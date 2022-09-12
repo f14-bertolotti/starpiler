@@ -25,4 +25,4 @@ class Production:
         return f"{self.name} : {right}"
 
     def __str__(self):
-        return self.name()
+        return f"Production({self.name})"
