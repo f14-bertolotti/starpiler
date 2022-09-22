@@ -1,6 +1,7 @@
 from src.syntax import Production
+from src.syntax import Larkable
 
-class Language:
+class Language(Larkable):
 
     def __init__(self, production):
         self.production = production.setName("start")

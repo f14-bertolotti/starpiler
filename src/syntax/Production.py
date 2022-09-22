@@ -1,10 +1,11 @@
-from textwrap import wrap
+from src.syntax import Larkable
 
-class Production:
+class Production(Larkable):
     
-    def __init__(self, name, rules=[]):
+    def __init__(self, name, rules=[], mod=""):
         self.rules = rules
         self.name = name
+        self.mod = mod
 
     def __iter__(self):
         return iter(self.rules)
@@ -16,13 +17,13 @@ class Production:
         self.name = name
         return self
 
-    def append(self, rule):
-        self.rules = (*self.rules, rule)
+    def append(self, *args):
+        self.rules = self.rules + list(args)
         return self
 
     def toLark(self):
         right = "\n | ".join([rule.name if isinstance(rule,Production) else rule.toLark() for rule in self])
-        return f"{self.name} : {right}"
+        return f"{self.mod}{self.name} : {right}"
 
     def __str__(self):
         return f"Production({self.name})"
