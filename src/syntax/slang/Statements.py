@@ -10,6 +10,7 @@ skip = P(name="s_skip", rules=[R(T("skip"), T(";"))])
 returnstmt = P(name="s_return", rules=[R(T("return"), expr, T(";"))])
 assignement = P(name="s_assign", rules=[R(ntype, identifier, T("="), expr, T(";"))])
 whileloop = P(name="s_while", rules=[R(T("while"), expr, T("do"), block, T(";"))])
-statement.append(assignement, whileloop, returnstmt, skip)
+ifthen = P(name="s_ifthen", rules=[R(T("if"), expr, T("do"), block, T(";"))])
+statement.append(ifthen, whileloop, assignement, returnstmt, skip)
 
 
