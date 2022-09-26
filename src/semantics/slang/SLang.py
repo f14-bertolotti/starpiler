@@ -36,7 +36,9 @@ class Module:
         for func in funcs: 
             block = func[1].append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
-            builder.name2var = {arg.strname:(arg, arg.type) for arg in func[1].args}
+            builder.name2var = {arg.strname:(builder.alloca(arg.type), arg.type) for arg in func[1].args}
+            for arg in func[1].args:
+                builder.store(arg, builder.name2var[arg.strname][0])
             func[0].block.toLLVM(builder)
         return module
 
@@ -63,7 +65,7 @@ class FunctionCall:
         return f"Call({self.name},{argsstr})"
     def toLLVM(self, builder):
         func = [f for f in builder.module.functions if f.name == self.name.value][-1]
-        return builder.call(func, [arg.toLLVM(builder)[0] for arg in self.arguments]), func.return_value
+        return builder.call(func, [arg.toLLVM(builder)[0] for arg in self.arguments]), func.function_type.return_type
 
 class BinaryOperation:
     def __init__(self, x, y, type2op, cmpop=None):
@@ -144,15 +146,25 @@ class Block:
     def toLLVM(self, builder):
         for stmt in self.statements: stmt.toLLVM(builder)
 
-class Assign:
+class DeclareAssign:
     def __init__(self, type, name, expr):
         self.type, self.name, self.expr = type, name, expr
     def __str__(self):
         return f"Ass({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
         res = self.expr.toLLVM(builder)
-        res[0].name = self.name.value
-        builder.name2var[self.name.value] = (res[0], self.type)
+        var = builder.alloca(res[1])
+        builder.store(res[0], var)
+        builder.name2var[self.name.value] = (var, self.type)
+
+class ReAssign:
+    def __init__(self, name, expr):
+        self.name, self.expr = name, expr
+    def __str__(self):
+        return f"RAss({self.name},{self.expr})"
+    def toLLVM(self, builder):
+        assert self.name.value in builder.name2var, f"{self.name.value} not declared."
+        a = builder.store(self.expr.toLLVM(builder)[0], builder.name2var[self.name.value][0])
 
 class Skip:
     def __init__(self): pass
@@ -163,33 +175,44 @@ class IfThen:
     def __init__(self, cond, block): self.cond, self.block = cond, block
     def __str__(self): return f"IfThen({self.cond},{self.block})"
     def toLLVM(self, builder):
-
         cond = builder.icmp_signed("==",self.cond.toLLVM(builder)[0], ir.Constant(ir.IntType(64),1))
+        tmp = builder.name2var
+        builder.name2var = copy.deepcopy(builder.name2var)
         with builder.if_then(cond):
             self.block.toLLVM(builder)
-        #self.end.toLLVM(builder)
+        builder.name2var = tmp
 
-        #tblock = builder.function.append_basic_block()
-        #fblock = builder.function.append_basic_block()
-        #eblock = builder.function.append_basic_block()
+class While:
+    def __init__(self, cond, block): self.cond, self.block = cond, block
+    def __str__(self): return f"While({self.cond},{self.block})"
+    def toLLVM(self, builder):
 
-        #tbuilder = ir.IRBuilder(tblock)
-        #fbuilder = ir.IRBuilder(fblock)
-        #ebuilder = ir.IRBuilder(eblock)
+        whileblock = builder.function.append_basic_block()
+        endblock   = builder.function.append_basic_block()
+        bodyblock  = builder.function.append_basic_block()
 
-        #tbuilder.name2var = copy.deepcopy(builder.name2var)
-        #fbuilder.name2var = copy.deepcopy(builder.name2var)
-        #ebuilder.name2var = builder.name2var 
+        whilebuilder = ir.IRBuilder(whileblock)
+        bodybuilder  = ir.IRBuilder(bodyblock)
+        whilebuilder.name2var = builder.name2var
+        bodybuilder .name2var = copy.deepcopy(builder.name2var)
 
-        #self.block.toLLVM(tbuilder)
-        #self.end  .toLLVM(ebuilder)
+        builder.branch(whileblock)
 
-        #cond = self.cond.toLLVM(builder)
-        #builder.cbranch(cond,tblock,fblock)
-        #tbuilder.branch(eblock)
-        #fbuilder.branch(eblock)
+        cond = whilebuilder.icmp_signed("==",self.cond.toLLVM(whilebuilder)[0], ir.Constant(ir.IntType(64),1))
+        whilebuilder.cbranch(cond, bodyblock, endblock)
 
+        self.block.toLLVM(bodybuilder)
+        bodybuilder.branch(whileblock)
 
+        builder.position_at_start(endblock)
+
+        #cond = builder.icmp_signed("==",self.cond.toLLVM(builder)[0], ir.Constant(ir.IntType(64),1))
+        #tmp = builder.name2var
+        #builder.name2var = copy.deepcopy(builder.name2var)
+        #with builder.if_then(ir.Consta):
+        #    self.block.toLLVM(builder)
+        #builder.position_before(cond)
+        #builder.name2var = tmp
 
 class Return:
     def __init__(self, expr):
@@ -228,8 +251,7 @@ class Name:
         return other.value != self.value
     def toLLVM(self, builder):
         assert self.value in builder.name2var, f"name=\"{self.value}\" not found in current scope."
-        res = builder.name2var[self.value]
-        return res
+        return builder.load(builder.name2var[self.value][0]), builder.name2var[self.value][1]
 
 class SlangTransformer(Transformer):
 
@@ -248,11 +270,18 @@ class SlangTransformer(Transformer):
     def s_return(self, node):
         return Return(node[1])
 
-    def s_assign(self, node):
-        return Assign(node[0], node[1], node[3])
+    def s_decl_assign(self, node):
+        return DeclareAssign(node[0], node[1], node[3])
+
+    def s_nodecl_assign(self, node):
+        return ReAssign(node[0], node[2])
+    
 
     def s_ifthen(self, node):
         return IfThen(node[1], node[3])
+
+    def s_while(self, node):
+        return While(node[1], node[3])
 
     def s_add(self, node): return Add(node[0], node[2])
     def s_sub(self, node): return Sub(node[0], node[2])

@@ -20,6 +20,16 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 11)
 
+    def test_mutableVars(self):
+        program = """
+        def int64 start() does
+            int64 x = 10;
+            x = 11;
+            return x;
+        ;
+        """
+        self.assertEqual(run(program), 11)
+
     def test_multiplication(self):
         program = """
         def int64 start() does
@@ -256,6 +266,73 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 2)
 
+    def test_ifthen6(self):
+        program = """
+        def int64 start() does
+            int64 x = 10;
+            int64 y = 9;
+            if x != y do y = x;;
+            return y;
+        ;
+        """
+        self.assertEqual(run(program), 10)
+
+    def test_ifthen7(self):
+        program = """
+        def int64 start() does
+            int64 x = 5+5;
+            int64 y = 4+5;
+            if x != y do y = y + 1;;
+            return y;
+        ;
+        """
+        self.assertEqual(run(program), 10)
+
+    def test_ifthen8(self):
+        program = """
+        def int64 start() does
+            int64 x = 10;
+            int64 y = 5;
+            if x != y do int64 y = y + 1;;
+            return y;
+        ;
+        """
+        self.assertEqual(run(program), 5)
+
+
+    def test_while1(self):
+        program = """
+        def int64 start() does
+            int64 x = 10;
+            int64 y = 9;
+            while x != y do y = x;;
+            return y;
+        ;
+        """
+        self.assertEqual(run(program), 10)
+
+    def test_while2(self):
+        program = """
+        def int64 start() does
+            int64 x = 10;
+            int64 y = 5;
+            while x != y do y = y + 1;;
+            return y;
+        ;
+        """
+        self.assertEqual(run(program), 10)
+
+    def test_while3(self):
+        program = """
+        def int64 start() does
+            int64 x = 10;
+            while x != 0 do
+                x = x - 1;
+            ;
+            return x;
+        ;
+        """
+        self.assertEqual(run(program), 0)
 
 
 
