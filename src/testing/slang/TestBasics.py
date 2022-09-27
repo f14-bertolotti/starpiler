@@ -334,12 +334,21 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 0)
 
-
-
-
-
-
-
+    def test_pointer1(self):
+        program = """
+        def int64 start() does
+            int64* x = (int64*) malloc(8 * 3);
+            x[0] = 0;
+            x[1] = 0;
+            x[2] = 0;
+            int64 a = x[0];
+            int64 b = x[1];
+            int64 c = x[2];
+            free((int8*) x);
+            return a == b * b == c;
+        ;
+        """
+        self.assertEqual(run(program), 1)
 
 
 if __name__ == "__main__":

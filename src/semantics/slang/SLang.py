@@ -5,7 +5,12 @@ from llvmlite import binding
 from lark.visitors import Transformer
 import copy
 
-from ctypes import CFUNCTYPE, c_double, c_int64
+from ctypes import CFUNCTYPE, CDLL, c_void_p, c_double, c_int64
+import ctypes
+from ctypes.util import find_library
+
+
+
 
 class Parameter:
     def __init__(self, type, name):
@@ -32,6 +37,13 @@ class Module:
         return f"Module({funcstr})"
     def toLLVM(self):
         module = ir.Module(name="MainModule")
+
+        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
+        function = ir.Function(module, functionType, name="malloc")
+        
+        functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
+        function = ir.Function(module, functionType, name="free")
+
         funcs = [(func, func.toLLVM(module)) for func in self.functions]
         for func in funcs: 
             block = func[1].append_basic_block(name="entry")
@@ -87,7 +99,6 @@ class UnaryOperation:
         self.x = x
         self.type2op = type2op
     def __str__(self):
-        dir(self)
         return f"{self.__class__.__name__}({self.x})"
     def toLLVM(self, builder):
         LValue, LType = self.x.toLLVM(builder)
@@ -137,6 +148,15 @@ class Neq(BinaryOperation):
         if LType == ir.IntType(64) : return builder.select(builder.icmp_signed ("!=",LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
         if LType == ir.DoubleType(): return builder.select(builder.fcmp_ordered("!=",LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
 
+class Indexed(BinaryOperation):
+    def __init__(self,x,y):
+        BinaryOperation.__init__(self,x,y,None)
+    def toLLVM(self, builder):
+        ptr = builder.load(builder.name2var[self.x.value][0])
+        exp = self.y.toLLVM(builder)
+        val = builder.load(builder.gep(ptr, [exp[0]]))
+        return val, exp[1]
+
 class Block:
     def __init__(self, *args):
         self.statements = args
@@ -144,7 +164,8 @@ class Block:
         self.stmtsstr = ",".join([str(stmt) for stmt in self.statements])
         return f"Block({self.stmtsstr})"
     def toLLVM(self, builder):
-        for stmt in self.statements: stmt.toLLVM(builder)
+        for stmt in self.statements: 
+            stmt.toLLVM(builder)
 
 class DeclareAssign:
     def __init__(self, type, name, expr):
@@ -152,9 +173,9 @@ class DeclareAssign:
     def __str__(self):
         return f"Ass({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
-        res = self.expr.toLLVM(builder)
-        var = builder.alloca(res[1])
-        builder.store(res[0], var)
+        res = self.expr.toLLVM(builder)[0]
+        var = builder.alloca(self.type)
+        builder.store(res, var)
         builder.name2var[self.name.value] = (var, self.type)
 
 class ReAssign:
@@ -165,6 +186,27 @@ class ReAssign:
     def toLLVM(self, builder):
         assert self.name.value in builder.name2var, f"{self.name.value} not declared."
         a = builder.store(self.expr.toLLVM(builder)[0], builder.name2var[self.name.value][0])
+
+class ReAssignArr:
+    def __init__(self, name, index, expr):
+        self.name, self.index, self.expr = name, index, expr
+    def __str__(self):
+        return f"RAssArr({self.name},{self.index},{self.expr})"
+    def toLLVM(self, builder):
+        assert self.name.value in builder.name2var, f"{self.name.value} not declared."
+        expr  = self.expr.toLLVM(builder)
+        index = self.index.toLLVM(builder)
+        prt = builder.load(builder.name2var[self.name.value][0])
+        ptr = builder.gep(prt, [index[0]])
+        builder.store(expr[0], ptr)
+
+class Cast:
+    def __init__(self, type, expr):
+        self.type, self.expr = type, expr
+    def __str__(self):
+        return f"Cast({self.type},{self.expr})"
+    def toLLVM(self, builder):
+        return builder.bitcast(self.expr.toLLVM(builder)[0], self.type), self.type
 
 class Skip:
     def __init__(self): pass
@@ -206,21 +248,14 @@ class While:
 
         builder.position_at_start(endblock)
 
-        #cond = builder.icmp_signed("==",self.cond.toLLVM(builder)[0], ir.Constant(ir.IntType(64),1))
-        #tmp = builder.name2var
-        #builder.name2var = copy.deepcopy(builder.name2var)
-        #with builder.if_then(ir.Consta):
-        #    self.block.toLLVM(builder)
-        #builder.position_before(cond)
-        #builder.name2var = tmp
-
 class Return:
     def __init__(self, expr):
         self.expr = expr
     def __str__(self):
         return f"Return({self.expr})"
     def toLLVM(self, builder):
-        builder.ret(self.expr.toLLVM(builder)[0])
+        res = self.expr.toLLVM(builder)
+        builder.ret(res[0])
 
 class Integer:
     def __init__(self, value):
@@ -248,6 +283,7 @@ class Name:
     def __eq__(self, other):
         return other.value == self.value
     def __ne__(self, other):
+        if not isinstance(other, Name): return True
         return other.value != self.value
     def toLLVM(self, builder):
         assert self.value in builder.name2var, f"name=\"{self.value}\" not found in current scope."
@@ -276,12 +312,17 @@ class SlangTransformer(Transformer):
     def s_nodecl_assign(self, node):
         return ReAssign(node[0], node[2])
     
-
+    def s_nodecl_assign_arr(self, node):
+        return ReAssignArr(node[0], node[2], node[5])
+    
     def s_ifthen(self, node):
         return IfThen(node[1], node[3])
 
     def s_while(self, node):
         return While(node[1], node[3])
+
+    def s_statement(self, node):
+        return node[0]
 
     def s_add(self, node): return Add(node[0], node[2])
     def s_sub(self, node): return Sub(node[0], node[2])
@@ -302,6 +343,9 @@ class SlangTransformer(Transformer):
     def s_int64(self, _):
         return ir.IntType(64)
 
+    def s_int8(self, _):
+        return ir.IntType(8)
+
     def s_float64(self, _):
         return ir.DoubleType()
 
@@ -314,8 +358,22 @@ class SlangTransformer(Transformer):
     def s_rational(self, node):
         return Rational(node[0].value)
 
+    def s_ptr(self, node):
+        return node[0].as_pointer()
+
+    def s_idx(self, node):
+        return Indexed(node[0], node[2])
+    
+    def s_cst(self, node):
+        return Cast(node[1], node[3])
+
+import rich
+
 def parsed(programstr):
-    return lang.parse(programstr)
+    #rich.print(programstr)
+    res = lang.parse(programstr)
+    #rich.print(res)
+    return res
 
 def transformed(programstr):
     return SlangTransformer().transform(parsed(programstr))
@@ -331,7 +389,8 @@ def run(programstr):
     binding.initialize()
     binding.initialize_native_target()
     binding.initialize_native_asmprinter()
-    
+    binding.load_library_permanently(ctypes.util.find_library('c'))
+
     parsedAssembly = binding.parse_assembly(str(module))
     parsedAssembly.verify()
     
