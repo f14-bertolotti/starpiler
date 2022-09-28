@@ -20,9 +20,15 @@ lse = P(name = "s_lse", rules=[R(expr, T("<="), expr)])
 neq = P(name = "s_neq", rules=[R(expr, T("!="), expr)])
 cld = P(name = "s_cld", rules=[R(T("("), expr, T(")"))])
 ref = P(name = "s_ref", rules=[R(T("&"), identifier)])
-lad = P(name = "s_idx", rules=[R(T("$"), expr)])
-esq = P(name = "s_esq", rules=[expr, R(expr, T(","), R(expr,mod="*"))])
+
+sqt = P(name = "s_sqt", rules=[R(T("["), expr, T("]"))])
+rqt = P(name = "s_rqt", rules=[R(T("&["), expr, T("]"))])
+cqt = P(name = "s_cqt", rules=[sqt, rqt], mod="?")
+
+idx = P(name = "s_idx", rules=[R(identifier, R(cqt, mod="+"))])
+
+esq = P(name = "s_esq", rules=[expr, R(expr, R(T(","), expr, mod="*"))])
 fcl = P(name = "s_fcl", rules=[R(identifier, T("("), esq, T(")"))])
 cst = P(name = "s_cst", rules=[R(expr, T("as"), ntype)])
-expr.append(add, sub, mul, div, mod, neq, eql, gtr, gte, lss, lse, neg, rational, integer, identifier, cld, fcl, cst, ref, lad)
+expr.append(add, sub, mul, div, mod, neq, eql, gtr, gte, lss, lse, neg, rational, integer, identifier, cld, fcl, cst, ref, idx)
 

@@ -7,7 +7,7 @@ from src.semantics.slang import assembled
 
 class TestAlgos(unittest.TestCase):
 
-    def test_bublesort(self):
+    def test_bubblesort(self):
         program = """
         def int64 sort(int64* array, int64 len) does
             int64 i = 0;
@@ -16,23 +16,23 @@ class TestAlgos(unittest.TestCase):
                 while j < len do
                     if array[i] > array[j] do
                         int64 tmp = array[i];
-                        array[i] = array[j];
-                        array[j] = tmp;
+                        array&[i] = array[j];
+                        array&[j] = tmp;
                     ;
-                    j = j + 1;
+                    &j = j + 1;
                 ;   
-                i = i + 1;
+                &i = i + 1;
             ;
             return 0;
         ;
 
         def int64 start() does
-            int64* array = (int64*) malloc(8 * 5);
-            array[0] = 4;
-            array[1] = 2;
-            array[2] = 1;
-            array[3] = 0;
-            array[4] = 3;
+            int64* array = malloc(8 * 5) as int64*;
+            array&[0] = 4;
+            array&[1] = 2;
+            array&[2] = 1;
+            array&[3] = 0;
+            array&[4] = 3;
             int64 res = sort(array, 5);
 
             int64 sorted = array[0] == 0 *
@@ -40,39 +40,93 @@ class TestAlgos(unittest.TestCase):
                            array[2] == 2 *
                            array[3] == 3 *
                            array[4] == 4;
-            free((int8*) array);
+            free(array as int8*);
             return sorted;
         ;
         """
         self.assertEqual(run(program),1)
 
-    def test_matrix(self):
+    def test_mmul(self):
         program = """
-        def int64 start() does
-            int64** matrix = (int64**) malloc(8 * 5);
 
+        def int64** newmatrix(int64 rows, int64 cols) does
+            int64** matrix = malloc(8 * rows) as int64**;
             int64 i = 0;
-            while i < 5 do
-                matrix[i] = (int64*) malloc(8 * 5);
-                i = i + 1;
+            while i < 3 do
+                matrix&[i] = malloc(8 * cols) as int64*;
+                &i = i + 1;
             ;
+            return &matrix;
+        ;
 
-            matrix[0][0] = 1;
-
-            i = 0;
-            while i < 5 do
-                free((int8*) matrix[i]);
-                i = i + 1;
+        def int64 initAsIdentityMatrix(int64** m, int64 r, int64 c) does
+            int64 i = 0;
+            while i < r do
+                int64 j = 0;
+                while j < c do
+                    m[i]&[j] = i == j;
+                    &j = j + 1;
+                ;
+                &i = i + 1;
             ;
-
-            free((int8*) matrix);
-
             return 0;
         ;
 
-        """
+        def int64** mmul(int64** m1, int64 r1, int64 c1, int64** m2, int64 r2, int64 c2) does
+            int64** m = newmatrix(r1, c2);
+            int64 i = 0;
+            while i < r1 do
+                int64 j = 0;
+                while j < c2 do
+                    int64 cum = 0;
+                    int64 k = 0;
+                    while k < c1 do
+                        &cum = cum + m1[i][k] * m2[k][j];
+                        &k = k + 1;
+                    ;
+                    m[i]&[j] = cum;
+                    &j = j + 1;
+                ;
+                &i = i + 1;
+            ;
+            return &m;
+        ;
 
-        print(run(program))
+        def int64 freematrix(int64** matrix, int64 rows, int64 cols) does
+            int64 i = 0;
+            while i < 3 do
+                free(matrix[i] as int8*);
+                &i = i + 1;
+            ;
+            free(matrix as int8*);
+            return 0;
+        ;
+
+
+        def int64 start() does
+            int64** m1 = newmatrix(3,3);
+            int64** m2 = newmatrix(3,3);
+            int64 res = initAsIdentityMatrix(m1,3,3);
+            int64 res = initAsIdentityMatrix(m2,3,3);
+            int64** m3 = mmul(m1,3,3,m2,3,3);
+            int64 result = m3[0][0] == 1 * 
+                           m3[0][1] == 0 *
+                           m3[0][2] == 0 *
+                           m3[1][0] == 0 *
+                           m3[1][1] == 1 *
+                           m3[1][2] == 0 *
+                           m3[2][0] == 0 *
+                           m3[2][1] == 0 *
+                           m3[2][2] == 1;
+            int64 res = freematrix(m1,3,3);
+            int64 res = freematrix(m2,3,3);
+            int64 res = freematrix(m3,3,3);
+            return result;
+        ;
+
+        """
+        self.assertEqual(run(program),1)
+
 
 
 

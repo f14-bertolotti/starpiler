@@ -131,6 +131,7 @@ class BinaryOperation(Operation):
     def getType(self, builder): 
         ltype = self.getLType(builder)
         rtype = self.getRType(builder)
+        if ltype == rtype: return ltype
         assert ltype == rtype,  f"non coherent types. Found left:{ltype}, right:{rtype}"
         return ltype
 
@@ -217,21 +218,44 @@ class Neg(UnaryOperation):
         elif self.getType(builder) == Double(): return builder.fneg
         self.raiseOperationNotFound(builder)
 
-
 class Cast(Expression):
     def __init__(self, expr, type):
         self.type, self.expr = type, expr
     def __str__(self):
         return f"Cast({self.type},{self.expr})"
-    def getType(self, builder):
+    def getType(self, _):
         return self.type.LLVMType()
     def toLLVM(self, builder):
         expr = self.expr.toLLVM(builder)
         if isinstance(expr.type, ir.PointerType): 
-            return builder.bitcast(self.expr.toLLVM(builder), self.type.LLVMType())
+            return builder.bitcast(expr, self.type.LLVMType())
         assert self.expr.getType(builder) == Int64(), "only int64 cast to int64* is allowed"
         return builder.inttoptr(expr, self.type.LLVMType())
 
+class ValIndex: 
+    def __init__(self, index): self.index = index
+    def __str__(self): return f"[{self.index}]"
+    def toLLVM(self, builder, val): 
+        return builder.load(builder.gep(val, [self.index.toLLVM(builder)]))
+
+class RefIndex:
+    def __init__(self, index): self.index = index
+    def __str__(self): return f"&[{self.index}]"
+    def toLLVM(self, builder, val): 
+        return builder.gep(val, [self.index.toLLVM(builder)])
+
+class Index(Expression):
+    def __init__(self, name, indexes): self.name, self.indexes = name, indexes
+    def __str__(self): return f"{self.name}["+",".join([str(idx) for idx in self.indexes])+"]"
+    def getType(self, builder):
+        currentType = self.name.getType(builder)
+        for _ in self.indexes: currentType = currentType.base
+        return currentType
+    def toLLVM(self, builder):
+        val = self.name.toLLVM(builder)
+        for idx in self.indexes: val = idx.toLLVM(builder, val)
+        return val
+    
 
 class Integer(Expression):
     def __init__(self, value):
@@ -268,7 +292,6 @@ class Load(Expression):
         expr = self.expr.toLLVM(builder)
         assert isinstance(expr.type, ir.PointerType)
         return builder.load(expr)
-
 
 class Eqs(ComparisonOperation):
     def __init__(self, x, y):
@@ -481,6 +504,16 @@ class SlangTransformer(Transformer):
 
     def s_cst(self, node):
         return Cast(node[0], node[2])
+
+    def s_sqt(self, node):
+        return ValIndex(node[1])
+
+    def s_rqt(self, node):
+        return RefIndex(node[1])
+
+    def s_idx(self, node):
+        return Index(node[0], node[1:])
+
 
 
 import rich
