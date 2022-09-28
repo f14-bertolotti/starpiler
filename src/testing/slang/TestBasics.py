@@ -24,7 +24,7 @@ class TestBasics(unittest.TestCase):
         program = """
         def int64 start() does
             int64 x = 10;
-            x = 11;
+            &x = 11;
             return x;
         ;
         """
@@ -271,7 +271,7 @@ class TestBasics(unittest.TestCase):
         def int64 start() does
             int64 x = 10;
             int64 y = 9;
-            if x != y do y = x;;
+            if x != y do &y = x;;
             return y;
         ;
         """
@@ -282,7 +282,7 @@ class TestBasics(unittest.TestCase):
         def int64 start() does
             int64 x = 5+5;
             int64 y = 4+5;
-            if x != y do y = y + 1;;
+            if x != y do &y = y + 1;;
             return y;
         ;
         """
@@ -305,7 +305,7 @@ class TestBasics(unittest.TestCase):
         def int64 start() does
             int64 x = 10;
             int64 y = 9;
-            while x != y do y = x;;
+            while x != y do &y = x;;
             return y;
         ;
         """
@@ -316,7 +316,7 @@ class TestBasics(unittest.TestCase):
         def int64 start() does
             int64 x = 10;
             int64 y = 5;
-            while x != y do y = y + 1;;
+            while x != y do &y = y + 1;;
             return y;
         ;
         """
@@ -327,7 +327,7 @@ class TestBasics(unittest.TestCase):
         def int64 start() does
             int64 x = 10;
             while x != 0 do
-                x = x - 1;
+                &x = x - 1;
             ;
             return x;
         ;
@@ -337,15 +337,15 @@ class TestBasics(unittest.TestCase):
     def test_pointer1(self):
         program = """
         def int64 start() does
-            int64* x = (int64*) malloc(8 * 3);
-            x[0] = 0;
-            x[1] = 0;
-            x[2] = 0;
-            int64 a = x[0];
-            int64 b = x[1];
-            int64 c = x[2];
-            free((int8*) x);
-            return a == b * b == c;
+            int64* x = malloc(8 * 3) as int64*;
+            x + 1 = 0;
+            x + 2 = 0;
+            x + 3 = 0;
+            int64 a = $(x + 0);
+            int64 b = $(x + 1);
+            int64 c = $(x + 2);
+            free(x as int8*);
+            return a == b * b == c * c == 0;
         ;
         """
         self.assertEqual(run(program), 1)

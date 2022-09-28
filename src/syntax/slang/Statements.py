@@ -2,7 +2,7 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.slang import expr, sqt, ntype, identifier
+from src.syntax.slang import expr, ntype, identifier
 
 statement = P(name="s_statement", mod="?")
 block = P(name="s_block", rules = [R(statement, mod="*")])

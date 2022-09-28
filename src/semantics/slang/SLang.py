@@ -10,7 +10,33 @@ from ctypes import CFUNCTYPE, CDLL, c_void_p, c_double, c_int64
 import ctypes
 from ctypes.util import find_library
 
+from collections import defaultdict
+from functools import partial
 
+import abc
+
+class Type: 
+    @abc.abstractmethod
+    def LLVMType(self): pass
+    def __eq__(self, other): return str(self) == str(other) 
+    def __neq__(self, other):return str(self) != str(other)
+class Stack(Type): pass
+class Int8(Stack): 
+    def LLVMType(self): return ir.IntType(8)
+    def __str__(self): return "Int8"
+class Int64(Stack): 
+    def LLVMType(self): return ir.IntType(64)
+    def __str__(self): return "Int64"
+class Double(Stack): 
+    def LLVMType(self): return ir.DoubleType()
+    def __str__(self): return "Double"
+class Pointer(Type):
+    def __init__(self, base): self.base = base
+    def __str__(self): return f"{self.base}*"
+    def LLVMType(self): return ir.PointerType(self.base.LLVMType())
+
+const64_0 = ir.Constant(ir.IntType(64), 0)
+const64_1 = ir.Constant(ir.IntType(64), 1)
 
 
 class Parameter:
@@ -21,13 +47,13 @@ class Parameter:
 
 class ParameterSequence:
     def __init__(self, *args):
-        self.paramters = args
+        self.parameters = args
     def __get_item__(self, index):
-        return self.paramters[index]
+        return self.parameters[index]
     def __iter__(self):
-        return iter(self.paramters)
+        return iter(self.parameters)
     def __str__(self):
-        paramsstr = ",".join(str(param) for param in self.paramters)
+        paramsstr = ",".join(str(param) for param in self.parameters)
         return f"ParameterSequence({paramsstr})"
 
 class Module:
@@ -40,33 +66,33 @@ class Module:
         module = ir.Module(name="MainModule")
 
         functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
-        function = ir.Function(module, functionType, name="malloc")
+        ir.Function(module, functionType, name="malloc")
         
         functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
-        function = ir.Function(module, functionType, name="free")
+        ir.Function(module, functionType, name="free")
 
         funcs = [(func, func.toLLVM(module)) for func in self.functions]
         for func in funcs: 
             block = func[1].append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
-            builder.name2var = {arg.strname:(builder.alloca(arg.type), arg.type) for arg in func[1].args}
+            builder.name2var = {param.name.value:(builder.alloca(param.type.LLVMType()), param.type) for param in func[0].parameters}
             for arg in func[1].args:
                 builder.store(arg, builder.name2var[arg.strname][0])
             func[0].block.toLLVM(builder)
         return module
 
 class Function:
-    def __init__(self, returntype, name, paramters, block):
+    def __init__(self, returntype, name, parameters, block):
         self.returntype = returntype
-        self.paramters = paramters
+        self.parameters = parameters
         self.block = block
         self.name = name
     def __str__(self):
-        return f"Function({self.returntype},{self.name},{self.paramters},{self.block})"
+        return f"Function({self.returntype},{self.name},{self.parameters},{self.block})"
     def toLLVM(self, module):
-        functionType = ir.FunctionType(self.returntype, [param.type for param in self.paramters])
+        functionType = ir.FunctionType(self.returntype.LLVMType(), [param.type.LLVMType() for param in self.parameters])
         function = ir.Function(module, functionType, name=self.name.value)
-        for param, arg in zip(self.paramters, function.args): arg.strname = param.name.value
+        for param, arg in zip(self.parameters, function.args): arg.strname = param.name.value
         return function
 
 class FunctionCall:
@@ -78,108 +104,219 @@ class FunctionCall:
         return f"Call({self.name},{argsstr})"
     def toLLVM(self, builder):
         func = [f for f in builder.module.functions if f.name == self.name.value][-1]
-        return builder.call(func, [arg.toLLVM(builder)[0] for arg in self.arguments]), func.function_type.return_type
+        return builder.call(func, [arg.toLLVM(builder) for arg in self.arguments])
 
-class BinaryOperation:
-    def __init__(self, x, y, type2op, cmpop=None):
+class Expression:
+    @abc.abstractmethod
+    def getType(self, builder): pass 
+
+class Operation(Expression):
+    @abc.abstractmethod
+    def getOperation(self, builder): pass
+
+    def raiseOperationNotFound(self, builder):
+        raise ValueError(f"non suitable operation for type {self.getType(builder)}")
+
+class BinaryOperation(Operation):
+    def __init__(self, x, y):
         self.x, self.y = x, y
-        self.type2op = type2op
-        self.cmpop = cmpop
+
+    @abc.abstractmethod
+    def getOperation(self, builder): pass
+
+    def getLType(self, builder): return self.x.getType(builder)
+
+    def getRType(self, builder): return self.y.getType(builder)
+
+    def getType(self, builder): 
+        ltype = self.getLType(builder)
+        rtype = self.getRType(builder)
+        assert ltype == rtype,  f"non coherent types. Found left:{ltype}, right:{rtype}"
+        return ltype
+
     def __str__(self):
         dir(self)
         return f"{self.__class__.__name__}({self.x},{self.y})"
     def toLLVM(self, builder):
-        LValue, LType = self.x.toLLVM(builder)
-        RValue, RType = self.y.toLLVM(builder)
-        assert LType == RType, f"fTypes do not agree. Found left={LType}, right={RType}."
-        return (getattr(builder, self.type2op[LType])(self.cmpop, LValue, RValue), LType) if self.cmpop else \
-               (getattr(builder, self.type2op[LType])(LValue, RValue), LType)
+        lexpr = self.x.toLLVM(builder)
+        rexpr = self.y.toLLVM(builder)
+        return self.getOperation(builder)(lexpr, rexpr)
 
-class UnaryOperation:
-    def __init__(self, x, type2op):
+
+class UnaryOperation(Operation):
+    def __init__(self, x):
         self.x = x
-        self.type2op = type2op
+
+    def getType(self, builder): return self.x.getType(builder)
+
+    @abc.abstractmethod
+    def getOperation(self, builder): pass
+
     def __str__(self):
         return f"{self.__class__.__name__}({self.x})"
     def toLLVM(self, builder):
-        LValue, LType = self.x.toLLVM(builder)
-        return getattr(builder, self.type2op[LType])(LValue), LType
+        return self.getOperation(builder)(self.x.toLLVM(builder))
+
+class ComparisonOperation(BinaryOperation):
+    def __init__(self, x, y):
+        BinaryOperation.__init__(self, x, y)
+    
+    @abc.abstractmethod
+    def getOperation(self, builder): pass
+
+    def toLLVM(self, builder):
+        lexpr = self.x.toLLVM(builder)
+        rexpr = self.y.toLLVM(builder)
+        return builder.select(self.getOperation(builder)(lexpr, rexpr), const64_1, const64_0)
 
 class Add(BinaryOperation):
     def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"add", ir.DoubleType():"fadd"})
+        BinaryOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if   self.getType(builder) == Int64(): return builder.add
+        elif self.getType(builder) == Double(): return builder.fadd
+        self.raiseOperationNotFound(builder)
 
 class Sub(BinaryOperation):
     def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"sub", ir.DoubleType():"fsub"})
+        BinaryOperation.__init__(self,x,y)
+    def getOperation(self,builder):
+        if   self.getType(builder) == Int64(): return builder.sub
+        elif self.getType(builder) == Double(): return builder.fsub
+        self.raiseOperationNotFound(builder)
 
 class Mul(BinaryOperation):
     def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"mul", ir.DoubleType():"fmul"})
+        BinaryOperation.__init__(self,x,y)
+    def getOperation(self,builder):
+        if   self.getType(builder) == Int64(): return builder.mul
+        elif self.getType(builder) == Double(): return builder.fmul
+        self.raiseOperationNotFound(builder)
 
 class Div(BinaryOperation):
     def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"sdiv", ir.DoubleType():"fdiv"})
-
-class Neg(UnaryOperation):
-    def __init__(self, x):
-        UnaryOperation.__init__(self,x,{ir.IntType(64):"neg", ir.DoubleType():"fneg"})
+        BinaryOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if   self.getType(builder) == Int64(): return builder.sdiv
+        elif self.getType(builder) == Double(): return builder.fdiv
+        self.raiseOperationNotFound(builder)
 
 class Mod(BinaryOperation):
     def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"srem", ir.DoubleType():"frem"})
+        BinaryOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if   self.getType(builder) == Int64(): return builder.srem
+        elif self.getType(builder) == Double(): return builder.frem
+        self.raiseOperationNotFound(builder)
 
-class Comparison(BinaryOperation):
-    def __init__(self, x, y, op):
-        BinaryOperation.__init__(self,x,y,dict())
-        self.op = op
+class Neg(UnaryOperation):
+    def __init__(self, x):
+        UnaryOperation.__init__(self,x)
+    def getOperation(self, builder):
+        if   self.getType(builder) == Int64(): return builder.neg
+        elif self.getType(builder) == Double(): return builder.fneg
+        self.raiseOperationNotFound(builder)
+
+
+class Cast(Expression):
+    def __init__(self, expr, type):
+        self.type, self.expr = type, expr
+    def __str__(self):
+        return f"Cast({self.type},{self.expr})"
+    def getType(self, builder):
+        return self.type.LLVMType()
     def toLLVM(self, builder):
-        LValue, LType = self.x.toLLVM(builder)
-        RValue, RType = self.y.toLLVM(builder)
-        assert LType == RType, f"fTypes do not agree. Found left={LType}, right={RType}."
-        if LType == ir.IntType(64) : return builder.select(builder.icmp_signed (self.op,LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
-        if LType == ir.DoubleType(): return builder.select(builder.fcmp_ordered(self.op,LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
+        expr = self.expr.toLLVM(builder)
+        if isinstance(expr.type, ir.PointerType): 
+            return builder.bitcast(self.expr.toLLVM(builder), self.type.LLVMType())
+        assert self.expr.getType(builder) == Int64(), "only int64 cast to int64* is allowed"
+        return builder.inttoptr(expr, self.type.LLVMType())
 
-class Eqs(Comparison):
+
+class Integer(Expression):
+    def __init__(self, value):
+        self.value = ir.Constant(ir.IntType(64), value)
+    def __str__(self):
+        return f"Integer({self.value})"
+    def getType(self,_): return Int64()
+    def toLLVM(self, _):
+        return self.value
+
+class Rational(Expression):
+    def __init__(self, value): self.value = ir.Constant(ir.DoubleType(), value)
+    def __str__(self): return f"Rational({self.value})"
+    def getType(self,_): return Double()
+    def toLLVM(self,_): return self.value
+
+class Name(Expression):
+    def __init__(self, value): self.value = value
+    def __str__(self): return f"Name({self.value})"
+    def getType(self, builder): return builder.name2var[self.value][1]
+    def toLLVM(self, builder): return builder.load(builder.name2var[self.value][0])
+
+class Ref(Expression):
+    def __init__(self, expr): self.expr = expr
+    def __str__(self): return f"Ref({self.expr})"
+    def getType(self, builder): return Pointer(self.expr.getType(builder))
+    def toLLVM(self, builder): return builder.name2var[self.expr.value][0]
+
+class Load(Expression):
+    def __init__(self, expr): self.expr = expr
+    def __str__(self): return f"Load({self.expr})"
+    def getType(self, builder): return self.expr.getType(builder).base
+    def toLLVM(self, builder): 
+        expr = self.expr.toLLVM(builder)
+        assert isinstance(expr.type, ir.PointerType)
+        return builder.load(expr)
+
+
+class Eqs(ComparisonOperation):
     def __init__(self, x, y):
-        Comparison.__init__(self,x,y,op="==")
+        ComparisonOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if self.getType(builder) == Int64(): return partial(builder.icmp_signed, "==")
+        if self.getType(builder) == Double(): return partial(builder.fcmp_ordered, "==")
+        self.raiseOperationNotFound(builder)
 
-class Gtr(Comparison):
+class Gtr(ComparisonOperation):
     def __init__(self, x, y):
-        Comparison.__init__(self,x,y,op=">")
+        ComparisonOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if self.getType(builder) == Int64(): return partial(builder.icmp_signed, ">")
+        if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, ">")
+        self.raiseOperationNotFound(builder)
 
-class Gte(Comparison):
+class Gte(ComparisonOperation):
     def __init__(self, x, y):
-        Comparison.__init__(self,x,y,op=">=")
+        ComparisonOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if self.getType(builder) == Int64(): return partial(builder.icmp_signed, ">=")
+        if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, ">=")
+        self.raiseOperationNotFound(builder)
 
-class Lss(Comparison):
+class Lss(ComparisonOperation):
     def __init__(self, x, y):
-        Comparison.__init__(self,x,y,op="<")
+        ComparisonOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if self.getType(builder) == Int64(): return partial(builder.icmp_signed, "<")
+        if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, "<")
+        self.raiseOperationNotFound(builder)
 
-class Lse(Comparison):
+class Lse(ComparisonOperation):
     def __init__(self, x, y):
-        Comparison.__init__(self,x,y,op="<=")
+        ComparisonOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if self.getType(builder) == Int64(): return partial(builder.icmp_signed, "<=")
+        if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, "<=")
+        self.raiseOperationNotFound(builder)
 
-class Neq(Comparison):
+class Neq(ComparisonOperation):
     def __init__(self, x, y):
-        Comparison.__init__(self,x,y,op="!=")
-
-class Indexed:
-    def __init__(self,left,idx):
-        self.left, self.idx = left, idx
-    def __str__(self): return f"Idxd({self.left},{self.idx})"
-    def toLLVM(self, builder, left=False):
-        ptr = builder.load(self.left.toLLVM(builder,left)[0])
-        exp = self.idx.toLLVM(builder)
-        if left: return builder.gep(ptr, [exp[0]]), exp[1]
-        val = builder.load(builder.gep(ptr, [exp[0]]))
-        return val, exp[1]
-
-class Index:
-    def __init__(self, idx): self.idx = idx
-    def __str__(self): return f"Idx({self.idx})"
-    def toLLVM(self, builder):
-        return self.idx.toLLVM(builder)
+        ComparisonOperation.__init__(self,x,y)
+    def getOperation(self, builder):
+        if self.getType(builder) == Int64(): return partial(builder.icmp_signed, "!=")
+        if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, "!=")
+        self.raiseOperationNotFound(builder)
 
 class Block:
     def __init__(self, *args):
@@ -197,9 +334,10 @@ class DeclareAssign:
     def __str__(self):
         return f"Ass({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
-        res = self.expr.toLLVM(builder)[0]
-        var = builder.alloca(self.type)
-        builder.store(res, var)
+        expr = self.expr.toLLVM(builder)
+        var = builder.alloca(self.type.LLVMType())
+
+        builder.store(expr, var)
         builder.name2var[self.name.value] = (var, self.type)
 
 class ReAssign:
@@ -208,31 +346,20 @@ class ReAssign:
     def __str__(self):
         return f"RAss({self.lexpr},{self.rexpr})"
     def toLLVM(self, builder):
-        rexpr = self.rexpr.toLLVM(builder)[0]
-        print(self)
-        lexpr = self.lexpr.toLLVM(builder, left=True)[0]
-        print(lexpr, lex
-
-        a = builder.store(rexpr, lexpr)
-
-class Cast:
-    def __init__(self, type, expr):
-        self.type, self.expr = type, expr
-    def __str__(self):
-        return f"Cast({self.type},{self.expr})"
-    def toLLVM(self, builder):
-        return builder.bitcast(self.expr.toLLVM(builder)[0], self.type), self.type
+        rexpr = self.rexpr.toLLVM(builder)
+        lexpr = self.lexpr.toLLVM(builder)
+        builder.store(rexpr, lexpr)
 
 class Skip:
     def __init__(self): pass
     def __str__(self): return f"Skip"
-    def toLLVM(self, builder): pass
+    def toLLVM(self, _): pass
 
 class IfThen:
     def __init__(self, cond, block): self.cond, self.block = cond, block
     def __str__(self): return f"IfThen({self.cond},{self.block})"
     def toLLVM(self, builder):
-        cond = builder.icmp_signed("==",self.cond.toLLVM(builder)[0], ir.Constant(ir.IntType(64),1))
+        cond = builder.icmp_signed("==",self.cond.toLLVM(builder), const64_1)
         tmp = builder.name2var
         builder.name2var = copy.deepcopy(builder.name2var)
         with builder.if_then(cond):
@@ -254,8 +381,8 @@ class While:
         bodybuilder .name2var = copy.deepcopy(builder.name2var)
 
         builder.branch(whileblock)
-
-        cond = whilebuilder.icmp_signed("==",self.cond.toLLVM(whilebuilder)[0], ir.Constant(ir.IntType(64),1))
+    
+        cond = whilebuilder.icmp_signed("==", self.cond.toLLVM(whilebuilder), const64_1)
         whilebuilder.cbranch(cond, bodyblock, endblock)
 
         self.block.toLLVM(bodybuilder)
@@ -270,40 +397,8 @@ class Return:
         return f"Return({self.expr})"
     def toLLVM(self, builder):
         res = self.expr.toLLVM(builder)
-        builder.ret(res[0])
-
-class Integer:
-    def __init__(self, value):
-        self.value = ir.Constant(ir.IntType(64), value)
-    def __str__(self):
-        return f"Integer({self.value})"
-    def toLLVM(self, _):
-        return self.value, ir.IntType(64)
-
-class Rational:
-    def __init__(self, value):
-        self.value = ir.Constant(ir.DoubleType(), value)
-    def __str__(self):
-        return f"Rational({self.value})"
-    def toLLVM(self, _):
-        return self.value, ir.DoubleType()
-
-class Name:
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return f"Name({self.value})"
-    def __hash__(self):
-        return hash(self.value)
-    def __eq__(self, other):
-        return other.value == self.value
-    def __ne__(self, other):
-        if not isinstance(other, Name): return True
-        return other.value != self.value
-    def toLLVM(self, builder, left=False):
-        assert self.value in builder.name2var, f"name=\"{self.value}\" not found in current scope."
-        if left: return builder.name2var[self.value]
-        return builder.load(builder.name2var[self.value][0]), builder.name2var[self.value][1]
+        if isinstance(res.type, ir.PointerType): builder.ret(builder.load(res))
+        else: builder.ret(res)
 
 class SlangTransformer(Transformer):
 
@@ -328,9 +423,6 @@ class SlangTransformer(Transformer):
     def s_nodecl_assign(self, node):
         return ReAssign(node[0], node[2])
     
-    def s_nodecl_assign_arr(self, node):
-        return ReAssignArr(node[0], [n for n in node[1].children if n], node[3])
-
     def s_ifthen(self, node):
         return IfThen(node[1], node[3])
 
@@ -361,16 +453,22 @@ class SlangTransformer(Transformer):
         return Parameter(node[0], node[1])
 
     def s_int64(self, _):
-        return ir.IntType(64)
+        return Int64()
 
     def s_int8(self, _):
-        return ir.IntType(8)
+        return Int8()
 
     def s_float64(self, _):
-        return ir.DoubleType()
+        return Double()
 
     def s_identifier(self, node):
         return Name(node[0].value.strip())
+
+    def s_ref(self, node):
+        return Ref(node[1])
+
+    def s_lad(self, node):
+        return Load(node[2])
 
     def s_integer(self, node):
         return Integer(node[0].value)
@@ -379,23 +477,18 @@ class SlangTransformer(Transformer):
         return Rational(node[0].value)
 
     def s_ptr(self, node):
-        return node[0].as_pointer()
+        return Pointer(node[0])
 
-    def s_idx(self, node):
-        return Indexed(node[0], node[1])
-
-    def s_sqt(self, node):
-        return Index(node[1])
-    
     def s_cst(self, node):
-        return Cast(node[1], node[3])
+        return Cast(node[0], node[2])
+
 
 import rich
 
 def parsed(programstr):
-    rich.print(programstr)
+    #rich.print(programstr)
     res = lang.parse(programstr)
-    rich.print(res)
+    #rich.print(res)
     return res
 
 def transformed(programstr):
@@ -406,7 +499,7 @@ def assembled(programstr):
 
 def run(programstr):
     program = transformed(programstr) 
-    rich.print(program)
+    #rich.print(program)
 
     module = program.toLLVM()
     
@@ -429,8 +522,8 @@ def run(programstr):
     
     func_ptr = engine.get_function_address("start")
     rtype = [func.returntype for func in program.functions if func.name.value == "start"][-1]
-    if rtype == ir.DoubleType(): cfunc = CFUNCTYPE(c_double)(func_ptr)
-    if rtype == ir.IntType(64) : cfunc = CFUNCTYPE(c_int64)(func_ptr)
+    if rtype == Double(): cfunc = CFUNCTYPE(c_double)(func_ptr)
+    if rtype == Int64(): cfunc = CFUNCTYPE(c_int64)(func_ptr)
     res = cfunc()
     return res
 
