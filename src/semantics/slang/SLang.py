@@ -3,6 +3,7 @@ from src.syntax.slang import lang
 from llvmlite import ir
 from llvmlite import binding 
 from lark.visitors import Transformer
+from lark import Token
 import copy
 
 from ctypes import CFUNCTYPE, CDLL, c_void_p, c_double, c_int64
@@ -128,34 +129,57 @@ class Mod(BinaryOperation):
     def __init__(self, x, y):
         BinaryOperation.__init__(self,x,y,{ir.IntType(64):"srem", ir.DoubleType():"frem"})
 
-class Eqs(BinaryOperation):
-    def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"icmp_signed", ir.DoubleType():"fcmp_ordered"}, cmpop="==")
+class Comparison(BinaryOperation):
+    def __init__(self, x, y, op):
+        BinaryOperation.__init__(self,x,y,dict())
+        self.op = op
     def toLLVM(self, builder):
         LValue, LType = self.x.toLLVM(builder)
         RValue, RType = self.y.toLLVM(builder)
         assert LType == RType, f"fTypes do not agree. Found left={LType}, right={RType}."
-        if LType == ir.IntType(64) : return builder.select(builder.icmp_signed ("==",LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
-        if LType == ir.DoubleType(): return builder.select(builder.fcmp_ordered("==",LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
+        if LType == ir.IntType(64) : return builder.select(builder.icmp_signed (self.op,LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
+        if LType == ir.DoubleType(): return builder.select(builder.fcmp_ordered(self.op,LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
 
-class Neq(BinaryOperation):
+class Eqs(Comparison):
     def __init__(self, x, y):
-        BinaryOperation.__init__(self,x,y,{ir.IntType(64):"icmp_signed", ir.DoubleType():"fcmp_ordered"}, cmpop="==")
-    def toLLVM(self, builder):
-        LValue, LType = self.x.toLLVM(builder)
-        RValue, RType = self.y.toLLVM(builder)
-        assert LType == RType, f"fTypes do not agree. Found left={LType}, right={RType}."
-        if LType == ir.IntType(64) : return builder.select(builder.icmp_signed ("!=",LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
-        if LType == ir.DoubleType(): return builder.select(builder.fcmp_ordered("!=",LValue,RValue),ir.Constant(ir.IntType(64),1), ir.Constant(ir.IntType(64),0)), LType
+        Comparison.__init__(self,x,y,op="==")
 
-class Indexed(BinaryOperation):
-    def __init__(self,x,y):
-        BinaryOperation.__init__(self,x,y,None)
-    def toLLVM(self, builder):
-        ptr = builder.load(builder.name2var[self.x.value][0])
-        exp = self.y.toLLVM(builder)
+class Gtr(Comparison):
+    def __init__(self, x, y):
+        Comparison.__init__(self,x,y,op=">")
+
+class Gte(Comparison):
+    def __init__(self, x, y):
+        Comparison.__init__(self,x,y,op=">=")
+
+class Lss(Comparison):
+    def __init__(self, x, y):
+        Comparison.__init__(self,x,y,op="<")
+
+class Lse(Comparison):
+    def __init__(self, x, y):
+        Comparison.__init__(self,x,y,op="<=")
+
+class Neq(Comparison):
+    def __init__(self, x, y):
+        Comparison.__init__(self,x,y,op="!=")
+
+class Indexed:
+    def __init__(self,left,idx):
+        self.left, self.idx = left, idx
+    def __str__(self): return f"Idxd({self.left},{self.idx})"
+    def toLLVM(self, builder, left=False):
+        ptr = builder.load(self.left.toLLVM(builder,left)[0])
+        exp = self.idx.toLLVM(builder)
+        if left: return builder.gep(ptr, [exp[0]]), exp[1]
         val = builder.load(builder.gep(ptr, [exp[0]]))
         return val, exp[1]
+
+class Index:
+    def __init__(self, idx): self.idx = idx
+    def __str__(self): return f"Idx({self.idx})"
+    def toLLVM(self, builder):
+        return self.idx.toLLVM(builder)
 
 class Block:
     def __init__(self, *args):
@@ -179,26 +203,17 @@ class DeclareAssign:
         builder.name2var[self.name.value] = (var, self.type)
 
 class ReAssign:
-    def __init__(self, name, expr):
-        self.name, self.expr = name, expr
+    def __init__(self, lexpr, rexpr):
+        self.lexpr, self.rexpr = lexpr, rexpr
     def __str__(self):
-        return f"RAss({self.name},{self.expr})"
+        return f"RAss({self.lexpr},{self.rexpr})"
     def toLLVM(self, builder):
-        assert self.name.value in builder.name2var, f"{self.name.value} not declared."
-        a = builder.store(self.expr.toLLVM(builder)[0], builder.name2var[self.name.value][0])
+        rexpr = self.rexpr.toLLVM(builder)[0]
+        print(self)
+        lexpr = self.lexpr.toLLVM(builder, left=True)[0]
+        print(lexpr, lex
 
-class ReAssignArr:
-    def __init__(self, name, index, expr):
-        self.name, self.index, self.expr = name, index, expr
-    def __str__(self):
-        return f"RAssArr({self.name},{self.index},{self.expr})"
-    def toLLVM(self, builder):
-        assert self.name.value in builder.name2var, f"{self.name.value} not declared."
-        expr  = self.expr.toLLVM(builder)
-        index = self.index.toLLVM(builder)
-        prt = builder.load(builder.name2var[self.name.value][0])
-        ptr = builder.gep(prt, [index[0]])
-        builder.store(expr[0], ptr)
+        a = builder.store(rexpr, lexpr)
 
 class Cast:
     def __init__(self, type, expr):
@@ -285,8 +300,9 @@ class Name:
     def __ne__(self, other):
         if not isinstance(other, Name): return True
         return other.value != self.value
-    def toLLVM(self, builder):
+    def toLLVM(self, builder, left=False):
         assert self.value in builder.name2var, f"name=\"{self.value}\" not found in current scope."
+        if left: return builder.name2var[self.value]
         return builder.load(builder.name2var[self.value][0]), builder.name2var[self.value][1]
 
 class SlangTransformer(Transformer):
@@ -313,8 +329,8 @@ class SlangTransformer(Transformer):
         return ReAssign(node[0], node[2])
     
     def s_nodecl_assign_arr(self, node):
-        return ReAssignArr(node[0], node[2], node[5])
-    
+        return ReAssignArr(node[0], [n for n in node[1].children if n], node[3])
+
     def s_ifthen(self, node):
         return IfThen(node[1], node[3])
 
@@ -330,9 +346,13 @@ class SlangTransformer(Transformer):
     def s_div(self, node): return Div(node[0], node[2])
     def s_mod(self, node): return Mod(node[0], node[2])
     def s_eql(self, node): return Eqs(node[0], node[2])
+    def s_gtr(self, node): return Gtr(node[0], node[2])
+    def s_gte(self, node): return Gte(node[0], node[2])
+    def s_lss(self, node): return Lss(node[0], node[2])
+    def s_lse(self, node): return Lse(node[0], node[2])
     def s_neq(self, node): return Neq(node[0], node[2])
     def s_neg(self, node): return Neg(node[1])
-    def s_fcl(self, node): return FunctionCall(node[0], *[n for n in node[2].children if n != Name(",")])
+    def s_fcl(self, node): return FunctionCall(node[0], *[n for n in node[2].children if not isinstance(n,Token)])
 
     def s_skip(self, _):
         return Skip();
@@ -362,7 +382,10 @@ class SlangTransformer(Transformer):
         return node[0].as_pointer()
 
     def s_idx(self, node):
-        return Indexed(node[0], node[2])
+        return Indexed(node[0], node[1])
+
+    def s_sqt(self, node):
+        return Index(node[1])
     
     def s_cst(self, node):
         return Cast(node[1], node[3])
@@ -370,9 +393,9 @@ class SlangTransformer(Transformer):
 import rich
 
 def parsed(programstr):
-    #rich.print(programstr)
+    rich.print(programstr)
     res = lang.parse(programstr)
-    #rich.print(res)
+    rich.print(res)
     return res
 
 def transformed(programstr):
@@ -383,6 +406,7 @@ def assembled(programstr):
 
 def run(programstr):
     program = transformed(programstr) 
+    rich.print(program)
 
     module = program.toLLVM()
     
