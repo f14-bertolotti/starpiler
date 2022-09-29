@@ -20,14 +20,20 @@ class Type:
     def LLVMType(self): pass
     def __eq__(self, other): return str(self) == str(other) 
     def __neq__(self, other):return str(self) != str(other)
-class Stack(Type): pass
-class Int8(Stack): 
+    def __hash__(self): return hash(self.__class__)
+class Void(Type):
+    def LLVMType(self): return ir.VoidType()
+    def __str__(self): return "Void"
+class Int8(Type): 
     def LLVMType(self): return ir.IntType(8)
     def __str__(self): return "Int8"
-class Int64(Stack): 
+class Int32(Type):
+    def LLVMType(self): return ir.IntType(32)
+    def __str__(self): return "Int32"
+class Int64(Type): 
     def LLVMType(self): return ir.IntType(64)
     def __str__(self): return "Int64"
-class Double(Stack): 
+class Double(Type): 
     def LLVMType(self): return ir.DoubleType()
     def __str__(self): return "Double"
 class Pointer(Type):
@@ -66,49 +72,58 @@ class Module:
         module = ir.Module(name="MainModule")
 
         functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
-        ir.Function(module, functionType, name="malloc")
+        function = ir.Function(module, functionType, name="malloc")
+        function.returnType = Pointer(Int8())
         
         functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
-        ir.Function(module, functionType, name="free")
+        function = ir.Function(module, functionType, name="free")
+        function.returnType = Void()
+
+        functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
+        function = ir.Function(module, functionType, name="printf")
+        function.returnType = Int32()
 
         funcs = [(func, func.toLLVM(module)) for func in self.functions]
         for func in funcs: 
             block = func[1].append_basic_block(name="entry")
             builder = ir.IRBuilder(block)
             builder.name2var = {param.name.value:(builder.alloca(param.type.LLVMType()), param.type) for param in func[0].parameters}
-            for arg in func[1].args:
-                builder.store(arg, builder.name2var[arg.strname][0])
+            for arg in func[1].args: builder.store(arg, builder.name2var[arg.strname][0])
             func[0].block.toLLVM(builder)
         return module
 
 class Function:
-    def __init__(self, returntype, name, parameters, block):
-        self.returntype = returntype
+    def __init__(self, returnType, name, parameters, block):
+        self.returnType = returnType
         self.parameters = parameters
         self.block = block
         self.name = name
     def __str__(self):
-        return f"Function({self.returntype},{self.name},{self.parameters},{self.block})"
+        return f"Function({self.returnType},{self.name},{self.parameters},{self.block})"
     def toLLVM(self, module):
-        functionType = ir.FunctionType(self.returntype.LLVMType(), [param.type.LLVMType() for param in self.parameters])
+        functionType = ir.FunctionType(self.returnType.LLVMType(), [param.type.LLVMType() for param in self.parameters])
         function = ir.Function(module, functionType, name=self.name.value)
+        function.returnType = self.returnType
         for param, arg in zip(self.parameters, function.args): arg.strname = param.name.value
         return function
 
-class FunctionCall:
+class Expression:
+    @abc.abstractmethod
+    def getType(self, builder): pass 
+
+class FunctionCall(Expression):
     def __init__(self, name, *args):
         self.name = name
         self.arguments = args
     def __str__(self):
         argsstr = ",".join([str(arg) for arg in self.arguments])
         return f"Call({self.name},{argsstr})"
+    def getType(self, builder):
+        func = [f for f in builder.module.functions if f.name == self.name.value][-1]
+        return func.returnType
     def toLLVM(self, builder):
         func = [f for f in builder.module.functions if f.name == self.name.value][-1]
         return builder.call(func, [arg.toLLVM(builder) for arg in self.arguments])
-
-class Expression:
-    @abc.abstractmethod
-    def getType(self, builder): pass 
 
 class Operation(Expression):
     @abc.abstractmethod
@@ -226,11 +241,15 @@ class Cast(Expression):
     def getType(self, _):
         return self.type.LLVMType()
     def toLLVM(self, builder):
-        expr = self.expr.toLLVM(builder)
-        if isinstance(expr.type, ir.PointerType): 
-            return builder.bitcast(expr, self.type.LLVMType())
-        assert self.expr.getType(builder) == Int64(), "only int64 cast to int64* is allowed"
-        return builder.inttoptr(expr, self.type.LLVMType())
+        expr, etype = self.expr.toLLVM(builder), self.expr.getType(builder)
+        if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.LLVMType())
+        if isinstance(etype, Pointer) and not isinstance(self.type, Pointer): return builder.ptrtoint(expr, self.type.LLVMType())
+        if not isinstance(etype, Pointer) and isinstance(self.type, Pointer): return builder.inttoptr(expr, self.type.LLVMType())
+        if etype == Int64() and self.type in {Int32(), Int8()}  : return builder.trunc(expr, self.type.LLVMType())
+        if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.LLVMType())
+        if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.LLVMType())
+        if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.LLVMType())
+
 
 class ValIndex: 
     def __init__(self, index): self.index = index
@@ -554,7 +573,7 @@ def run(programstr):
     engine.run_static_constructors()
     
     func_ptr = engine.get_function_address("start")
-    rtype = [func.returntype for func in program.functions if func.name.value == "start"][-1]
+    rtype = [func.returnType for func in program.functions if func.name.value == "start"][-1]
     if rtype == Double(): cfunc = CFUNCTYPE(c_double)(func_ptr)
     if rtype == Int64(): cfunc = CFUNCTYPE(c_int64)(func_ptr)
     res = cfunc()
