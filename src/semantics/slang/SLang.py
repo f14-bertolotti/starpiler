@@ -32,10 +32,14 @@ class Int32(Type):
     def __str__(self): return "Int32"
 class Int64(Type): 
     def LLVMType(self): return ir.IntType(64)
-    def __str__(self): return "Int64"
+    def __str__(self): return "Int64"  
 class Double(Type): 
     def LLVMType(self): return ir.DoubleType()
     def __str__(self): return "Double"
+class Array(Type):
+    def __init__(self, base, length): self.base, self.length = base, length
+    def LLVMType(self): return ir.ArrayType(self.base.LLVMType(), self.length)
+    def __Str__(self): return f"Array({self.base},{self.length})"
 class Pointer(Type):
     def __init__(self, base): self.base = base
     def __str__(self): return f"{self.base}*"
@@ -43,7 +47,6 @@ class Pointer(Type):
 
 const64_0 = ir.Constant(ir.IntType(64), 0)
 const64_1 = ir.Constant(ir.IntType(64), 1)
-
 
 class Parameter:
     def __init__(self, type, name):
@@ -275,7 +278,6 @@ class Index(Expression):
         for idx in self.indexes: val = idx.toLLVM(builder, val)
         return val
     
-
 class Integer(Expression):
     def __init__(self, value):
         self.value = ir.Constant(ir.IntType(64), value)
@@ -290,6 +292,21 @@ class Rational(Expression):
     def __str__(self): return f"Rational({self.value})"
     def getType(self,_): return Double()
     def toLLVM(self,_): return self.value
+
+class String(Expression):
+    def __init__(self, value): 
+        self.value = value[1:-1] + "\0" 
+        self.type = ir.ArrayType(ir.IntType(8), len(self.value))
+    def __str__(self): return f"Rational({self.value})"
+    def getType(self,_): return Pointer(Int8()) 
+    def toLLVM(self,builder):
+        gvar = ir.GlobalVariable(builder.module, self.type, builder.module.get_unique_name())
+        gvar.global_constant = True
+        gvar.linkage = "internal"
+        gvar.unnamed_addr = True
+        gvar.align = 1
+        gvar.initializer = self.type(bytearray(self.value.encode("utf8")))
+        return gvar.gep([const64_0, const64_0])
 
 class Name(Expression):
     def __init__(self, value): self.value = value
@@ -515,6 +532,9 @@ class SlangTransformer(Transformer):
     def s_integer(self, node):
         return Integer(node[0].value)
 
+    def s_string(self, node):
+        return String(node[0].value)
+
     def s_rational(self, node):
         return Rational(node[0].value)
 
@@ -554,6 +574,7 @@ def run(programstr):
     #rich.print(program)
 
     module = program.toLLVM()
+    #print(module)
     
     binding.initialize()
     binding.initialize_native_target()

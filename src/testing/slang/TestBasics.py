@@ -386,7 +386,7 @@ class TestBasics(unittest.TestCase):
         """ 
         self.assertEqual(run(program),1)
 
-    def test_printf(self):
+    def test_printf1(self):
         program = """
         def int64 start() does
             int8* f = malloc(3) as int8*;
@@ -402,6 +402,17 @@ class TestBasics(unittest.TestCase):
         ;
         """
         self.assertEqual(run(program), 0)
+
+    def test_printf2(self):
+        program = """
+        def int64 start() does
+            printf(\"%s\",\"\");
+            return 0;
+        ;
+        """
+        self.assertEqual(run(program), 0)
+
+
 
 if __name__ == "__main__":
     unittest.main()
