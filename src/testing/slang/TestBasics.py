@@ -412,6 +412,23 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 0)
 
+    def test_array1(self):
+        program = """
+        def int64 start() does
+            int64* x = [1,2,3,4];
+            int64** y = [[1,2,3], [1,2]];
+            return x[0] == 1 * 
+                   x[1] == 2 *
+                   x[2] == 3 *
+                   x[3] == 4 *
+                   y[0][0] == 1 *
+                   y[0][1] == 2 *
+                   y[0][2] == 3 *
+                   y[1][0] == 1 *
+                   y[1][1] == 2;
+        ;
+        """
+        self.assertEqual(run(program), 1)
 
 
 if __name__ == "__main__":

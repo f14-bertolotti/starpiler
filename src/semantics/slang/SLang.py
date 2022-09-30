@@ -308,6 +308,24 @@ class String(Expression):
         gvar.initializer = self.type(bytearray(self.value.encode("utf8")))
         return gvar.gep([const64_0, const64_0])
 
+class Array(Expression):
+    def __init__(self, values):
+        self.values = values
+    def __str__(self): 
+        arrayString = ",".join([str(val) for val in self.values])
+        return f"Array({arrayString})"
+    def getType(self, builder): return Pointer(self.values[0].getType(builder))
+    def toLLVM(self, builder):
+        type = ir.ArrayType(self.values[0].getType(builder).LLVMType(), len(self.values))
+        gvar = ir.GlobalVariable(builder.module, type, builder.module.get_unique_name())
+        gvar.global_constant = True
+        gvar.linkage = "internal"
+        gvar.unnamed_addr = True
+        gvar.align = 1
+        gvar.initializer = type([val.toLLVM(builder) for val in self.values])
+        return gvar.gep([const64_0, const64_0])
+
+
 class Name(Expression):
     def __init__(self, value): self.value = value
     def __str__(self): return f"Name({self.value})"
@@ -553,6 +571,9 @@ class SlangTransformer(Transformer):
     def s_idx(self, node):
         return Index(node[0], node[1:])
 
+    def s_array(self, node):
+        arrayValues = [child for child in node if isinstance(child, Expression)]
+        return Array(arrayValues)
 
 
 import rich
