@@ -2,36 +2,56 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.slang import rational, integer, identifier, string
-from src.syntax.slang import ntype
+from src.syntax.slang import native, rational, integer, identifier, string
 
-expr = P(name = "s_expr", mod="?")
-add = P(name = "s_add", rules=[R(expr, T("+"), expr)]) 
-sub = P(name = "s_sub", rules=[R(expr, T("-"), expr)])
-mul = P(name = "s_mul", rules=[R(expr, T("*"), expr)]) 
-div = P(name = "s_div", rules=[R(expr, T("/"), expr)])
-mod = P(name = "s_mod", rules=[R(expr, T("%"), expr)])
-neg = P(name = "s_neg", rules=[R(T("-"), expr)])
-eql = P(name = "s_eql", rules=[R(expr, T("=="), expr)])
-gtr = P(name = "s_gtr", rules=[R(expr, T(">") , expr)])
-gte = P(name = "s_gte", rules=[R(expr, T(">="), expr)])
-lss = P(name = "s_lss", rules=[R(expr, T("<") , expr)])
-lse = P(name = "s_lse", rules=[R(expr, T("<="), expr)])
-neq = P(name = "s_neq", rules=[R(expr, T("!="), expr)])
-cld = P(name = "s_cld", rules=[R(T("("), expr, T(")"))])
-ref = P(name = "s_ref", rules=[R(T("&"), identifier)])
+expression = P(name = "slang_expression", mod="?")
 
-sqt = P(name = "s_sqt", rules=[R(T("["), expr, T("]"))])
-rqt = P(name = "s_rqt", rules=[R(T("&["), expr, T("]"))])
-cqt = P(name = "s_cqt", rules=[sqt, rqt], mod="?")
+addition       = P(name = "slang_addition"       , rules=[R(expression, T("+"), expression)])
+subtraction    = P(name = "slang_subtraction"    , rules=[R(expression, T("-"), expression)])
+multiplication = P(name = "slang_multiplication" , rules=[R(expression, T("*"), expression)])
+division       = P(name = "slang_division"       , rules=[R(expression, T("/"), expression)])
+modulo         = P(name = "slang_modulo"         , rules=[R(expression, T("%"), expression)])
+negative       = P(name = "slang_negative"       , rules=[R(T("-"), expression)])
+equality       = P(name = "slang_equality"       , rules=[R(expression, T("=="), expression)])
+greater        = P(name = "slang_greater"        , rules=[R(expression, T(">") , expression)])
+greaterEqual   = P(name = "slang_greater_equal"  , rules=[R(expression, T(">="), expression)])
+less           = P(name = "slang_less"           , rules=[R(expression, T("<") , expression)])
+lessEqual      = P(name = "slang_less_equal"     , rules=[R(expression, T("<="), expression)])
+notEqual       = P(name = "slang_not_equal"      , rules=[R(expression, T("!="), expression)])
+reference      = P(name = "slang_reference"      , rules=[R(T("&"), identifier)])
 
-idx = P(name = "s_idx", rules=[R(identifier, R(cqt, mod="+"))])
+roundParenthesized           = P(name = "slang_round_parenthesized"           , rules=[R(T("("), expression, T(")"))])
+squareParenthesized          = P(name = "slang_square_parenthesized"           , rules=[R(T("["), expression, T("]"))])
+referenceSquareParenthesized = P(name = "slang_reference_square_parenthesized" , rules=[R(T("&["), expression, T("]"))])
+parenthesized                = P(name = "slang_parenthesized"                , rules=[squareParenthesized, referenceSquareParenthesized], mod="?")
+indexed                      = P(name = "slang_indexed"                      , rules=[R(identifier, R(parenthesized, mod="+"))])
 
-esq = P(name = "s_esq", rules=[expr, R(expr, R(T(","), expr, mod="*"))])
-fcl = P(name = "s_fcl", rules=[R(identifier, T("("), esq, T(")"))])
-cst = P(name = "s_cst", rules=[R(expr, T("as"), ntype)])
+expressionSequence = P(name = "slang_expression_sequence" , rules=[expression, R(expression, R(T(","), expression, mod="*"))])
+functionCall       = P(name = "slang_function_call"       , rules=[R(identifier, T("("), expressionSequence, T(")"))])
+cast               = P(name = "slang_cast"               , rules=[R(expression, T("as"), native)])
 
-array = P(name = "s_array", rules = [R(T("["), T("]")), R(T("["), expr, R(T(","), expr, mod="*"), T("]"))])
+array = P(name = "slang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])
 
-expr.append(add, sub, mul, div, mod, neq, eql, gtr, gte, lss, lse, neg, rational, integer, identifier, string, array, cld, fcl, cst, ref, idx)
+expression.append(addition, 
+                  subtraction, 
+                  multiplication, 
+                  division, 
+                  modulo, 
+                  notEqual, 
+                  equality, 
+                  greater, 
+                  greaterEqual, 
+                  less, 
+                  lessEqual, 
+                  negative, 
+                  rational, 
+                  integer, 
+                  identifier, 
+                  string, 
+                  array, 
+                  roundParenthesized, 
+                  functionCall, 
+                  cast, 
+                  reference, 
+                  indexed)
 

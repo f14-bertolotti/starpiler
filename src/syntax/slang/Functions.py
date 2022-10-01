@@ -2,10 +2,9 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.slang import ntype, identifier, block
+from src.syntax.slang import native, identifier, block
 
-parameter = P(name = "s_param", rules = [R(ntype, identifier)])
-parameters = P(name = "s_param_seq", rules=[R(T("("), R(parameter, T(","), mod="*"), parameter, T(")")), 
-                                            R(T("("), T(")"))])
-function = P(name = "s_func", rules = [R(T("def"), ntype, identifier, parameters, T("does"), block, T(";"))])
+parameter         = P(name = "slang_parameter"         , rules = [R(native, identifier)])
+parameterSequence = P(name = "slang_parameter_sequence" , rules = [R(T("("), parameter, R(T(","), parameter, mod="*"), T(")")), R(T("("), T(")"))])
+function          = P(name = "slang_function"          , rules = [R(T("def"), native, identifier, parameterSequence, T("does"), block, T(";"))])
 

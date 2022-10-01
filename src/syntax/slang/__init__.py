@@ -1,6 +1,6 @@
-from src.syntax.slang.Literals import identifier, natural, integer, decimal, rational, string
-from src.syntax.slang.NativeTypes import int64, float64, ntype
-from src.syntax.slang.Expressions import expr
-from src.syntax.slang.Statements import statement, block
-from src.syntax.slang.Functions import function, parameter
-from src.syntax.slang.SLang import lang
+from src.syntax.slang.Literals    import *
+from src.syntax.slang.NativeTypes import *
+from src.syntax.slang.Expressions import *
+from src.syntax.slang.Statements  import *
+from src.syntax.slang.Functions   import *
+from src.syntax.slang.SLang       import lang

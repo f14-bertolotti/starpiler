@@ -2,17 +2,16 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.slang import expr, ntype, identifier
+from src.syntax.slang import expression, native
 
-statement = P(name="s_statement", mod="?")
-block = P(name="s_block", rules = [R(statement, mod="*")])
-skip = P(name="s_skip", rules=[R(T("skip"), T(";"))])
-returnstmt = P(name="s_return", rules=[R(T("return"), expr, T(";"))])
-declare_assign = P(name="s_decl_assign", rules=[R(ntype, expr, T("="), expr, T(";"))])
-nodeclr_assign = P(name="s_nodecl_assign", rules=[R(expr, T("="), expr, T(";"))])
-assignement = P(name="s_assign", rules=[declare_assign, nodeclr_assign], mod="?")
-whileloop = P(name="s_while", rules=[R(T("while"), expr, T("do"), block, T(";"))])
-ifthen = P(name="s_ifthen", rules=[R(T("if"), expr, T("do"), block, T(";"))])
-statement.append(ifthen, whileloop, assignement, returnstmt, skip, R(expr, T(";")))
+statement              = P(name="slang_statement"             , mod="?")
+block                  = P(name="slang_block"                 , rules = [R(statement, mod="*")])
+skip                   = P(name="slang_skip"                  , rules = [R(T("skip"), T(";"))])
+returnstmt             = P(name="slang_return"                , rules = [R(T("return"), expression, T(";"))])
+declarationAssignement = P(name="slang_declaration_assignment" , rules = [R(native, expression, T("="), expression, T(";"))])
+assignement            = P(name="slang_assignement"           , rules = [R(expression, T("="), expression, T(";"))])
+whileloop              = P(name="slang_while"                 , rules = [R(T("while"), expression, T("do"), block, T(";"))])
+ifthen                 = P(name="slang_ifthen"                , rules = [R(T("if"), expression, T("do"), block, T(";"))])
+statement.append(ifthen, whileloop, declarationAssignement, assignement, returnstmt, skip, R(expression, T(";")))
 
 

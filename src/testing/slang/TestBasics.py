@@ -48,7 +48,7 @@ class TestBasics(unittest.TestCase):
 
     def test_floatDivision(self):
         program = """
-        def float64 start() does
+        def double start() does
             return 100.0 / 10.0;
         ;
         """
@@ -56,7 +56,7 @@ class TestBasics(unittest.TestCase):
 
     def test_floatMultiplication(self):
         program = """
-        def float64 start() does
+        def double start() does
             return 10.0 * 10.0;
         ;
         """
@@ -72,7 +72,7 @@ class TestBasics(unittest.TestCase):
 
     def test_floatNegation(self):
         program = """
-        def float64 start() does
+        def double start() does
             return -10.0;
         ;
         """
@@ -88,7 +88,7 @@ class TestBasics(unittest.TestCase):
 
     def test_floatModulo(self):
         program = """
-        def float64 start() does
+        def double start() does
             return 10.0 % 4.0;
         ;
         """
@@ -160,7 +160,7 @@ class TestBasics(unittest.TestCase):
 
     def test_expression1F(self):
         program = """
-        def float64 start() does
+        def double start() does
             return -10.0 * 10.0 + 10.0;
         ;
         """
@@ -176,7 +176,7 @@ class TestBasics(unittest.TestCase):
 
     def test_expression2F(self):
         program = """
-        def float64 start() does
+        def double start() does
             return -10.0 * 10.0 + 10.0 * 10.0;
         ;
         """
@@ -192,7 +192,7 @@ class TestBasics(unittest.TestCase):
 
     def test_expression3F(self):
         program = """
-        def float64 start() does
+        def double start() does
             return -10.0 * 10.0 / 2.0 + 10.0 * 10.0;
         ;
         """
