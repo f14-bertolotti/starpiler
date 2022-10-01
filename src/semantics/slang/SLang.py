@@ -29,10 +29,10 @@ class ParameterSequence:
         return f"ParameterSequence({paramsstr})"
 
 class Module:
-    def __init__(self, functions):
-        self.functions = functions 
+    def __init__(self, globals):
+        self.globals = globals
     def __str__(self):
-        funcstr = ",".join([str(func) for func in self.functions])
+        string = ",".join([str(gbl) for gbl in self.globals])
         return f"Module({funcstr})"
     def toLLVM(self):
         module = ir.Module(name="MainModule")
@@ -53,29 +53,53 @@ class Module:
         function = ir.Function(module, functionType, name="memcpy")
         function.returnType = Void()
 
-        funcs = [(func, func.toLLVM(module)) for func in self.functions]
-        for func in funcs: 
-            block = func[1].append_basic_block(name="entry")
-            builder = ir.IRBuilder(block)
-            builder.name2var = {param.name.value:(builder.alloca(param.type.asLLVM()), param.type) for param in func[0].parameters}
-            for arg in func[1].args: builder.store(arg, builder.name2var[arg.strname][0])
-            func[0].block.toLLVM(builder)
+        global2var = dict()
+        for gbl in self.globals:
+            if gbl.name.value in global2var: raise ValueError(f"global name already defined {gbl.name.value}")
+            var = gbl.LLVMDeclaration(module)
+            global2var[gbl.name.value] = (var, gbl.type)
+
+        module.global2var = global2var
+        for gbl in self.globals: gbl.toLLVM(module)
+                
+
+        startFunction = module.global2var["start"][0]
+        builder = ir.IRBuilder()
+        builder.position_at_start(startFunction.entry_basic_block)
+        initializers = [f for f in module.functions if f.name.startswith("0initilizer")]
+        for initializer in initializers: 
+            value = builder.call(initializer, [])
+            builder.store(value, initializer.reference) 
+
         return module
 
+
 class Function:
-    def __init__(self, returnType, name, parameters, block):
-        self.returnType = returnType
+    def __init__(self, type, name, parameters, block):
+        self.type = type
         self.parameters = parameters
         self.block = block
         self.name = name
     def __str__(self):
-        return f"Function({self.returnType},{self.name},{self.parameters},{self.block})"
-    def toLLVM(self, module):
-        functionType = ir.FunctionType(self.returnType.asLLVM(), [param.type.asLLVM() for param in self.parameters])
+        return f"Function({self.type},{self.name},{self.parameters},{self.block})"
+    
+    def LLVMDeclaration(self, module):
+        functionType = ir.FunctionType(self.type.toLLVM(), [param.type.toLLVM() for param in self.parameters])
         function = ir.Function(module, functionType, name=self.name.value)
-        function.returnType = self.returnType
-        for param, arg in zip(self.parameters, function.args): arg.strname = param.name.value
+        self.function = function
         return function
+
+    def allocaAndStore(self, builder, argument): 
+        ptr = builder.alloca(argument.type)
+        builder.store(argument, ptr)
+        return ptr
+
+    def toLLVM(self, module):
+        block = self.function.append_basic_block()
+        builder = ir.IRBuilder(block)
+        param2var = {p.name.value:(self.allocaAndStore(builder, a),p.type) for p,a in zip(self.parameters, self.function.args)}
+        builder.name2var = {**module.global2var, **param2var}
+        self.block.toLLVM(builder)
 
 class Block:
     def __init__(self, *args):
@@ -87,8 +111,34 @@ class Block:
         for stmt in self.statements: 
             stmt.toLLVM(builder)
 
+class GlobalAssignement:
+    def __init__(self, type, name, expr):
+        self.type, self.name, self.expr = type, name, expr
+    def __str__(self): 
+        return f"GlobalAssignement({self.type},{self.name},{self.expr})"
+    def LLVMDeclaration(self, module):
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.name.value)
+        gvar.linkage = "internal"
+        self.reference = gvar
+        return gvar
+ 
+    def toLLVM(self, module):
+        # function initializer
+        functionType = ir.FunctionType(self.type.toLLVM(), [])
+        function = ir.Function(module, functionType, name=f"0initilizer.{self.name.value}")
+        function.reference = self.reference.gep([ir.Constant(ir.IntType(64), 0)])
+
+        block = function.append_basic_block("entry")
+        builder = ir.IRBuilder(block)
+        builder.name2var = module.global2var
+        builder.ret(self.expr.toLLVM(builder))
+
+        return self.reference
+
+
 
 class SlangTransformer(Transformer):
+
 
     # MODULEWISE DECLARATION
     def start                    (self, node): return Module(node)
@@ -96,6 +146,7 @@ class SlangTransformer(Transformer):
     def slang_parameter          (self, node): return Parameter(node[0], node[1])
     def slang_parameter_sequence (self, node): return ParameterSequence(*[param for param in node if isinstance(param,Parameter)])
     def slang_block              (self, node): return Block(*node)
+    def slang_global_assignement (self, node): return GlobalAssignement(node[1].type, node[1].name, node[1].expr)
 
     # STATEMENTS
     def slang_return                 (self, node): return Return(node[1])
@@ -176,7 +227,7 @@ def run(programstr):
     engine.run_static_constructors()
     
     func_ptr = engine.get_function_address("start")
-    rtype = [func.returnType for func in program.functions if func.name.value == "start"][-1]
+    rtype = [func.type for func in program.globals if func.name.value == "start"][-1]
     if rtype == Double(): cfunc = CFUNCTYPE(c_double)(func_ptr)
     if rtype == Int64(): cfunc = CFUNCTYPE(c_int64)(func_ptr)
     res = cfunc()

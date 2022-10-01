@@ -9,7 +9,7 @@ class DeclareAssign:
         return f"Ass({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
         expr = self.expr.toLLVM(builder)
-        var = builder.alloca(self.type.asLLVM())
+        var = builder.alloca(self.type.toLLVM())
 
         builder.store(expr, var)
         builder.name2var[self.name.value] = (var, self.type)

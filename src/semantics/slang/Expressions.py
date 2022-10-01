@@ -136,16 +136,16 @@ class Cast(Expression):
     def __str__(self):
         return f"Cast({self.type},{self.expr})"
     def getType(self, _):
-        return self.type.asLLVM()
+        return self.type.toLLVM()
     def toLLVM(self, builder):
         expr, etype = self.expr.toLLVM(builder), self.expr.getType(builder)
-        if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.asLLVM())
-        if isinstance(etype, Pointer) and not isinstance(self.type, Pointer): return builder.ptrtoint(expr, self.type.asLLVM())
-        if not isinstance(etype, Pointer) and isinstance(self.type, Pointer): return builder.inttoptr(expr, self.type.asLLVM())
-        if etype == Int64() and self.type in {Int32(), Int8()}  : return builder.trunc(expr, self.type.asLLVM())
-        if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.asLLVM())
-        if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.asLLVM())
-        if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.asLLVM())
+        if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.toLLVM())
+        if isinstance(etype, Pointer) and not isinstance(self.type, Pointer): return builder.ptrtoint(expr, self.type.toLLVM())
+        if not isinstance(etype, Pointer) and isinstance(self.type, Pointer): return builder.inttoptr(expr, self.type.toLLVM())
+        if etype == Int64() and self.type in {Int32(), Int8()}  : return builder.trunc(expr, self.type.toLLVM())
+        if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.toLLVM())
+        if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.toLLVM())
+        if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.toLLVM())
 
 
 class ValIndex: 
@@ -211,7 +211,7 @@ class Array(Expression):
         return f"Array({arrayString})"
     def getType(self, builder): return Pointer(self.values[0].getType(builder))
     def toLLVM(self, builder):
-        ptr = builder.alloca(self.getType(builder).base.asLLVM(), len(self.values))
+        ptr = builder.alloca(self.getType(builder).base.toLLVM(), len(self.values))
         for i,val in enumerate(self.values): 
             builder.store(val.toLLVM(builder), builder.gep(ptr, [ir.Constant(ir.IntType(64),i)]))
         return ptr
