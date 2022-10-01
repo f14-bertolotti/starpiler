@@ -8,6 +8,4 @@ integer    = P(name = "s_integer"    , rules = [R(T("[+-]?"+natural.rules[0].rul
 rational   = P(name = "s_rational"   , rules = [R(T("[+-]?"+decimal.rules[0].rule[0].value, regex=True))])
 identifier = P(name = "s_identifier" , rules = [R(T("(?!return|if|while)[a-zA-Z]\w*", regex=True))]) 
 string     = P(name = "s_string"     , rules = [R(T("\"(?:[^\"\\\]|\\.)*\"", regex=True))])
-arrayValue = P(name = "s_array_value", rules = [integer, rational, string], mod="?")
-array      = P(name = "s_array"      , rules = [R(T("["), T("]")), R(T("["), arrayValue, R(T(","), arrayValue, mod="*"), T("]"))])
-arrayValue.append(array)
+

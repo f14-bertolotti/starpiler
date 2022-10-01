@@ -416,7 +416,7 @@ class TestBasics(unittest.TestCase):
         program = """
         def int64 start() does
             int64* x = [1,2,3,4];
-            int64** y = [[1,2,3], [1,2]];
+            int64** y = [[1,2,3],[1,2]];
             return x[0] == 1 * 
                    x[1] == 2 *
                    x[2] == 3 *
@@ -429,6 +429,39 @@ class TestBasics(unittest.TestCase):
         ;
         """
         self.assertEqual(run(program), 1)
+
+    def test_array2(self):
+        program = """
+        def int64 start() does
+            int64* x = [1,2];
+            int64** y = [x,x];
+            return x[0] == 1 * 
+                   x[1] == 2 *
+                   y[0][0] == 1 *
+                   y[0][1] == 2 *
+                   y[1][0] == 1 *
+                   y[1][1] == 2;
+        ;
+        """
+        self.assertEqual(run(program), 1)
+
+    def test_array3(self):
+        program = """
+        def int64 start() does
+            int64* x = [1,2,3,4,5];
+            int64* y = malloc(8 * 5) as int64*;
+            memcpy(y as int8*, x as int8*, (8 * 5) as int32);
+            int64 result = y[0] == 1 * 
+                           y[1] == 2 *
+                           y[2] == 3 *
+                           y[3] == 4 *
+                           y[4] == 5;
+            free(y as int8*);
+            return result;
+        ;
+        """
+        self.assertEqual(run(program), 1)
+
 
 
 if __name__ == "__main__":

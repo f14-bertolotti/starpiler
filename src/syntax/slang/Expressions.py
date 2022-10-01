@@ -2,7 +2,7 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.slang import rational, integer, identifier, string, array
+from src.syntax.slang import rational, integer, identifier, string
 from src.syntax.slang import ntype
 
 expr = P(name = "s_expr", mod="?")
@@ -30,5 +30,8 @@ idx = P(name = "s_idx", rules=[R(identifier, R(cqt, mod="+"))])
 esq = P(name = "s_esq", rules=[expr, R(expr, R(T(","), expr, mod="*"))])
 fcl = P(name = "s_fcl", rules=[R(identifier, T("("), esq, T(")"))])
 cst = P(name = "s_cst", rules=[R(expr, T("as"), ntype)])
+
+array = P(name = "s_array", rules = [R(T("["), T("]")), R(T("["), expr, R(T(","), expr, mod="*"), T("]"))])
+
 expr.append(add, sub, mul, div, mod, neq, eql, gtr, gte, lss, lse, neg, rational, integer, identifier, string, array, cld, fcl, cst, ref, idx)
 

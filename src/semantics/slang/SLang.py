@@ -15,35 +15,44 @@ from functools import partial
 
 import abc
 
+def getFunction(module, name):
+    matching = [f for f in module.functions if f.name == name]
+    if len(matching) <= 0: raise ValueError(f"functions {name} not found among {module.functions}")
+    return matching[-1]
+
 class Type: 
     @abc.abstractmethod
     def LLVMType(self): pass
+    @abc.abstractmethod
+    def __len__(self): pass
     def __eq__(self, other): return str(self) == str(other) 
     def __neq__(self, other):return str(self) != str(other)
     def __hash__(self): return hash(self.__class__)
 class Void(Type):
     def LLVMType(self): return ir.VoidType()
     def __str__(self): return "Void"
+    def __len__(self): raise ValueError("Void Type has no size")
 class Int8(Type): 
     def LLVMType(self): return ir.IntType(8)
     def __str__(self): return "Int8"
+    def __len__(self): return 1
 class Int32(Type):
     def LLVMType(self): return ir.IntType(32)
     def __str__(self): return "Int32"
+    def __len__(self): return 2
 class Int64(Type): 
     def LLVMType(self): return ir.IntType(64)
     def __str__(self): return "Int64"  
+    def __len__(self): return 4
 class Double(Type): 
     def LLVMType(self): return ir.DoubleType()
     def __str__(self): return "Double"
-class Array(Type):
-    def __init__(self, base, length): self.base, self.length = base, length
-    def LLVMType(self): return ir.ArrayType(self.base.LLVMType(), self.length)
-    def __Str__(self): return f"Array({self.base},{self.length})"
+    def __len__(self): return 8
 class Pointer(Type):
     def __init__(self, base): self.base = base
     def __str__(self): return f"{self.base}*"
     def LLVMType(self): return ir.PointerType(self.base.LLVMType())
+    def __len__(self): return 4
 
 const64_0 = ir.Constant(ir.IntType(64), 0)
 const64_1 = ir.Constant(ir.IntType(64), 1)
@@ -85,6 +94,11 @@ class Module:
         functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
         function = ir.Function(module, functionType, name="printf")
         function.returnType = Int32()
+
+        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(8).as_pointer(), ir.IntType(8).as_pointer(), ir.IntType(32)])
+        function = ir.Function(module, functionType, name="memcpy")
+        function.returnType = Void()
+
 
         funcs = [(func, func.toLLVM(module)) for func in self.functions]
         for func in funcs: 
@@ -310,21 +324,17 @@ class String(Expression):
 
 class Array(Expression):
     def __init__(self, values):
+        assert len(values) > 0, "Invalid 0 length array"
         self.values = values
     def __str__(self): 
         arrayString = ",".join([str(val) for val in self.values])
         return f"Array({arrayString})"
     def getType(self, builder): return Pointer(self.values[0].getType(builder))
     def toLLVM(self, builder):
-        type = ir.ArrayType(self.values[0].getType(builder).LLVMType(), len(self.values))
-        gvar = ir.GlobalVariable(builder.module, type, builder.module.get_unique_name())
-        gvar.global_constant = True
-        gvar.linkage = "internal"
-        gvar.unnamed_addr = True
-        gvar.align = 1
-        gvar.initializer = type([val.toLLVM(builder) for val in self.values])
-        return gvar.gep([const64_0, const64_0])
-
+        ptr = builder.alloca(self.getType(builder).base.LLVMType(), len(self.values))
+        for i,val in enumerate(self.values): 
+            builder.store(val.toLLVM(builder), builder.gep(ptr, [ir.Constant(ir.IntType(64),i)]))
+        return ptr
 
 class Name(Expression):
     def __init__(self, value): self.value = value
@@ -531,6 +541,9 @@ class SlangTransformer(Transformer):
 
     def s_int64(self, _):
         return Int64()
+    
+    def s_int32(self, _): 
+        return Int32()
 
     def s_int8(self, _):
         return Int8()
@@ -561,6 +574,9 @@ class SlangTransformer(Transformer):
 
     def s_cst(self, node):
         return Cast(node[0], node[2])
+
+    def s_cld(self, node):
+        return node[1]
 
     def s_sqt(self, node):
         return ValIndex(node[1])
