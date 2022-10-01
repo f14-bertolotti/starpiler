@@ -70,7 +70,5 @@ class Return:
     def __str__(self):
         return f"Return({self.expr})"
     def toLLVM(self, builder):
-        res = self.expr.toLLVM(builder)
-        if isinstance(res.type, ir.PointerType): builder.ret(builder.load(res))
-        else: builder.ret(res)
+        builder.ret(self.expr.toLLVM(builder))
 

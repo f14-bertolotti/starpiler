@@ -60,16 +60,12 @@ class Module:
             global2var[gbl.name.value] = (var, gbl.type)
 
         module.global2var = global2var
-        for gbl in self.globals: gbl.toLLVM(module)
-                
 
-        startFunction = module.global2var["start"][0]
-        builder = ir.IRBuilder()
-        builder.position_at_start(startFunction.entry_basic_block)
-        initializers = [f for f in module.functions if f.name.startswith("0initilizer")]
-        for initializer in initializers: 
-            value = builder.call(initializer, [])
-            builder.store(value, initializer.reference) 
+        for gbl in filter(lambda g: isinstance(g, Function), self.globals):
+            gbl.toLLVM(module)
+
+        for gbl in list(filter(lambda g: isinstance(g, GlobalAssignement), self.globals))[::-1]:
+            gbl.toLLVM(module)
 
         return module
 
@@ -123,15 +119,10 @@ class GlobalAssignement:
         return gvar
  
     def toLLVM(self, module):
-        # function initializer
-        functionType = ir.FunctionType(self.type.toLLVM(), [])
-        function = ir.Function(module, functionType, name=f"0initilizer.{self.name.value}")
-        function.reference = self.reference.gep([ir.Constant(ir.IntType(64), 0)])
-
-        block = function.append_basic_block("entry")
-        builder = ir.IRBuilder(block)
+        builder = ir.IRBuilder()
+        builder.position_at_start(module.global2var["start"][0].entry_basic_block)
         builder.name2var = module.global2var
-        builder.ret(self.expr.toLLVM(builder))
+        builder.store(self.expr.toLLVM(builder), self.reference)
 
         return self.reference
 

@@ -136,7 +136,7 @@ class Cast(Expression):
     def __str__(self):
         return f"Cast({self.type},{self.expr})"
     def getType(self, _):
-        return self.type.toLLVM()
+        return self.type
     def toLLVM(self, builder):
         expr, etype = self.expr.toLLVM(builder), self.expr.getType(builder)
         if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.toLLVM())
@@ -227,15 +227,6 @@ class Ref(Expression):
     def __str__(self): return f"Ref({self.expr})"
     def getType(self, builder): return Pointer(self.expr.getType(builder))
     def toLLVM(self, builder): return builder.name2var[self.expr.value][0]
-
-class Load(Expression):
-    def __init__(self, expr): self.expr = expr
-    def __str__(self): return f"Load({self.expr})"
-    def getType(self, builder): return self.expr.getType(builder).base
-    def toLLVM(self, builder): 
-        expr = self.expr.toLLVM(builder)
-        assert isinstance(expr.type, ir.PointerType)
-        return builder.load(expr)
 
 class Eqs(ComparisonOperation):
     def __init__(self, x, y):

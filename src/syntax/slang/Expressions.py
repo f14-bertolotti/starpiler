@@ -24,7 +24,7 @@ roundParenthesized           = P(name = "slang_round_parenthesized"           , 
 squareParenthesized          = P(name = "slang_square_parenthesized"           , rules=[R(T("["), expression, T("]"))])
 referenceSquareParenthesized = P(name = "slang_reference_square_parenthesized" , rules=[R(T("&["), expression, T("]"))])
 parenthesized                = P(name = "slang_parenthesized"                , rules=[squareParenthesized, referenceSquareParenthesized], mod="?")
-indexed                      = P(name = "slang_indexed"                      , rules=[R(identifier, R(parenthesized, mod="+"))])
+indexed                      = P(name = "slang_indexed"                      , rules=[R(expression, R(parenthesized, mod="+"))])
 
 expressionSequence = P(name = "slang_expression_sequence" , rules=[expression, R(expression, R(T(","), expression, mod="*"))])
 functionCall       = P(name = "slang_function_call"       , rules=[R(identifier, T("("), expressionSequence, T(")"))])
