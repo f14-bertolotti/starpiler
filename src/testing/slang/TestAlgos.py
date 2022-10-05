@@ -27,20 +27,20 @@ class TestAlgos(unittest.TestCase):
         ;
 
         def int64 start() does
-            int64* array = malloc(8 * 5) as int64*;
+            int64* array = &malloc(8 * 5) as int64*;
             array&[0] = 4;
             array&[1] = 2;
             array&[2] = 1;
             array&[3] = 0;
             array&[4] = 3;
-            int64 res = sort(array, 5);
+            int64 res = &sort(array, 5);
 
             int64 sorted = array[0] == 0 *
                            array[1] == 1 *
                            array[2] == 2 *
                            array[3] == 3 *
                            array[4] == 4;
-            free(array as int8*);
+            &free(array as int8*);
             return sorted;
         ;
         """
@@ -50,10 +50,10 @@ class TestAlgos(unittest.TestCase):
         program = """
 
         def int64** newmatrix(int64 rows, int64 cols) does
-            int64** matrix = malloc(8 * rows) as int64**;
+            int64** matrix = &malloc(8 * rows) as int64**;
             int64 i = 0;
             while i < 3 do
-                matrix&[i] = malloc(8 * cols) as int64*;
+                matrix&[i] = &malloc(8 * cols) as int64*;
                 &i = i + 1;
             ;
             return matrix;
@@ -73,7 +73,7 @@ class TestAlgos(unittest.TestCase):
         ;
 
         def int64** mmul(int64** m1, int64 r1, int64 c1, int64** m2, int64 r2, int64 c2) does
-            int64** m = newmatrix(r1, c2);
+            int64** m = &newmatrix(r1, c2);
             int64 i = 0;
             while i < r1 do
                 int64 j = 0;
@@ -95,20 +95,20 @@ class TestAlgos(unittest.TestCase):
         def int64 freematrix(int64** matrix, int64 rows, int64 cols) does
             int64 i = 0;
             while i < 3 do
-                free(matrix[i] as int8*);
+                &free(matrix[i] as int8*);
                 &i = i + 1;
             ;
-            free(matrix as int8*);
+            &free(matrix as int8*);
             return 0;
         ;
 
 
         def int64 start() does
-            int64** m1 = newmatrix(3,3);
-            int64** m2 = newmatrix(3,3);
-            int64 res = initAsIdentityMatrix(m1,3,3);
-            int64 res = initAsIdentityMatrix(m2,3,3);
-            int64** m3 = mmul(m1,3,3,m2,3,3);
+            int64** m1 = &newmatrix(3,3);
+            int64** m2 = &newmatrix(3,3);
+            int64 res = &initAsIdentityMatrix(m1,3,3);
+            int64 res = &initAsIdentityMatrix(m2,3,3);
+            int64** m3 = &mmul(m1,3,3,m2,3,3);
             int64 result = m3[0][0] == 1 * 
                            m3[0][1] == 0 *
                            m3[0][2] == 0 *
@@ -118,9 +118,9 @@ class TestAlgos(unittest.TestCase):
                            m3[2][0] == 0 *
                            m3[2][1] == 0 *
                            m3[2][2] == 1;
-            int64 res = freematrix(m1,3,3);
-            int64 res = freematrix(m2,3,3);
-            int64 res = freematrix(m3,3,3);
+            int64 res = &freematrix(m1,3,3);
+            int64 res = &freematrix(m2,3,3);
+            int64 res = &freematrix(m3,3,3);
             return result;
         ;
 
@@ -148,14 +148,14 @@ class TestAlgos(unittest.TestCase):
 
             res&[i] = (node[0] as int64*)[0];
 
-            &i = visit(node[1] as int8**, i + 1);
-            &i = visit(node[2] as int8**, i + 1);
+            &i = &visit(node[1] as int8**, i + 1);
+            &i = &visit(node[2] as int8**, i + 1);
 
             return i;
         ;
 
         def int64 start() does
-            visit(n6,0); 
+            &visit(n6,0); 
             return res[0] == 4  *
                    res[1] == 8  *
                    res[2] == 10 *

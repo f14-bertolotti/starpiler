@@ -14,7 +14,7 @@ class TestBasics(unittest.TestCase):
         ;
         
         def int64 start() does
-            int64 result = increment(10);
+            int64 result = &increment(10);
             return result;
         ;
         """
@@ -337,14 +337,14 @@ class TestBasics(unittest.TestCase):
     def test_pointer1(self):
         program = """
         def int64 start() does
-            int64* x = malloc(8 * 3) as int64*;
+            int64* x = &malloc(8 * 3) as int64*;
             x&[0] = 0;
             x&[1] = 0;
             x&[2] = 0;
             int64 a = x[0];
             int64 b = x[1];
             int64 c = x[2];
-            free(x as int8*);
+            &free(x as int8*);
             return a == b * b == c * c == 0;
         ;
         """
@@ -353,10 +353,10 @@ class TestBasics(unittest.TestCase):
     def test_pointer2(self):
         program = """
         def int64 start() does
-            int64** x = malloc(8 * 3) as int64**;
-            x&[0] = malloc(8 * 3) as int64*;
-            x&[1] = malloc(8 * 3) as int64*;
-            x&[2] = malloc(8 * 3) as int64*;
+            int64** x = &malloc(8 * 3) as int64**;
+            x&[0] = &malloc(8 * 3) as int64*;
+            x&[1] = &malloc(8 * 3) as int64*;
+            x&[2] = &malloc(8 * 3) as int64*;
             x[0]&[0] = 0;
             x[0]&[1] = 1;
             x[0]&[2] = 2;
@@ -376,10 +376,10 @@ class TestBasics(unittest.TestCase):
                            x[2][1] == 7 *
                            x[2][2] == 8;
 
-            free(x[0] as int8*);
-            free(x[1] as int8*);
-            free(x[2] as int8*);
-            free(x as int8*);
+            &free(x[0] as int8*);
+            &free(x[1] as int8*);
+            &free(x[2] as int8*);
+            &free(x as int8*);
 
             return result;
         ;
@@ -389,15 +389,15 @@ class TestBasics(unittest.TestCase):
     def test_printf1(self):
         program = """
         def int64 start() does
-            int8* f = malloc(3) as int8*;
-            int8* s = malloc(1) as int8*;
+            int8* f = &malloc(3) as int8*;
+            int8* s = &malloc(1) as int8*;
             s&[0] = 65 as int8;
             s&[1] = 65 as int8;
             s&[2] = 0 as int8;
             f&[0] = 0 as int8;
-            printf(f,s);
-            free(f);
-            free(s);
+            &printf(f,s);
+            &free(f);
+            &free(s);
             return 0;
         ;
         """
@@ -406,7 +406,7 @@ class TestBasics(unittest.TestCase):
     def test_printf2(self):
         program = """
         def int64 start() does
-            printf(\"%s\",\"\");
+            &printf(\"%s\",\"\");
             return 0;
         ;
         """
@@ -449,14 +449,14 @@ class TestBasics(unittest.TestCase):
         program = """
         def int64 start() does
             int64* x = [1,2,3,4,5];
-            int64* y = malloc(8 * 5) as int64*;
-            memcpy(y as int8*, x as int8*, (8 * 5) as int32);
+            int64* y = &malloc(8 * 5) as int64*;
+            &memcpy(y as int8*, x as int8*, (8 * 5) as int32);
             int64 result = y[0] == 1 * 
                            y[1] == 2 *
                            y[2] == 3 *
                            y[3] == 4 *
                            y[4] == 5;
-            free(y as int8*);
+            &free(y as int8*);
             return result;
         ;
         """
@@ -484,7 +484,7 @@ class TestBasics(unittest.TestCase):
         from "src/programs/slang/Increment.sl" import x as y;
 
         def int64 start() does
-            return inc(y);
+            return &inc(y);
         ;
         """
         self.assertEqual(run(program),1)
@@ -494,7 +494,7 @@ class TestBasics(unittest.TestCase):
         from "src/programs/slang/DoubleDoubleIncrement.sl" import doubleDoubleIncrement as inc;
 
         def int64 start() does
-            return inc(0);
+            return &inc(0);
         ;
         """
         self.assertEqual(run(program), 4)
@@ -506,10 +506,25 @@ class TestBasics(unittest.TestCase):
         from "src/programs/slang/Shape2Sides.sl" import square as square;
 
         def int64 start() does
-            return inc(triangle + square);
+            return &inc(triangle + square);
         ;
         """
         self.assertEqual(run(program), 11)
+
+    def test_ftype1(self):
+        program = """
+        def int64 increment(int64 x) does
+            return x + 1;
+        ;
+
+        def int64 start() does
+            int8* f = &increment as int8*;
+            return (f as (int64 -> int64)*)(0);
+        ;
+        """
+        self.assertEqual(run(program), 1)
+
+
 
 
 if __name__ == "__main__":

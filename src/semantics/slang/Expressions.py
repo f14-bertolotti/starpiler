@@ -1,5 +1,5 @@
 
-from src.semantics.slang import Int8, Int32, Int64, Double, Pointer
+from src.semantics.slang import Int8, Int32, Int64, Double, Pointer, FType
 from abc import abstractmethod
 from llvmlite import ir
 from functools import partial
@@ -9,17 +9,17 @@ class Expression:
     def getType(self, builder): pass 
 
 class FunctionCall(Expression):
-    def __init__(self, name, args):
-        self.name = name
+    def __init__(self, expr, args):
+        self.expr = expr
         self.arguments = args
     def __str__(self):
         argsstr = ",".join([str(arg) for arg in self.arguments])
-        return f"Call({self.name},{argsstr})"
+        return f"Call({self.expr},{argsstr})"
     def getType(self, builder):
-        return builder.name2var[self.name.value].type
+        return self.expr.getType(builder)
     def toLLVM(self, builder):
-        return builder.call(builder.name2var[self.name.value].ref, 
-                            [arg.toLLVM(builder) for arg in self.arguments])
+        expr = self.expr.toLLVM(builder)
+        return builder.call(expr, [arg.toLLVM(builder) for arg in self.arguments])
 
 class Operation(Expression):
     @abstractmethod
@@ -133,6 +133,7 @@ class Cast(Expression):
     def getType(self, _):
         return self.type
     def toLLVM(self, builder):
+
         expr, etype = self.expr.toLLVM(builder), self.expr.getType(builder)
         if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.toLLVM())
         if isinstance(etype, Pointer) and not isinstance(self.type, Pointer): return builder.ptrtoint(expr, self.type.toLLVM())
@@ -141,6 +142,8 @@ class Cast(Expression):
         if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.toLLVM())
         if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.toLLVM())
         if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.toLLVM())
+
+        assert False, f"unkown cast for {expr.type} -> {self.type}"
 
 
 class ValIndex: 
@@ -219,8 +222,8 @@ class Name(Expression):
 
 class Ref(Expression):
     def __init__(self, name): self.name = name
-    def __str__(self): return f"Ref({self.expr})"
-    def getType(self, builder): return Pointer(self.expr.getType(builder))
+    def __str__(self): return f"Ref({self.name})"
+    def getType(self, builder): return Pointer(self.name.getType(builder))
     def toLLVM(self, builder): return builder.name2var[self.name.value].ref
 
 class Eqs(ComparisonOperation):

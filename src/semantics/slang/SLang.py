@@ -82,14 +82,16 @@ class ParameterSequence:
     def __str__(self):
         paramsstr = ",".join(str(param) for param in self.parameters)
         return f"ParameterSequence({paramsstr})"
+    def getType(self):
+        return [p.getType() for p in self.parameters]
     def toLLVM(self, builder, llvmParameters):
         for myParam, llvmParam in zip(self.parameters, llvmParameters):
             myParam.toLLVM(builder, llvmParam)
 
 class Function(WithUniqueName):
-    def __init__(self, type, name, parameters, block):
+    def __init__(self, rtype, name, parameters, block):
         WithUniqueName.__init__(self, name.value)
-        self.type = type
+        self.type = FType(parameters.getType(), rtype)
         self.parameters = parameters
         self.block = block
         self.name = name
@@ -99,8 +101,7 @@ class Function(WithUniqueName):
         return f"Function({self.type},{self.name},{self.parameters},{self.block})"
 
     def LLVMDeclare(self, module):
-        functionType = ir.FunctionType(self.type.toLLVM(), [param.type.toLLVM() for param in self.parameters])
-        function = ir.Function(module, functionType, name=self.id)
+        function = ir.Function(module, self.type.toLLVM(), name=self.id)
         self.ref = function
         module.name2decl[self.name.value] = self
 
@@ -247,6 +248,9 @@ class SlangTransformer(Transformer):
     def slang_int8   (self, _): return Int8()
     def slang_double (self, _): return Double()
     def slang_pointer(self, node): return Pointer(node[0])
+    def slang_ptype  (self, node): return node[1:]
+    def slang_rtype  (self, node): return node[1]
+    def slang_ftype  (self, node): return FType(node[0], node[1])
 
 
 def parsed(programstr):
@@ -283,7 +287,7 @@ def run(programstr):
 
     func_ptr = engine.get_function_address(module.name2decl["start"].id)
 
-    rtype = module.name2decl["start"].type
+    rtype = module.name2decl["start"].type.rtype
 
     if rtype == Double(): cfunc = CFUNCTYPE(c_double)(func_ptr)
     if rtype == Int64(): cfunc = CFUNCTYPE(c_int64)(func_ptr)

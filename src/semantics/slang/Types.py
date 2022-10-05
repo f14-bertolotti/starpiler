@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from llvmlite.ir import VoidType, IntType, DoubleType, PointerType
+from llvmlite.ir import VoidType, IntType, DoubleType, PointerType, FunctionType
 
 
 class Type: 
@@ -35,4 +35,10 @@ class Pointer(Type):
     def __str__(self): return f"{self.base}*"
     def toLLVM(self): return PointerType(self.base.toLLVM())
     def __len__(self): return 4
-
+class FType(Type):
+    def __init__(self, ptypes, rtype): self.ptypes, self.rtype = ptypes, rtype
+    def __str__(self): 
+        ptypestr = ",".join([str(t) for t in self.ptypes])
+        return f"FType({ptypestr}->{self.rtype})"
+    def toLLVM(self): return FunctionType(self.rtype.toLLVM(), [t.toLLVM() for t in self.ptypes])
+    def __len__(self): 1

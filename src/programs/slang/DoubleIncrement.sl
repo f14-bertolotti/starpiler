@@ -3,5 +3,5 @@ def int64 increment(int64 x) does
 ;
 
 def int64 doubleIncrement(int64 x) does
-   return increment(increment(x));
+   return &increment(&increment(x));
 ;
