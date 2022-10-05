@@ -5,7 +5,7 @@ from llvmlite import ir
 from functools import partial
 
 class Expression:
-    abstractmethod
+    @abstractmethod
     def getType(self, builder): pass 
 
 class FunctionCall(Expression):
@@ -16,14 +16,13 @@ class FunctionCall(Expression):
         argsstr = ",".join([str(arg) for arg in self.arguments])
         return f"Call({self.name},{argsstr})"
     def getType(self, builder):
-        func = [f for f in builder.module.functions if f.name == self.name.value][-1]
-        return func.returnType
+        return builder.name2var[self.name.value].type
     def toLLVM(self, builder):
-        func = [f for f in builder.module.functions if f.name == self.name.value][-1]
-        return builder.call(func, [arg.toLLVM(builder) for arg in self.arguments])
+        return builder.call(builder.name2var[self.name.value].ref, 
+                            [arg.toLLVM(builder) for arg in self.arguments])
 
 class Operation(Expression):
-    abstractmethod
+    @abstractmethod
     def getOperation(self, builder): pass
 
     def raiseOperationNotFound(self, builder):
@@ -33,16 +32,12 @@ class BinaryOperation(Operation):
     def __init__(self, x, y):
         self.x, self.y = x, y
 
-    abstractmethod
+    @abstractmethod
     def getOperation(self, builder): pass
 
-    def getLType(self, builder): return self.x.getType(builder)
-
-    def getRType(self, builder): return self.y.getType(builder)
-
     def getType(self, builder): 
-        ltype = self.getLType(builder)
-        rtype = self.getRType(builder)
+        ltype = self.x.getType(builder)
+        rtype = self.y.getType(builder)
         if ltype == rtype: return ltype
         assert ltype == rtype,  f"non coherent types. Found left:{ltype}, right:{rtype}"
         return ltype
@@ -62,7 +57,7 @@ class UnaryOperation(Operation):
 
     def getType(self, builder): return self.x.getType(builder)
 
-    abstractmethod
+    @abstractmethod
     def getOperation(self, builder): pass
 
     def __str__(self):
@@ -74,7 +69,7 @@ class ComparisonOperation(BinaryOperation):
     def __init__(self, x, y):
         BinaryOperation.__init__(self, x, y)
     
-    abstractmethod
+    @abstractmethod
     def getOperation(self, builder): pass
 
     def toLLVM(self, builder):
@@ -191,7 +186,7 @@ class String(Expression):
     def __init__(self, value): 
         self.value = value[1:-1] + "\0" 
         self.type = ir.ArrayType(ir.IntType(8), len(self.value))
-    def __str__(self): return f"Rational({self.value})"
+    def __str__(self): return f"String({self.value})"
     def getType(self,_): return Pointer(Int8()) 
     def toLLVM(self,builder):
         gvar = ir.GlobalVariable(builder.module, self.type, builder.module.get_unique_name())
@@ -219,14 +214,14 @@ class Array(Expression):
 class Name(Expression):
     def __init__(self, value): self.value = value
     def __str__(self): return f"Name({self.value})"
-    def getType(self, builder): return builder.name2var[self.value][1]
-    def toLLVM(self, builder): return builder.load(builder.name2var[self.value][0])
+    def getType(self, builder): return builder.name2var[self.value].type
+    def toLLVM(self, builder): return builder.load(builder.name2var[self.value].ref)
 
 class Ref(Expression):
-    def __init__(self, expr): self.expr = expr
+    def __init__(self, name): self.name = name
     def __str__(self): return f"Ref({self.expr})"
     def getType(self, builder): return Pointer(self.expr.getType(builder))
-    def toLLVM(self, builder): return builder.name2var[self.expr.value][0]
+    def toLLVM(self, builder): return builder.name2var[self.name.value].ref
 
 class Eqs(ComparisonOperation):
     def __init__(self, x, y):

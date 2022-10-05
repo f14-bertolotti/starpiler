@@ -9,13 +9,68 @@ from ctypes import CFUNCTYPE, c_double, c_int64
 from ctypes.util import find_library
 
 from src.semantics.slang import *
+import os, pathlib
 
+class WithUniqueName:
+    unique = 0
+    def __init__(self, name=""):
+        self.id = f"{name}.{WithUniqueName.unique}"
+        WithUniqueName.unique += 1
+
+class Module(WithUniqueName):
+    def __init__(self, declarations):
+        WithUniqueName.__init__(self)
+        self.LLVMModule = ir.Module()
+        self.declarations = declarations
+        self.LLVMModule.name2decl = dict()
+        self.LLVMModule.path2import = dict()
+        self.LLVMModule.compiled = set()
+        
+    def __str__(self):
+        string = ",".join([str(gbl) for gbl in self.declarations])
+        return f"Module({string})"
+
+    def toLLVM(self):
+
+        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
+        function = ir.Function(self.LLVMModule, functionType, name="malloc")
+        self.LLVMModule.name2decl["malloc"] = ExternFunction(function, Pointer(Int8()))
+        
+        functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
+        function = ir.Function(self.LLVMModule, functionType, name="free")
+        self.LLVMModule.name2decl["free"] = ExternFunction(function, Void())
+    
+        functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
+        function = ir.Function(self.LLVMModule, functionType, name="printf")
+        self.LLVMModule.name2decl["printf"] = ExternFunction(function, Int32())
+    
+        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(8).as_pointer(), ir.IntType(8).as_pointer(), ir.IntType(32)])
+        function = ir.Function(self.LLVMModule, functionType, name="memcpy")
+        self.LLVMModule.name2decl["memcpy"] = ExternFunction(function, Void())
+
+        for dcl in self.declarations:
+            dcl.LLVMDeclare(self.LLVMModule)
+
+        self.LLVMModule.name2decl["start"].globalsBuilder = ir.IRBuilder(self.LLVMModule.name2decl["start"].ref.append_basic_block())
+
+        for dcl in self.declarations:
+            dcl.toLLVM(self.LLVMModule)
+
+        self.LLVMModule.name2decl["start"].globalsBuilder.branch(self.LLVMModule.name2decl["start"].block.ref)
+
+        return self.LLVMModule
 
 class Parameter:
     def __init__(self, type, name):
         self.type, self.name = type, name
     def __str__(self):
         return f"Parameter({self.type},{self.name})"
+    def getType(self):
+        return self.type
+    def toLLVM(self, builder, llvmParam):
+        self.ref = builder.alloca(llvmParam.type)
+        builder.store(llvmParam, self.ref)
+        builder.name2var[self.name.value] = self
 
 class ParameterSequence:
     def __init__(self, *args):
@@ -27,105 +82,113 @@ class ParameterSequence:
     def __str__(self):
         paramsstr = ",".join(str(param) for param in self.parameters)
         return f"ParameterSequence({paramsstr})"
+    def toLLVM(self, builder, llvmParameters):
+        for myParam, llvmParam in zip(self.parameters, llvmParameters):
+            myParam.toLLVM(builder, llvmParam)
 
-class Module:
-    def __init__(self, globals):
-        self.globals = globals
-    def __str__(self):
-        string = ",".join([str(gbl) for gbl in self.globals])
-        return f"Module({funcstr})"
-    def toLLVM(self):
-        module = ir.Module(name="MainModule")
-
-        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
-        function = ir.Function(module, functionType, name="malloc")
-        function.returnType = Pointer(Int8())
-        
-        functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
-        function = ir.Function(module, functionType, name="free")
-        function.returnType = Void()
-
-        functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
-        function = ir.Function(module, functionType, name="printf")
-        function.returnType = Int32()
-
-        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(8).as_pointer(), ir.IntType(8).as_pointer(), ir.IntType(32)])
-        function = ir.Function(module, functionType, name="memcpy")
-        function.returnType = Void()
-
-        global2var = dict()
-        for gbl in self.globals:
-            if gbl.name.value in global2var: raise ValueError(f"global name already defined {gbl.name.value}")
-            var = gbl.LLVMDeclaration(module)
-            global2var[gbl.name.value] = (var, gbl.type)
-
-        module.global2var = global2var
-
-        for gbl in filter(lambda g: isinstance(g, Function), self.globals):
-            gbl.toLLVM(module)
-
-        for gbl in list(filter(lambda g: isinstance(g, GlobalAssignement), self.globals))[::-1]:
-            gbl.toLLVM(module)
-
-        return module
-
-
-class Function:
+class Function(WithUniqueName):
     def __init__(self, type, name, parameters, block):
+        WithUniqueName.__init__(self, name.value)
         self.type = type
         self.parameters = parameters
         self.block = block
         self.name = name
+        self.ref = None
+    
     def __str__(self):
         return f"Function({self.type},{self.name},{self.parameters},{self.block})"
-    
-    def LLVMDeclaration(self, module):
-        functionType = ir.FunctionType(self.type.toLLVM(), [param.type.toLLVM() for param in self.parameters])
-        function = ir.Function(module, functionType, name=self.name.value)
-        self.function = function
-        return function
 
-    def allocaAndStore(self, builder, argument): 
-        ptr = builder.alloca(argument.type)
-        builder.store(argument, ptr)
-        return ptr
+    def LLVMDeclare(self, module):
+        functionType = ir.FunctionType(self.type.toLLVM(), [param.type.toLLVM() for param in self.parameters])
+        function = ir.Function(module, functionType, name=self.id)
+        self.ref = function
+        module.name2decl[self.name.value] = self
 
     def toLLVM(self, module):
-        block = self.function.append_basic_block()
-        builder = ir.IRBuilder(block)
-        param2var = {p.name.value:(self.allocaAndStore(builder, a),p.type) for p,a in zip(self.parameters, self.function.args)}
-        builder.name2var = {**module.global2var, **param2var}
+        basicBlock = self.ref.append_basic_block()
+        builder = ir.IRBuilder(basicBlock)
+        builder.name2var = {**module.name2decl}
+        self.parameters.toLLVM(builder, self.ref.args)
         self.block.toLLVM(builder)
+
+class ExternFunction(WithUniqueName):
+    def __init__(self, ref, returnType): 
+        WithUniqueName.__init__(self, ref.name)
+        self.type = returnType
+        self.ref = ref
+    def getType(self): return self.type
+
+
+class GlobalAssignement(WithUniqueName):
+    def __init__(self, type, name, expr):
+        WithUniqueName.__init__(self, name.value)
+        self.type, self.name, self.expr, self.ref = type, name, expr, None
+
+    def __str__(self): 
+        return f"GlobalAssignement({self.type},{self.name},{self.expr})"
+
+    def LLVMDeclare(self, module):
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.id)
+        self.ref = gvar
+        module.name2decl[self.name.value] = self
+        gvar.linkage = "internal"
+
+    def toLLVM(self, module):
+        builder = module.name2decl["start"].globalsBuilder
+        builder.name2var = module.name2decl
+        builder.store(self.expr.toLLVM(builder), self.ref)
+ 
+
+class Import(WithUniqueName):
+    
+    path2module = dict()
+    path2import = dict()
+    compiled = set()
+    def __init__(self, path, name, rename):
+        WithUniqueName.__init__(self, name.value)
+        self.path, self.name, self.rename = pathlib.Path(os.path.join(os.getcwd(), path)), name, rename
+        
+        if self.path in Import.path2module: self.module = Import.path2module[self.path]
+        else:
+            self.module = transformed(self.path.read_text())
+            Import.path2module[self.path] = self.module
+
+    def __str__(self):
+        return f"Import({self.path},{self.name},{self.rename})"
+
+    def LLVMDeclare(self, module):
+        if self.path not in module.path2import:
+            module.name2decl, tmp = dict(), module.name2decl
+
+            for dcl in self.module.declarations:
+                dcl.LLVMDeclare(module)
+
+            module.path2import[self.path] = module.name2decl
+            module.name2decl = tmp
+
+        module.name2decl[self.rename.value] = module.path2import[self.path][self.name.value]
+
+    def toLLVM(self, module): 
+        if self.path not in module.compiled:
+            module.compiled.add(self.path)
+
+            module.name2decl, tmp = module.path2import[self.path], module.name2decl
+            module.name2decl["start"] = tmp["start"]
+            for dcl in self.module.declarations:
+                dcl.toLLVM(module)
+            module.name2decl = tmp
+
 
 class Block:
     def __init__(self, *args):
-        self.statements = args
+        self.statements, self.ref = args, None
     def __str__(self):
         self.stmtsstr = ",".join([str(stmt) for stmt in self.statements])
         return f"Block({self.stmtsstr})"
     def toLLVM(self, builder):
+        self.ref = builder.basic_block
         for stmt in self.statements: 
             stmt.toLLVM(builder)
-
-class GlobalAssignement:
-    def __init__(self, type, name, expr):
-        self.type, self.name, self.expr = type, name, expr
-    def __str__(self): 
-        return f"GlobalAssignement({self.type},{self.name},{self.expr})"
-    def LLVMDeclaration(self, module):
-        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.name.value)
-        gvar.linkage = "internal"
-        self.reference = gvar
-        return gvar
- 
-    def toLLVM(self, module):
-        builder = ir.IRBuilder()
-        builder.position_at_start(module.global2var["start"][0].entry_basic_block)
-        builder.name2var = module.global2var
-        builder.store(self.expr.toLLVM(builder), self.reference)
-
-        return self.reference
-
 
 
 class SlangTransformer(Transformer):
@@ -138,6 +201,7 @@ class SlangTransformer(Transformer):
     def slang_parameter_sequence (self, node): return ParameterSequence(*[param for param in node if isinstance(param,Parameter)])
     def slang_block              (self, node): return Block(*node)
     def slang_global_assignement (self, node): return GlobalAssignement(node[1].type, node[1].name, node[1].expr)
+    def slang_import             (self, node): return Import(node[1].value[:-1], node[3], node[5])
 
     # STATEMENTS
     def slang_return                 (self, node): return Return(node[1])
@@ -216,9 +280,11 @@ def run(programstr):
     engine.add_module(parsedAssembly)
     engine.finalize_object()
     engine.run_static_constructors()
-    
-    func_ptr = engine.get_function_address("start")
-    rtype = [func.type for func in program.globals if func.name.value == "start"][-1]
+
+    func_ptr = engine.get_function_address(module.name2decl["start"].id)
+
+    rtype = module.name2decl["start"].type
+
     if rtype == Double(): cfunc = CFUNCTYPE(c_double)(func_ptr)
     if rtype == Int64(): cfunc = CFUNCTYPE(c_int64)(func_ptr)
     res = cfunc()

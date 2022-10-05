@@ -1,0 +1,3 @@
+add extern clause
+add function types and function cast
+code coverage 100%

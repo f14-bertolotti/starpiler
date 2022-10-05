@@ -478,6 +478,38 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 1)
 
+    def test_import1(self):
+        program = """
+        from "src/programs/slang/Increment.sl" import increment as inc;
+        from "src/programs/slang/Increment.sl" import x as y;
+
+        def int64 start() does
+            return inc(y);
+        ;
+        """
+        self.assertEqual(run(program),1)
+
+    def test_import2(self):
+        program = """
+        from "src/programs/slang/DoubleDoubleIncrement.sl" import doubleDoubleIncrement as inc;
+
+        def int64 start() does
+            return inc(0);
+        ;
+        """
+        self.assertEqual(run(program), 4)
+
+    def test_import3(self):
+        program = """
+        from "src/programs/slang/DoubleDoubleIncrement.sl" import doubleDoubleIncrement as inc;
+        from "src/programs/slang/Shape2Sides.sl" import triangle as triangle;
+        from "src/programs/slang/Shape2Sides.sl" import square as square;
+
+        def int64 start() does
+            return inc(triangle + square);
+        ;
+        """
+        self.assertEqual(run(program), 11)
 
 
 if __name__ == "__main__":

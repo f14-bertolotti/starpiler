@@ -9,10 +9,10 @@ class DeclareAssign:
         return f"Ass({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
         expr = self.expr.toLLVM(builder)
-        var = builder.alloca(self.type.toLLVM())
+        self.ref = builder.alloca(self.type.toLLVM())
 
-        builder.store(expr, var)
-        builder.name2var[self.name.value] = (var, self.type)
+        builder.store(expr, self.ref)
+        builder.name2var[self.name.value] = self
 
 class ReAssign:
     def __init__(self, lexpr, rexpr):
@@ -34,8 +34,8 @@ class IfThen:
     def __str__(self): return f"IfThen({self.cond},{self.block})"
     def toLLVM(self, builder):
         cond = builder.icmp_signed("==",self.cond.toLLVM(builder), ir.Constant(ir.IntType(64), 1))
-        tmp = builder.name2var
-        builder.name2var = copy.deepcopy(builder.name2var)
+
+        builder.name2var, tmp = copy.deepcopy(builder.name2var), builder.name2var
         with builder.if_then(cond):
             self.block.toLLVM(builder)
         builder.name2var = tmp
