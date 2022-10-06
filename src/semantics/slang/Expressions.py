@@ -18,8 +18,7 @@ class FunctionCall(Expression):
     def getType(self, builder):
         return self.expr.getType(builder)
     def toLLVM(self, builder):
-        expr = self.expr.toLLVM(builder)
-        return builder.call(expr, [arg.toLLVM(builder) for arg in self.arguments])
+        return builder.call(self.expr.toLLVM(builder), [arg.toLLVM(builder) for arg in self.arguments])
 
 class Operation(Expression):
     @abstractmethod
@@ -39,11 +38,8 @@ class BinaryOperation(Operation):
         ltype = self.x.getType(builder)
         rtype = self.y.getType(builder)
         if ltype == rtype: return ltype
-        assert ltype == rtype,  f"non coherent types. Found left:{ltype}, right:{rtype}"
-        return ltype
-
+        raise ValueError(f"non coherent types. Found left:{ltype}, right:{rtype}")
     def __str__(self):
-        dir(self)
         return f"{self.__class__.__name__}({self.x},{self.y})"
     def toLLVM(self, builder):
         lexpr = self.x.toLLVM(builder)
@@ -142,6 +138,7 @@ class Cast(Expression):
         if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.toLLVM())
         if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.toLLVM())
         if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.toLLVM())
+        if etype in {Int32(), Int8(), Int64()} and self.type == Double(): return builder.sitofp(expr, self.type.toLLVM())
 
         assert False, f"unkown cast for {expr.type} -> {self.type}"
 

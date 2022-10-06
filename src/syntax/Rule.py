@@ -6,15 +6,8 @@ class Rule(Larkable):
         self.rule = list(args)
         self.mod = mod
 
-    def __hash__(self):
-        return hash(self.rule)
-
     def __iter__(self):
         return iter(self.rule)
-
-    def append(self, *args):
-        self.rule = self.rule + list(args)
-        return self
 
     def toLark(self):
         return "(" + " ".join([x.name if isinstance(x, Production) else x.toLark() for x in self]) + f"){self.mod}"

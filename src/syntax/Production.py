@@ -10,9 +10,6 @@ class Production(Larkable):
     def __iter__(self):
         return iter(self.rules)
 
-    def __hash__(self):
-        return hash(tuple(hash(rule) for rule in self.rules))
-
     def setName(self, name):
         self.name = name
         return self

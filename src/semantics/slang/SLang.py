@@ -11,23 +11,8 @@ from ctypes.util import find_library
 from src.semantics.slang import *
 import os, pathlib
 
-class WithUniqueName:
-    unique = 0
-    def __init__(self, name=""):
-        self.id = f"{name}.{WithUniqueName.unique}"
-        WithUniqueName.unique += 1
-
-class ExternFunction(WithUniqueName):
-    def __init__(self, ref, returnType): 
-        WithUniqueName.__init__(self, ref.name)
-        self.type = returnType
-        self.ref = ref
-    def getType(self): return self.type
-
-
-class Module(WithUniqueName):
+class Module:
     def __init__(self, declarations):
-        WithUniqueName.__init__(self)
         self.LLVMModule = ir.Module()
         self.declarations = declarations
         self.LLVMModule.name2decl = dict()
@@ -39,22 +24,6 @@ class Module(WithUniqueName):
         return f"Module({string})"
 
     def toLLVM(self):
-
-        #functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
-        #function = ir.Function(self.LLVMModule, functionType, name="malloc")
-        #self.LLVMModule.name2decl["malloc"] = ExternFunction(function, Pointer(Int8()))
-        #
-        #functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
-        #function = ir.Function(self.LLVMModule, functionType, name="free")
-        #self.LLVMModule.name2decl["free"] = ExternFunction(function, Void())
-    
-        #functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
-        #function = ir.Function(self.LLVMModule, functionType, name="printf")
-        #self.LLVMModule.name2decl["printf"] = ExternFunction(function, Int32())
-    
-        #functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(8).as_pointer(), ir.IntType(8).as_pointer(), ir.IntType(32)])
-        #function = ir.Function(self.LLVMModule, functionType, name="memcpy")
-        #self.LLVMModule.name2decl["memcpy"] = ExternFunction(function, Void())
 
         for dcl in self.declarations:
             dcl.LLVMDeclare(self.LLVMModule)
@@ -70,13 +39,10 @@ class Module(WithUniqueName):
 
 class VarArgParameter:
     def __init__(self): pass
-    def __str__(self): return "..."
 
 class ParameterDeclaration:
     def __init__(self, type):
         self.type = type
-    def __str__(self):
-        return f"ParamDecl({self.type})"
     def getType(self):
         return self.type
 
@@ -95,15 +61,8 @@ class ParameterDefinition:
 class ParameterSequenceDeclaration:
     def __init__(self, *args):
         self.parameters = args
-    def __get_item__(self, index):
-        return self.parameters[index]
-    def __iter__(self):
-        return iter(self.parameters)
-    def __str__(self):
-        paramstr = ",".join(str(p) for p in self.parameters)
-        return f"ParamSeqDecl({paramstr})"
     def isVariable(self):
-        return any([isinstance(p, VarArgParameter) for p in self.parameters])
+        return any([isinstance(p.getType(), VarArgParameter) for p in self.parameters])
     def getType(self):
         return [p.getType() for p in self.parameters if not isinstance(p.type, VarArgParameter)]
     def toLLVM(self):
@@ -112,10 +71,6 @@ class ParameterSequenceDeclaration:
 class ParameterSequenceDefinition:
     def __init__(self, *args):
         self.parameters = args
-    def __get_item__(self, index):
-        return self.parameters[index]
-    def __iter__(self):
-        return iter(self.parameters)
     def __str__(self):
         paramsstr = ",".join(str(param) for param in self.parameters)
         return f"ParamSeqDef({paramsstr})"
@@ -125,9 +80,8 @@ class ParameterSequenceDefinition:
         for myParam, llvmParam in zip(self.parameters, llvmParameters):
             myParam.toLLVM(builder, llvmParam)
 
-class FunctionDefinition(WithUniqueName):
+class FunctionDefinition:
     def __init__(self, rtype, name, parameters, block):
-        WithUniqueName.__init__(self, name.value)
         self.type = FType(parameters.getType(), rtype)
         self.parameters = parameters
         self.block = block
@@ -135,7 +89,7 @@ class FunctionDefinition(WithUniqueName):
         self.ref = None
     
     def __str__(self):
-        return f"FunctionDefinition({self.type},{self.name},{self.parameters},{self.block})"
+        return f"FunctionDefinition({self.name},{self.parameters},{self.block})"
 
     def LLVMDeclare(self, module):
         self.ref = ir.Function(module, self.type.toLLVM(), name=self.name.value)
@@ -148,16 +102,15 @@ class FunctionDefinition(WithUniqueName):
         self.parameters.toLLVM(builder, self.ref.args)
         self.block.toLLVM(builder)
 
-class FunctionDeclaration(WithUniqueName):
+class FunctionDeclaration:
     def __init__(self, rtype, name, parameters): 
-        WithUniqueName.__init__(self, name.value)
-        self.type = FType(parameters.getType(), rtype, vararg=True) if parameters.isVariable else FType(parameters.getType(), rtype)
+        self.type = FType(parameters.getType(), rtype, vararg=True) if parameters.isVariable() else FType(parameters.getType(), rtype)
         self.parameters = parameters
         self.name = name
         self.ref = None
 
     def __str__(self):
-        return f"FunctionDeclaration({self.type, self.name, self.parameters})"
+        return f"FunctionDeclaration({self.type},{self.name})"
         
     def LLVMDeclare(self, module):
         self.ref = ir.Function(module, self.type.toLLVM(), name=self.name.value)
@@ -166,9 +119,8 @@ class FunctionDeclaration(WithUniqueName):
     def toLLVM(self, module): pass
 
 
-class GlobalAssignement(WithUniqueName):
+class GlobalAssignement:
     def __init__(self, type, name, expr):
-        WithUniqueName.__init__(self, name.value)
         self.type, self.name, self.expr, self.ref = type, name, expr, None
 
     def __str__(self): 
@@ -186,13 +138,12 @@ class GlobalAssignement(WithUniqueName):
         builder.store(self.expr.toLLVM(builder), self.ref)
  
 
-class Import(WithUniqueName):
+class Import:
     
     path2module = dict()
     path2import = dict()
     compiled = set()
     def __init__(self, path, name, rename):
-        WithUniqueName.__init__(self, name.value)
         self.path, self.name, self.rename = pathlib.Path(os.path.join(os.getcwd(), path)), name, rename
         
         if self.path in Import.path2module: self.module = Import.path2module[self.path]
@@ -270,9 +221,9 @@ class SlangTransformer(Transformer):
     def slang_modulo                         (self, node): return Mod(node[0], node[2])
     def slang_equality                       (self, node): return Eqs(node[0], node[2])
     def slang_greater                        (self, node): return Gtr(node[0], node[2])
-    def slang_greaterEqual                   (self, node): return Gte(node[0], node[2])
+    def slang_greater_equal                  (self, node): return Gte(node[0], node[2])
     def slang_less                           (self, node): return Lss(node[0], node[2])
-    def slang_lessEqual                      (self, node): return Lse(node[0], node[2])
+    def slang_less_equal                     (self, node): return Lse(node[0], node[2])
     def slang_not_equal                      (self, node): return Neq(node[0], node[2])
     def slang_negative                       (self, node): return Neg(node[1])
     def slang_cast                           (self, node): return Cast(node[0], node[2])
