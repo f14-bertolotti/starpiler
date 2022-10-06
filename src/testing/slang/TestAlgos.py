@@ -9,6 +9,10 @@ class TestAlgos(unittest.TestCase):
 
     def test_bubblesort(self):
         program = """
+
+        def int8* malloc(int64);
+        def void free(int8*);
+
         def int64 sort(int64* array, int64 len) does
             int64 i = 0;
             while i < len do
@@ -48,6 +52,9 @@ class TestAlgos(unittest.TestCase):
 
     def test_mmul(self):
         program = """
+
+        def int8* malloc(int64);
+        def void free(int8*);
 
         def int64** newmatrix(int64 rows, int64 cols) does
             int64** matrix = &malloc(8 * rows) as int64**;
@@ -131,6 +138,9 @@ class TestAlgos(unittest.TestCase):
     def test_dfs(self):
         program = """
         
+        def int8* malloc(int64);
+        def void free(int8*);
+;
         def int8** n0 = [[10] as int8*, 0  as int8*, 0  as int8*];
         def int8** n1 = [[9 ] as int8*, 0  as int8*, 0  as int8*];
         def int8** n2 = [[8 ] as int8*, n0 as int8*, n1 as int8*];

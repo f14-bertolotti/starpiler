@@ -336,6 +336,9 @@ class TestBasics(unittest.TestCase):
 
     def test_pointer1(self):
         program = """
+        def int8* malloc(int64);
+        def void free(int8*);
+
         def int64 start() does
             int64* x = &malloc(8 * 3) as int64*;
             x&[0] = 0;
@@ -352,6 +355,10 @@ class TestBasics(unittest.TestCase):
 
     def test_pointer2(self):
         program = """
+
+        def int8* malloc(int64);
+        def void free(int8*);
+
         def int64 start() does
             int64** x = &malloc(8 * 3) as int64**;
             x&[0] = &malloc(8 * 3) as int64*;
@@ -388,6 +395,10 @@ class TestBasics(unittest.TestCase):
 
     def test_printf1(self):
         program = """
+        def int32 printf(int8*, ...);
+        def int8* malloc(int64);
+        def void free(int8*);
+
         def int64 start() does
             int8* f = &malloc(3) as int8*;
             int8* s = &malloc(1) as int8*;
@@ -405,6 +416,7 @@ class TestBasics(unittest.TestCase):
 
     def test_printf2(self):
         program = """
+        def int32 printf(int8*, ...);
         def int64 start() does
             &printf(\"%s\",\"\");
             return 0;
@@ -447,6 +459,11 @@ class TestBasics(unittest.TestCase):
 
     def test_array3(self):
         program = """
+
+        def int8* malloc(int64);
+        def void free(int8*);
+        def int8* memcpy(int8*,int8*,int32); 
+
         def int64 start() does
             int64* x = [1,2,3,4,5];
             int64* y = &malloc(8 * 5) as int64*;
@@ -524,6 +541,17 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 1)
 
+    def test_extern1(self):
+
+        program = """
+        def int32 printf(int8*, ...);
+
+        def int64 start() does
+            &printf("%s","");
+            return 0;
+        ;
+        """
+        self.assertEqual(run(program),0)
 
 
 

@@ -36,9 +36,9 @@ class Pointer(Type):
     def toLLVM(self): return PointerType(self.base.toLLVM())
     def __len__(self): return 4
 class FType(Type):
-    def __init__(self, ptypes, rtype): self.ptypes, self.rtype = ptypes, rtype
+    def __init__(self, ptypes, rtype, vararg=False): self.ptypes, self.rtype, self.vararg = ptypes, rtype, vararg
     def __str__(self): 
         ptypestr = ",".join([str(t) for t in self.ptypes])
         return f"FType({ptypestr}->{self.rtype})"
-    def toLLVM(self): return FunctionType(self.rtype.toLLVM(), [t.toLLVM() for t in self.ptypes])
+    def toLLVM(self): return FunctionType(self.rtype.toLLVM(), [t.toLLVM() for t in self.ptypes], var_arg = self.vararg)
     def __len__(self): 1

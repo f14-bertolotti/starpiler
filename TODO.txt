@@ -1,3 +1,4 @@
-add extern clause
+add extern clause [DONE]
 add function types and function cast [DONE]
+add comments
 code coverage 100%

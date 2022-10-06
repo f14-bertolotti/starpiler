@@ -17,6 +17,14 @@ class WithUniqueName:
         self.id = f"{name}.{WithUniqueName.unique}"
         WithUniqueName.unique += 1
 
+class ExternFunction(WithUniqueName):
+    def __init__(self, ref, returnType): 
+        WithUniqueName.__init__(self, ref.name)
+        self.type = returnType
+        self.ref = ref
+    def getType(self): return self.type
+
+
 class Module(WithUniqueName):
     def __init__(self, declarations):
         WithUniqueName.__init__(self)
@@ -32,21 +40,21 @@ class Module(WithUniqueName):
 
     def toLLVM(self):
 
-        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
-        function = ir.Function(self.LLVMModule, functionType, name="malloc")
-        self.LLVMModule.name2decl["malloc"] = ExternFunction(function, Pointer(Int8()))
-        
-        functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
-        function = ir.Function(self.LLVMModule, functionType, name="free")
-        self.LLVMModule.name2decl["free"] = ExternFunction(function, Void())
+        #functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(64)])
+        #function = ir.Function(self.LLVMModule, functionType, name="malloc")
+        #self.LLVMModule.name2decl["malloc"] = ExternFunction(function, Pointer(Int8()))
+        #
+        #functionType = ir.FunctionType(ir.VoidType(), [ir.IntType(8).as_pointer()])
+        #function = ir.Function(self.LLVMModule, functionType, name="free")
+        #self.LLVMModule.name2decl["free"] = ExternFunction(function, Void())
     
-        functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
-        function = ir.Function(self.LLVMModule, functionType, name="printf")
-        self.LLVMModule.name2decl["printf"] = ExternFunction(function, Int32())
+        #functionType = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True)
+        #function = ir.Function(self.LLVMModule, functionType, name="printf")
+        #self.LLVMModule.name2decl["printf"] = ExternFunction(function, Int32())
     
-        functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(8).as_pointer(), ir.IntType(8).as_pointer(), ir.IntType(32)])
-        function = ir.Function(self.LLVMModule, functionType, name="memcpy")
-        self.LLVMModule.name2decl["memcpy"] = ExternFunction(function, Void())
+        #functionType = ir.FunctionType(ir.IntType(8).as_pointer(), [ir.IntType(8).as_pointer(), ir.IntType(8).as_pointer(), ir.IntType(32)])
+        #function = ir.Function(self.LLVMModule, functionType, name="memcpy")
+        #self.LLVMModule.name2decl["memcpy"] = ExternFunction(function, Void())
 
         for dcl in self.declarations:
             dcl.LLVMDeclare(self.LLVMModule)
@@ -60,7 +68,19 @@ class Module(WithUniqueName):
 
         return self.LLVMModule
 
-class Parameter:
+class VarArgParameter:
+    def __init__(self): pass
+    def __str__(self): return "..."
+
+class ParameterDeclaration:
+    def __init__(self, type):
+        self.type = type
+    def __str__(self):
+        return f"ParamDecl({self.type})"
+    def getType(self):
+        return self.type
+
+class ParameterDefinition:
     def __init__(self, type, name):
         self.type, self.name = type, name
     def __str__(self):
@@ -72,7 +92,24 @@ class Parameter:
         builder.store(llvmParam, self.ref)
         builder.name2var[self.name.value] = self
 
-class ParameterSequence:
+class ParameterSequenceDeclaration:
+    def __init__(self, *args):
+        self.parameters = args
+    def __get_item__(self, index):
+        return self.parameters[index]
+    def __iter__(self):
+        return iter(self.parameters)
+    def __str__(self):
+        paramstr = ",".join(str(p) for p in self.parameters)
+        return f"ParamSeqDecl({paramstr})"
+    def isVariable(self):
+        return any([isinstance(p, VarArgParameter) for p in self.parameters])
+    def getType(self):
+        return [p.getType() for p in self.parameters if not isinstance(p.type, VarArgParameter)]
+    def toLLVM(self):
+        pass
+
+class ParameterSequenceDefinition:
     def __init__(self, *args):
         self.parameters = args
     def __get_item__(self, index):
@@ -81,14 +118,14 @@ class ParameterSequence:
         return iter(self.parameters)
     def __str__(self):
         paramsstr = ",".join(str(param) for param in self.parameters)
-        return f"ParameterSequence({paramsstr})"
+        return f"ParamSeqDef({paramsstr})"
     def getType(self):
         return [p.getType() for p in self.parameters]
     def toLLVM(self, builder, llvmParameters):
         for myParam, llvmParam in zip(self.parameters, llvmParameters):
             myParam.toLLVM(builder, llvmParam)
 
-class Function(WithUniqueName):
+class FunctionDefinition(WithUniqueName):
     def __init__(self, rtype, name, parameters, block):
         WithUniqueName.__init__(self, name.value)
         self.type = FType(parameters.getType(), rtype)
@@ -98,11 +135,10 @@ class Function(WithUniqueName):
         self.ref = None
     
     def __str__(self):
-        return f"Function({self.type},{self.name},{self.parameters},{self.block})"
+        return f"FunctionDefinition({self.type},{self.name},{self.parameters},{self.block})"
 
     def LLVMDeclare(self, module):
-        function = ir.Function(module, self.type.toLLVM(), name=self.id)
-        self.ref = function
+        self.ref = ir.Function(module, self.type.toLLVM(), name=self.name.value)
         module.name2decl[self.name.value] = self
 
     def toLLVM(self, module):
@@ -112,12 +148,22 @@ class Function(WithUniqueName):
         self.parameters.toLLVM(builder, self.ref.args)
         self.block.toLLVM(builder)
 
-class ExternFunction(WithUniqueName):
-    def __init__(self, ref, returnType): 
-        WithUniqueName.__init__(self, ref.name)
-        self.type = returnType
-        self.ref = ref
-    def getType(self): return self.type
+class FunctionDeclaration(WithUniqueName):
+    def __init__(self, rtype, name, parameters): 
+        WithUniqueName.__init__(self, name.value)
+        self.type = FType(parameters.getType(), rtype, vararg=True) if parameters.isVariable else FType(parameters.getType(), rtype)
+        self.parameters = parameters
+        self.name = name
+        self.ref = None
+
+    def __str__(self):
+        return f"FunctionDeclaration({self.type, self.name, self.parameters})"
+        
+    def LLVMDeclare(self, module):
+        self.ref = ir.Function(module, self.type.toLLVM(), name=self.name.value)
+        module.name2decl[self.name.value] = self
+
+    def toLLVM(self, module): pass
 
 
 class GlobalAssignement(WithUniqueName):
@@ -129,7 +175,7 @@ class GlobalAssignement(WithUniqueName):
         return f"GlobalAssignement({self.type},{self.name},{self.expr})"
 
     def LLVMDeclare(self, module):
-        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.id)
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.name.value)
         self.ref = gvar
         module.name2decl[self.name.value] = self
         gvar.linkage = "internal"
@@ -179,7 +225,6 @@ class Import(WithUniqueName):
                 dcl.toLLVM(module)
             module.name2decl = tmp
 
-
 class Block:
     def __init__(self, *args):
         self.statements, self.ref = args, None
@@ -196,13 +241,17 @@ class SlangTransformer(Transformer):
 
 
     # MODULEWISE DECLARATION
-    def start                    (self, node): return Module(node)
-    def slang_function           (self, node): return Function(node[1], node[2], node[3], node[5])
-    def slang_parameter          (self, node): return Parameter(node[0], node[1])
-    def slang_parameter_sequence (self, node): return ParameterSequence(*[param for param in node if isinstance(param,Parameter)])
-    def slang_block              (self, node): return Block(*node)
-    def slang_global_assignement (self, node): return GlobalAssignement(node[1].type, node[1].name, node[1].expr)
-    def slang_import             (self, node): return Import(node[1].value[:-1], node[3], node[5])
+    def start                      (self, node): return Module(node)
+    def slang_vararg_parameter     (self, node): return VarArgParameter()
+    def slang_parameter_definition (self, node): return ParameterDefinition(node[0], node[1])
+    def slang_parameter_declaration(self, node): return ParameterDeclaration(node[0])
+    def slang_parameter_seq_def    (self, node): return ParameterSequenceDefinition (*[param for param in node if isinstance(param,ParameterDefinition )])
+    def slang_parameter_seq_decl   (self, node): return ParameterSequenceDeclaration(*[param for param in node if isinstance(param,ParameterDeclaration)])
+    def slang_block                (self, node): return Block(*node)
+    def slang_global_assignement   (self, node): return GlobalAssignement(node[1].type, node[1].name, node[1].expr)
+    def slang_import               (self, node): return Import(node[1].value[:-1], node[3], node[5])
+    def slang_function_definition  (self, node): return FunctionDefinition(node[1], node[2], node[3], node[5])
+    def slang_function_declaration (self, node): return FunctionDeclaration(node[1], node[2], node[3])
 
     # STATEMENTS
     def slang_return                 (self, node): return Return(node[1])
@@ -246,6 +295,7 @@ class SlangTransformer(Transformer):
     def slang_int64  (self, _): return Int64()
     def slang_int32  (self, _): return Int32()
     def slang_int8   (self, _): return Int8()
+    def slang_void   (self, _): return Void()
     def slang_double (self, _): return Double()
     def slang_pointer(self, node): return Pointer(node[0])
     def slang_ptype  (self, node): return node[1:]
@@ -285,7 +335,7 @@ def run(programstr):
     engine.finalize_object()
     engine.run_static_constructors()
 
-    func_ptr = engine.get_function_address(module.name2decl["start"].id)
+    func_ptr = engine.get_function_address("start")
 
     rtype = module.name2decl["start"].type.rtype
 
