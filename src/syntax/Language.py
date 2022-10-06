@@ -19,7 +19,10 @@ class Language(Larkable):
         return visited
 
     def toLark(self):
+        def p(x): print(x); return x
         visited = self.visit(self.production)
-        return "\n\n".join([elem.toLark() for elem in visited if isinstance(elem, Production)] + ["%ignore /[ \\t\\n\\f\\r]+/"])
+        return "\n\n".join([elem.toLark() for elem in visited if isinstance(elem, Production)] + 
+                           ["%ignore /[ \\t\\n\\f\\r]+/"] + 
+                           ["%ignore /#[^\\n]*/"])
 
     

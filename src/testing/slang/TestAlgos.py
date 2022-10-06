@@ -140,7 +140,7 @@ class TestAlgos(unittest.TestCase):
         
         def int8* malloc(int64);
         def void free(int8*);
-;
+
         def int8** n0 = [[10] as int8*, 0  as int8*, 0  as int8*];
         def int8** n1 = [[9 ] as int8*, 0  as int8*, 0  as int8*];
         def int8** n2 = [[8 ] as int8*, n0 as int8*, n1 as int8*];

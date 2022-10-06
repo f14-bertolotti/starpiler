@@ -553,6 +553,17 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program),0)
 
+    def test_comment(self):
+
+        program = """
+        def int64 start() does
+            #assaasas
+            return 0;
+        ;
+        """
+        self.assertEqual(run(program),0)
+
+
 
 
 if __name__ == "__main__":

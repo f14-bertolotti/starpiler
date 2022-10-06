@@ -6,6 +6,7 @@ from src.syntax.slang import native, rational, integer, identifier, string
 
 expression = P(name = "slang_expression", mod="?")
 
+
 addition       = P(name = "slang_addition"       , rules=[R(expression, T("+"), expression)])
 subtraction    = P(name = "slang_subtraction"    , rules=[R(expression, T("-"), expression)])
 multiplication = P(name = "slang_multiplication" , rules=[R(expression, T("*"), expression)])
