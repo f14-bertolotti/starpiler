@@ -1,12 +1,17 @@
-from src.syntax import Production
 from src.syntax import Larkable
+from src.syntax import Visitable
 
-class Language(Larkable):
+from src.syntax import Production
+
+class Language(Larkable, Visitable):
 
     def __init__(self, production):
+        Larkable .__init__(self)
+        Visitable.__init__(self)
+
         self.production = production.setName("start")
 
-    def visit(self,node):
+    def visitX(self,node):
         visited = [node]
         queue = [node]
         
@@ -19,10 +24,12 @@ class Language(Larkable):
         return visited
 
     def toLark(self):
-        def p(x): print(x); return x
-        visited = self.visit(self.production)
+        visited = self.visitX(self.production)
         return "\n\n".join([elem.toLark() for elem in visited if isinstance(elem, Production)] + 
                            ["%ignore /[ \\t\\n\\f\\r]+/"] + 
                            ["%ignore /#[^\\n]*/"])
+
+    def getVisitable(self):
+        return [self.production]
 
     

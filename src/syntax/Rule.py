@@ -1,8 +1,15 @@
 from src.syntax import Larkable
+from src.syntax import Visitable
 from src.syntax import Production
 
-class Rule(Larkable):
+import abc
+
+
+class Rule(Larkable, Visitable):
     def __init__(self, *args, mod=""):
+        Larkable .__init__(self)
+        Visitable.__init__(self)
+
         self.rule = list(args)
         self.mod = mod
 
@@ -12,5 +19,6 @@ class Rule(Larkable):
     def toLark(self):
         return "(" + " ".join([x.name if isinstance(x, Production) else x.toLark() for x in self]) + f"){self.mod}"
 
-    def __str__(self):
-        return f"rule{self.rule}"
+    def getVisitable(self):
+        return self.rule
+        

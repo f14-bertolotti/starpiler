@@ -1,8 +1,13 @@
 from src.syntax import Larkable
+from src.syntax import Visitable
+ 
 
-class Terminal(Larkable):
+class Terminal(Larkable, Visitable):
 
     def __init__(self, value, regex=False, mod=""):
+        Larkable .__init__(self)
+        Visitable.__init__(self)
+
         self.value = value
         self.regex = regex
         self.mod = mod
@@ -13,5 +18,4 @@ class Terminal(Larkable):
     def toLark(self):
         return f"/{self.value}/" if self.regex else f"\"{self.value}\"{self.mod}"
 
-    def __str__(self):
-        return f"Terminal(\"{self.value}\", mod=\"{self.mod}\")"
+    def getVisitable(self): return []

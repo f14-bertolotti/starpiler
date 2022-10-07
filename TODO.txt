@@ -2,3 +2,6 @@ add extern clause [DONE]
 add function types and function cast [DONE]
 add comments [DONE]
 code coverage 100% [DONE 99%]
+syntax visitable [DONE]
+spplang classes
+spplang -> slang translator
