@@ -1,6 +1,5 @@
 from src.syntax import Larkable
 from src.syntax import Visitable
- 
 
 class Terminal(Larkable, Visitable):
 
@@ -13,7 +12,7 @@ class Terminal(Larkable, Visitable):
         self.mod = mod
 
     def __iter__(self):
-        return iter([self.value])
+        return iter([])
 
     def toLark(self):
         return f"/{self.value}/" if self.regex else f"\"{self.value}\"{self.mod}"

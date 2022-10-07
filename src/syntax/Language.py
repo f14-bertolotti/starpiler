@@ -11,7 +11,7 @@ class Language(Larkable, Visitable):
 
         self.production = production.setName("start")
 
-    def visitX(self,node):
+    def bfs(self,node):
         visited = [node]
         queue = [node]
         
@@ -24,7 +24,7 @@ class Language(Larkable, Visitable):
         return visited
 
     def toLark(self):
-        visited = self.visitX(self.production)
+        visited = self.bfs(self.production)
         return "\n\n".join([elem.toLark() for elem in visited if isinstance(elem, Production)] + 
                            ["%ignore /[ \\t\\n\\f\\r]+/"] + 
                            ["%ignore /#[^\\n]*/"])

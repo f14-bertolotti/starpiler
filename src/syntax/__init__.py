@@ -7,4 +7,5 @@ from src.syntax.Terminal   import Terminal
 from src.syntax.Language   import Language
 
 from src.syntax.Utils      import getChangePrefixVisitor
+from src.syntax.Utils      import getClonerVisitor
 

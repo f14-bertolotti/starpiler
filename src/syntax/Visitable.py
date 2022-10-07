@@ -2,12 +2,12 @@ from abc import abstractmethod
 
 class Visitable:
 
-    def visit(self, function, visited = set()):
-        function(self)
+    def visit(self, visitor):
+        function, visited = visitor
         visited.add(self)
-        for visitable in filter(lambda x: x not in visited, self.getVisitable()):
-            visitable.visit(function, visited)
-
+        for unvisited in filter(lambda v: v not in visited, self.getVisitable()):
+            unvisited.visit(visitor)
+        return function(self)
 
     @abstractmethod
     def getVisitable(self): pass
