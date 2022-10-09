@@ -14,6 +14,12 @@ class Production(Larkable, Visitable):
     def __iter__(self):
         return iter(self.rules)
 
+    def __getitem__(self, index):
+        return self.rules[index]
+
+    def __setitem__(self, index, value):
+        self.rules[index] = value
+
     def setName(self, name):
         self.name = name
         return self

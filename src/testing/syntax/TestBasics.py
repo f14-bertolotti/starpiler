@@ -19,14 +19,15 @@ class TestBasics(unittest.TestCase):
         self.lang = L(z)
 
     def test_changePrefixVisitor(self):
-        self.lang.visit(getChangePrefixVisitor("slang_", "spplang_"))
-        self.assertEqual(self.lang.toLark().replace(" ","").replace("\n",""), """start:spplang_y|(spplang_ystart)spplang_y:spplang_x|("("spplang_x")")|(spplang_xspplang_x)spplang_x:("X")|("Y")%ignore/[\\t\\n\\f\\r]+/%ignore/#[^\\n]*/""")
+        lang0 = self.lang.visit(getClonerVisitor(self.lang))
+        lang1 = self.lang.visit(getClonerVisitor(self.lang))\
+                         .visit(getChangePrefixVisitor("slang_","spplang_"))
+        self.assertEqual(lang0.toLark().replace("slang_","spplang_"), lang1.toLark())
 
     def test_clonerVisitor(self):
         self.assertTrue(self.lang is self.lang)
-        self.assertFalse(self.lang is self.lang.visit(getClonerVisitor()))
-        self.assertEqual(self.lang.toLark(), self.lang.visit(getClonerVisitor()).toLark())
-        self.assertEqual(self.lang.toLark(), self.lang.visit(getClonerVisitor()).toLark())
+        self.assertFalse(self.lang is self.lang.visit(getClonerVisitor(self.lang)))
+        self.assertEqual(self.lang.toLark(), self.lang.visit(getClonerVisitor(self.lang)).toLark())
         
 if __name__ == "__main__":
     unittest.main()

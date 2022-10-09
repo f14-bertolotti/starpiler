@@ -13,6 +13,12 @@ class Rule(Larkable, Visitable):
     def __iter__(self):
         return iter(self.rule)
 
+    def __getitem__(self, index):
+        return self.rule[index]
+
+    def __setitem__(self, index, value):
+        self.rule[index] = value
+
     def append(self, value):
         self.rule.append(value)
 

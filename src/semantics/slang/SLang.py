@@ -192,7 +192,7 @@ class SlangTransformer(Transformer):
 
 
     # MODULEWISE DECLARATION
-    def start                      (self, node): return Module(node)
+    def slang_start                (self, node): return Module(node)
     def slang_vararg_parameter     (self, node): return VarArgParameter()
     def slang_parameter_definition (self, node): return ParameterDefinition(node[0], node[1])
     def slang_parameter_declaration(self, node): return ParameterDeclaration(node[0])

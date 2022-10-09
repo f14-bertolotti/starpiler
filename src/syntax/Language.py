@@ -9,7 +9,10 @@ class Language(Larkable, Visitable):
         Larkable .__init__(self)
         Visitable.__init__(self)
 
-        self.production = production.setName("start")
+        self.production = Production(name="start",rules=[production],mod="?")
+
+    def __iter__(self):
+        return iter([])
 
     def bfs(self,node):
         visited = [node]
