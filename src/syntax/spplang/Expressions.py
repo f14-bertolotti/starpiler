@@ -1,3 +1,6 @@
+from src.syntax import Production as P
+from src.syntax import Rule as R
+from src.syntax import Terminal as T
 
 from src.syntax import getFindAndReplaceVisitor
 from src.syntax import getChangePrefixVisitor
@@ -5,6 +8,7 @@ from src.syntax import getClonerVisitor
 
 from src.syntax.slang import expression as slangExpression
 from src.syntax.spplang import native, identifier, integer, rational, string
+
 
 expression = slangExpression.visit(getClonerVisitor(slangExpression)) \
                             .visit(getFindAndReplaceVisitor("slang_type"       , native)) \
@@ -14,3 +18,5 @@ expression = slangExpression.visit(getClonerVisitor(slangExpression)) \
                             .visit(getFindAndReplaceVisitor("slang_string"     , string)) \
                             .visit(getChangePrefixVisitor("slang_"             , "spplang_"))
 
+qualification = P(name = "spplang_qualification", rules = [R(identifier, R(T("."), identifier, mod="+"))])
+expression.append(qualification)
