@@ -43,3 +43,9 @@ def getFindAndReplaceVisitor(src, tgt):
         return obj
     return replacer, set()
         
+def getMatchesVisitor(isMatch):
+    matched = []
+    def matcher(obj):
+        if isMatch(obj): matched.append(obj)
+        return matched
+    return matcher, set()
