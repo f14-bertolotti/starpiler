@@ -8,7 +8,9 @@ from src.syntax import Production as P
 from src.syntax.spplang import expression
 from src.syntax.spplang import statement
 from src.syntax.spplang import classDefinition
+from src.syntax.spplang import lang
 from src.syntax import Language
+
 
 
 class TestSyntax(unittest.TestCase):
@@ -18,6 +20,7 @@ class TestSyntax(unittest.TestCase):
         self.expressionLanguage = Lark(Language(expression).toLark())
         self.statementLanguage = Lark(Language(statement).toLark())
         self.classLanguage = Lark(Language(classDefinition).toLark())
+        self.sppLanguage = lang
 
    def test_expression1(self):
       self.expressionLanguage.parse("x")
@@ -45,6 +48,19 @@ class TestSyntax(unittest.TestCase):
          def int64 x = 0; 
          def int64 getX() does return self.x;;
       ;""")
+
+   def test_imports(self):
+      self.sppLanguage.parse("""
+      from "a/b/c" import F as D;
+      class X with;
+      """)
+
+   def test_spplang_class(self):
+      self.sppLanguage.parse("""
+      class X with;
+      """)
+
+
 
 if __name__ == "__main__":
    unittest.main() 
