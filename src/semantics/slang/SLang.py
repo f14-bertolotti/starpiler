@@ -136,6 +136,22 @@ class GlobalAssignement:
         builder = module.name2decl["start"].globalsBuilder
         builder.name2var = module.name2decl
         builder.store(self.expr.toLLVM(builder), self.ref)
+
+class GlobalDeclaration:
+    def __init__(self, type, name):
+        self.type, self.name, self.ref = type, name, None
+
+    def __str__(self): 
+        return f"GlobalDeclaration({self.type},{self.name})"
+
+    def LLVMDeclare(self, module):
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.name.value)
+        self.ref = gvar
+        module.name2decl[self.name.value] = self
+        gvar.linkage = "internal"
+
+    def toLLVM(self, module):
+        pass
  
 
 class Import:
@@ -200,6 +216,7 @@ class SlangTransformer(Transformer):
     def slang_parameter_seq_decl   (self, node): return ParameterSequenceDeclaration(*[param for param in node if isinstance(param,ParameterDeclaration)])
     def slang_block                (self, node): return Block(*node)
     def slang_global_assignement   (self, node): return GlobalAssignement(node[1].type, node[1].name, node[1].expr)
+    def slang_global_declaration   (self, node): return GlobalDeclaration(node[1], node[2])
     def slang_import               (self, node): return Import(node[1].value[:-1], node[3], node[5])
     def slang_function_definition  (self, node): return FunctionDefinition(node[1], node[2], node[3], node[5])
     def slang_function_declaration (self, node): return FunctionDeclaration(node[1], node[2], node[3])

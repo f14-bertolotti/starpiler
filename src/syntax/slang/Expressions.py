@@ -28,7 +28,7 @@ parenthesized                = P(name = "slang_parenthesized"                , r
 indexed                      = P(name = "slang_indexed"                      , rules=[R(expression, R(parenthesized, mod="+"))])
 
 expressionSequence = P(name = "slang_expression_sequence" , rules=[expression, R(expression, R(T(","), expression, mod="*"))])
-functionCall       = P(name = "slang_function_call"       , rules=[R(expression, T("("), expressionSequence, T(")"))])
+functionCall       = P(name = "slang_function_call"       , rules=[R(expression, T("("), expressionSequence, T(")")), R(expression, T("("),T(")"))])
 cast               = P(name = "slang_cast"               , rules=[R(expression, T("as"), native)])
 
 array = P(name = "slang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])

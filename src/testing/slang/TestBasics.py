@@ -707,7 +707,15 @@ class TestBasics(unittest.TestCase):
         program_add = """def int64 start() does return 1.0 + 1;;"""
         with self.assertRaises(ValueError): assembled(program_add)
         
-
+    def test_variable_declaration2(self):
+        program = """
+        def int64 x;
+        def int64 start() does
+            &x = 1;
+            return x;
+        ;
+        """
+        self.assertEqual(run(program), 1)
 
 if __name__ == "__main__":
     unittest.main()
