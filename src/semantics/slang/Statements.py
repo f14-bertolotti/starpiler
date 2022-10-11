@@ -72,3 +72,8 @@ class Return:
     def toLLVM(self, builder):
         builder.ret(self.expr.toLLVM(builder))
 
+class ReturnVoid:
+    def __str__(self): return f"ReturnVoid()"
+    def toLLVM(self, builder):
+        builder.ret_void()
+

@@ -16,7 +16,7 @@ class FunctionCall(Expression):
         argsstr = ",".join([str(arg) for arg in self.arguments])
         return f"Call({self.expr},{argsstr})"
     def getType(self, builder):
-        return self.expr.getType(builder)
+        return self.expr.getType(builder).base.rtype
     def toLLVM(self, builder):
         return builder.call(self.expr.toLLVM(builder), [arg.toLLVM(builder) for arg in self.arguments])
 

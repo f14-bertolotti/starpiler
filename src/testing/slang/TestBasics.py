@@ -717,6 +717,41 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 1)
 
+    def test_recursive(self):
+        program = """
+        def int64 fib(int64 n) does
+            if n == 0 do return 0;;
+            if n == 1 do return 1;;
+            return (&fib(n - 1)) + (&fib(n - 2));
+        ;
+        def int64 start() does
+            return &fib(12);
+        ;
+        """
+        self.assertEqual(run(program),144)
+
+    def test_pass_by_value(self):
+        program = """
+        def int64 f(int64 x) does &x = x + 1; return 0;;
+        def int64 start() does int64 x = 0; &f(x); return x;;
+        """
+        self.assertEqual(run(program),0)
+
+    def test_pass_by_ref(self):
+        program = """
+        def int64 f(int64* x) does x = x[0] + 1; return 0;;
+        def int64 start() does int64 x = 0; &f(&x); return x;;
+        """
+        self.assertEqual(run(program),1)
+
+    def test_voidfunc(self):
+        program = """
+        def void f(int64* x) does x = x[0]+1; return;;
+        def int64 start() does int64 x = 0; &f(&x); return x;;
+        """
+        self.assertEqual(run(program),1)
+
+
 if __name__ == "__main__":
     unittest.main()
 
