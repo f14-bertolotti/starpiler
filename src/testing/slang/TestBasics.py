@@ -658,7 +658,7 @@ class TestBasics(unittest.TestCase):
         def int64* array = [0,1,2,3,4];
         def int64 start() does return array[0];;
         """
-        self.assertEqual(str(transformed(program)), "Module(GlobalAssignement(Int64*,Name(array),Array(Integer(i64 0),Integer(i64 1),Integer(i64 2),Integer(i64 3),Integer(i64 4))),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Name(array)[[Integer(i64 0)]]))))")
+        self.assertEqual(str(transformed(program)), "Module(GlobalAssignement(Int64*,Name(array),Array(Integer(i64 0),Integer(i64 1),Integer(i64 2),Integer(i64 3),Integer(i64 4))),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Index(Name(array),[Integer(i64 0)])))))")
 
     def test_program2string_binary_op(self):
         program = """
@@ -750,6 +750,65 @@ class TestBasics(unittest.TestCase):
         def int64 start() does int64 x = 0; &f(&x); return x;;
         """
         self.assertEqual(run(program),1)
+
+    def test_struct(self):
+        program = """
+        struct XY with
+            int64 x;
+            int8* y;
+        ;
+
+        def int64 start() does
+            XY* xy = XY{x:1, y:0 as int8*};
+            return xy.x;
+        ;
+        """
+        self.assertEqual(run(program),1)
+
+    def test_nested_struct(self):
+        program = """
+        struct XY with
+            int64 x;
+            int64 y;
+            XY*  xy;
+        ;
+
+        def int64 start() does
+            XY* xy = XY{x:1, y:1, xy:XY{x:2, y:2, xy:0 as XY*}};
+            return xy.x == 1 *
+                   xy.y == 1 *
+                   xy.xy.x == 2 *
+                   xy.xy.y == 2;
+        ;
+        """
+        self.assertEqual(run(program),1)
+
+    def test_array_struct(self):
+        program = """
+        struct XY with int8* string;;
+
+        def int32 printf(int8*, ...);
+
+        def int64 start() does 
+            XY** xys = [XY{string:"aaa"}, XY{string:"aaa"}];
+            return (xys[0].string[0] as int64 == xys[1].string[0] as int64) * 
+                   (xys[0].string[1] as int64 == xys[1].string[1] as int64) *
+                   (xys[0].string[2] as int64 == xys[1].string[2] as int64);
+        ;
+        """
+        self.assertEqual(run(program),1)
+
+    def test_import_struct(self):
+        program = """
+        from "src/programs/slang/XYStruct.sl" import XY as ZZ;
+
+        def int64 start() does
+            ZZ* zz = ZZ{x:0,y:0,xy:0 as ZZ*};
+            return zz.x;
+        ;
+        """
+
+        self.assertEqual(run(program),0)
 
 
 if __name__ == "__main__":

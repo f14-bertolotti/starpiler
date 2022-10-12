@@ -92,7 +92,7 @@ class FunctionDefinition:
         return f"FunctionDefinition({self.name},{self.parameters},{self.block})"
 
     def LLVMDeclare(self, module):
-        self.ref = ir.Function(module, self.type.toLLVM(), name=self.name.value)
+        self.ref = ir.Function(module, self.type.toLLVM(module), name=self.name.value)
         module.name2decl[self.name.value] = self
 
     def toLLVM(self, module):
@@ -113,7 +113,7 @@ class FunctionDeclaration:
         return f"FunctionDeclaration({self.type},{self.name})"
         
     def LLVMDeclare(self, module):
-        self.ref = ir.Function(module, self.type.toLLVM(), name=self.name.value)
+        self.ref = ir.Function(module, self.type.toLLVM(module), name=self.name.value)
         module.name2decl[self.name.value] = self
 
     def toLLVM(self, module): pass
@@ -127,7 +127,7 @@ class GlobalAssignement:
         return f"GlobalAssignement({self.type},{self.name},{self.expr})"
 
     def LLVMDeclare(self, module):
-        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.name.value)
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(module), self.name.value)
         self.ref = gvar
         module.name2decl[self.name.value] = self
         gvar.linkage = "internal"
@@ -145,7 +145,7 @@ class GlobalDeclaration:
         return f"GlobalDeclaration({self.type},{self.name})"
 
     def LLVMDeclare(self, module):
-        gvar = ir.GlobalVariable(module, self.type.toLLVM(), self.name.value)
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(module), self.name.value)
         self.ref = gvar
         module.name2decl[self.name.value] = self
         gvar.linkage = "internal"
@@ -191,6 +191,19 @@ class Import:
             for dcl in self.module.declarations:
                 dcl.toLLVM(module)
             module.name2decl = tmp
+
+class StructDeclaration:
+    def __init__(self, name, names, types): 
+        self.name, self.types, self.names, self.type = name, types, names, SType(name.value)
+    def __str__(self): 
+        typesstr = ",".join([f"{n}:{t}" for n,t in zip(self.names, self.types)]) 
+        return f"StructDecl({self.name},{typesstr})"
+    def LLVMDeclare(self,module):
+        self.ref = ir.global_context.get_identified_type(f"struct.{self.name.value}")
+        module.name2decl[self.name.value] = self
+        self.ref.set_body(*[t.toLLVM(module) for t in self.types])
+    def toLLVM(self, builder):
+        pass
 
 class Block:
     def __init__(self, *args):
@@ -253,12 +266,16 @@ class SlangTransformer(Transformer):
     def slang_array                          (self, node): return Array([child for child in node if isinstance(child, Expression)])
     def slang_expression_sequence            (self, node): return [n for n in node if isinstance(n, Expression)]
     def slang_function_call                  (self, node): return FunctionCall(node[0], node[2])
+    def slang_struct_value                   (self, node): return StructValue(node[0], node[2:-1:4], node[4:-1:4])
+    def slang_struct_access                  (self, node): return StructAccess(node[0], node[2])
+    def slang_struct_ref_access              (self, node): return StructRefAccess(node[0], node[2])
 
     # LITERALS
     def slang_identifier (self, node): return Name(node[0].value.strip())
     def slang_integer    (self, node): return Integer(node[0].value)
     def slang_rational   (self, node): return Rational(node[0].value)
     def slang_string     (self, node): return String(node[0].value)
+    def slang_tname      (self, node): return SType(node[0].value)
 
     # NATIVE TYPES
     def slang_int64  (self, _): return Int64()
@@ -270,6 +287,7 @@ class SlangTransformer(Transformer):
     def slang_ptype  (self, node): return node[1:]
     def slang_rtype  (self, node): return node[1]
     def slang_ftype  (self, node): return FType(node[0], node[1])
+    def slang_struct (self, node): return StructDeclaration(node[1], node[4:-1:3], node[3:-1:3])
 
 
 def parsed(programstr):
@@ -283,6 +301,13 @@ def assembled(programstr):
     return str(transformed(programstr).toLLVM())
 
 def run(programstr):
+    # This shitty code resets the context 
+    # since there is no other documented way for doing so
+    # probably will brake shit about fuck
+    ir.global_context.scope = ir._utils.NameScope()  
+    ir.global_context.identified_types.clear()      
+
+
     program = transformed(programstr) 
 
     module = program.toLLVM()

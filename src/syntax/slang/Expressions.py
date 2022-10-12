@@ -31,6 +31,11 @@ expressionSequence = P(name = "slang_expression_sequence" , rules=[expression, R
 functionCall       = P(name = "slang_function_call"       , rules=[R(expression, T("("), expressionSequence, T(")")), R(expression, T("("),T(")"))])
 cast               = P(name = "slang_cast"               , rules=[R(expression, T("as"), native)])
 
+structValue = P(name = "slang_struct_value",  rules = [R(identifier, T("{"), identifier, T(":"), expression, R(T(","), identifier, T(":"), expression, mod="*"), T("}")),
+                                                       R(identifier, T("{"), T("}"))])
+structAccess    = P(name = "slang_struct_access"    , rules = [R(expression, T("."), identifier)])
+structRefAccess = P(name = "slang_struct_ref_access", rules = [R(expression, T("&."),identifier)]) 
+
 array = P(name = "slang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])
 
 expression.append(addition, 
@@ -50,9 +55,12 @@ expression.append(addition,
                   identifier, 
                   string, 
                   array, 
-                  roundParenthesized, 
                   functionCall, 
                   cast, 
                   reference, 
-                  indexed)
+                  structValue,
+                  structAccess,
+                  structRefAccess,
+                  indexed, 
+                  roundParenthesized) 
 

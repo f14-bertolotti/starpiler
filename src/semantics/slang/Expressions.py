@@ -129,16 +129,15 @@ class Cast(Expression):
     def getType(self, _):
         return self.type
     def toLLVM(self, builder):
-
         expr, etype = self.expr.toLLVM(builder), self.expr.getType(builder)
-        if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.toLLVM())
-        if isinstance(etype, Pointer) and not isinstance(self.type, Pointer): return builder.ptrtoint(expr, self.type.toLLVM())
-        if not isinstance(etype, Pointer) and isinstance(self.type, Pointer): return builder.inttoptr(expr, self.type.toLLVM())
-        if etype == Int64() and self.type in {Int32(), Int8()}  : return builder.trunc(expr, self.type.toLLVM())
-        if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.toLLVM())
-        if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.toLLVM())
-        if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.toLLVM())
-        if etype in {Int32(), Int8(), Int64()} and self.type == Double(): return builder.sitofp(expr, self.type.toLLVM())
+        if isinstance(etype, Pointer) and     isinstance(self.type, Pointer): return builder.bitcast (expr, self.type.toLLVM(builder.module))
+        if isinstance(etype, Pointer) and not isinstance(self.type, Pointer): return builder.ptrtoint(expr, self.type.toLLVM(builder.module))
+        if not isinstance(etype, Pointer) and isinstance(self.type, Pointer): return builder.inttoptr(expr, self.type.toLLVM(builder.module))
+        if etype == Int64() and self.type in {Int32(), Int8()}  : return builder.trunc(expr, self.type.toLLVM(builder.module))
+        if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.toLLVM(builder.module))
+        if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.toLLVM(builder.module))
+        if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.toLLVM(builder.module))
+        if etype in {Int32(), Int8(), Int64()} and self.type == Double(): return builder.sitofp(expr, self.type.toLLVM(builder.module))
 
         assert False, f"unkown cast for {expr.type} -> {self.type}"
 
@@ -157,7 +156,7 @@ class RefIndex:
 
 class Index(Expression):
     def __init__(self, name, indexes): self.name, self.indexes = name, indexes
-    def __str__(self): return f"{self.name}["+",".join([str(idx) for idx in self.indexes])+"]"
+    def __str__(self): return f"Index({self.name},"+"".join([str(idx) for idx in self.indexes])+")"
     def getType(self, builder):
         currentType = self.name.getType(builder)
         for _ in self.indexes: currentType = currentType.base
@@ -206,14 +205,19 @@ class Array(Expression):
         return f"Array({arrayString})"
     def getType(self, builder): return Pointer(self.values[0].getType(builder))
     def toLLVM(self, builder):
-        ptr = builder.alloca(self.getType(builder).base.toLLVM(), len(self.values))
+        ptr = builder.alloca(self.getType(builder).base.toLLVM(builder.module), len(self.values))
         for i,val in enumerate(self.values): 
-            builder.store(val.toLLVM(builder), builder.gep(ptr, [ir.Constant(ir.IntType(64),i)]))
+            pptr = builder.gep(ptr, [ir.Constant(ir.IntType(64),i)])
+            vall = val.toLLVM(builder)
+            builder.store(vall, pptr)
         return ptr
 
 class Name(Expression):
     def __init__(self, value): self.value = value
     def __str__(self): return f"Name({self.value})"
+    def __hash__(self): return hash(self.value)
+    def __eq__(self, other): return other.value == self.value
+    def __neq__(self, other): return other.value != self.value
     def getType(self, builder): return builder.name2var[self.value].type
     def toLLVM(self, builder): return builder.load(builder.name2var[self.value].ref)
 
@@ -270,5 +274,38 @@ class Neq(ComparisonOperation):
         if self.getType(builder) == Int64(): return partial(builder.icmp_signed, "!=")
         if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, "!=")
         self.raiseOperationNotFound(builder)
+
+class StructValue(Expression):
+    def __init__(self, name, names, expressions): self.name, self.names, self.expressions = name, names, expressions
+    def __str__(self):
+        values = ",".join([f"{str(n)}:{str(e)}" for n,e in zip(self.names, self.expressions)])
+        return f"Struct({self.name.value},{values})"
+    def getType(self, builder): return Pointer(builder.name2var[self.name.value].type)
+    def toLLVM(self, builder):
+        ptr = builder.alloca(builder.name2var[self.name.value].ref)
+        for name,expr in zip(self.names, self.expressions):
+            idx = builder.name2var[self.name.value].names.index(name)
+            pptr = builder.gep(ptr, [ir.Constant(ir.IntType(64),0), ir.Constant(ir.IntType(32), idx)])
+            builder.store(expr.toLLVM(builder), pptr)
+        return ptr;
+
+class StructAccess(Expression):
+    def __init__(self, accessed, index): self.accessed, self.index = accessed, index
+    def __str__(self): return f"Access({self.accessed},{self.index})"
+    def getType(self, builder): return self.accessed.getType(builder).base.typeof(builder.module, self.index)
+    def toLLVM(self, builder):
+        expr = self.accessed.toLLVM(builder)
+        idx = self.accessed.getType(builder).base.index(builder.module, self.index)
+        ptr = builder.gep(expr, [ir.Constant(ir.IntType(64),0), ir.Constant(ir.IntType(32), idx)])
+        return builder.load(ptr)
+
+class StructRefAccess(Expression):
+    def __init__(self, accessed, index): self.accessed, self.index = accessed, index
+    def __str__(self): return f"Access({self.accessed},{self.index})"
+    def getType(self, builder): return self.accessed.struct[self.index]
+    def toLLVM(self, builder):
+        expr = self.accessed.toLLVM(builder)
+        idx = self.accessed.getType(builder).base.index(builder.module, self.index)
+        return builder.gep(expr, [ir.Constant(ir.IntType(64),0), ir.Constant(ir.IntType(32), idx)])
 
 

@@ -1,4 +1,4 @@
-from src.semantics.slang import Void, Int8, Int32, Int64, Double, Pointer
+from src.semantics.slang import Type, Void, Int8, Int32, Int64, Double, Pointer, Name
 from llvmlite import ir
 import copy
 
@@ -9,7 +9,8 @@ class DeclareAssign:
         return f"Ass({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
         expr = self.expr.toLLVM(builder)
-        self.ref = builder.alloca(self.type.toLLVM())
+        self.ref = builder.alloca(expr.type)
+        if isinstance(self.type, Name): self.type = builder.name2var[self.type.value]
 
         builder.store(expr, self.ref)
         builder.name2var[self.name.value] = self

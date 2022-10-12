@@ -1,4 +1,4 @@
-from src.semantics.slang.Types import Int8, Int32, Int64, Double, Void, Pointer, FType
+from src.semantics.slang.Types import Int8, Int32, Int64, Double, Void, Pointer, FType, SType, Type
 from src.semantics.slang.Expressions import *
 from src.semantics.slang.Statements import *
 
