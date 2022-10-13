@@ -798,7 +798,7 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program),1)
 
-    def test_import_struct(self):
+    def test_import_struct1(self):
         program = """
         from "src/programs/slang/XYStruct.sl" import XY as ZZ;
 
@@ -807,8 +807,31 @@ class TestBasics(unittest.TestCase):
             return zz.x;
         ;
         """
-
         self.assertEqual(run(program),0)
+
+    def test_import_struct2(self):
+        program = """
+        from "src/programs/slang/XYZStruct.sl" import XYZ as Two;
+        from "src/programs/slang/XYStruct.sl" import XY as One;
+
+        def int64 start() does 
+            One* one = One{x:0,y:1,xy:0 as One*};
+            Two* two = Two{x:3, xy:one};
+            return two.xy.y;
+        ;
+        """
+        self.assertEqual(run(program),1)
+
+    def test_double_import_function(self):
+        program = """
+        from "src/programs/slang/Increment.sl" import increment as incr;
+        from "src/programs/slang/DoubleIncrement3.sl" import doubleIncrement as dincr;
+
+        def int64 start() does
+            return &dincr(&incr(0));
+        ;
+        """
+        self.assertEqual(run(program), 3)        
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 from abc import abstractmethod
+from pathlib import Path
 from llvmlite.ir import VoidType, IntType, DoubleType, PointerType, FunctionType, LiteralStructType
+
 
 
 class Type: 
@@ -43,9 +45,9 @@ class FType(Type):
     def toLLVM(self,module): return FunctionType(self.rtype.toLLVM(module), [t.toLLVM(module) for t in self.ptypes], var_arg = self.vararg)
     def __len__(self): 1
 class SType(Type):
-    def __init__(self, name): self.name = name
+    def __init__(self, name, path=Path()): self.name, self.path = name, path
     def __str__(self): return f"{self.name}"
-    def index(self, module, value): return module.name2decl[self.name].names.index(value)
-    def typeof(self, module, value): return module.name2decl[self.name].types[self.index(module, value)]
+    def index(self, module, value): return module.path2import[self.path][self.name.value].names.index(value)
+    def typeof(self, module, value): return module.path2import[self.path][self.name.value].types[self.index(module, value)]
     def toLLVM(self,module): 
-        return module.name2decl[self.name].ref
+        return module.path2import[self.path][self.name.value].ref

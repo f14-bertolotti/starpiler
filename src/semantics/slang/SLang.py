@@ -25,6 +25,8 @@ class Module:
 
     def toLLVM(self):
 
+        self.LLVMModule.path2import[pathlib.Path()] = self.LLVMModule.name2decl
+
         for dcl in self.declarations:
             dcl.LLVMDeclare(self.LLVMModule)
 
@@ -157,14 +159,13 @@ class GlobalDeclaration:
 class Import:
     
     path2module = dict()
-    path2import = dict()
     compiled = set()
     def __init__(self, path, name, rename):
         self.path, self.name, self.rename = pathlib.Path(os.path.join(os.getcwd(), path)), name, rename
         
         if self.path in Import.path2module: self.module = Import.path2module[self.path]
         else:
-            self.module = transformed(self.path.read_text())
+            self.module = transformed(self.path.read_text(), self.path)
             Import.path2module[self.path] = self.module
 
     def __str__(self):
@@ -173,11 +174,11 @@ class Import:
     def LLVMDeclare(self, module):
         if self.path not in module.path2import:
             module.name2decl, tmp = dict(), module.name2decl
+            module.path2import[self.path] = module.name2decl
 
             for dcl in self.module.declarations:
                 dcl.LLVMDeclare(module)
 
-            module.path2import[self.path] = module.name2decl
             module.name2decl = tmp
 
         module.name2decl[self.rename.value] = module.path2import[self.path][self.name.value]
@@ -194,7 +195,7 @@ class Import:
 
 class StructDeclaration:
     def __init__(self, name, names, types): 
-        self.name, self.types, self.names, self.type = name, types, names, SType(name.value)
+        self.name, self.types, self.names, self.type = name, types, names, SType(name)
     def __str__(self): 
         typesstr = ",".join([f"{n}:{t}" for n,t in zip(self.names, self.types)]) 
         return f"StructDecl({self.name},{typesstr})"
@@ -202,7 +203,7 @@ class StructDeclaration:
         self.ref = ir.global_context.get_identified_type(f"struct.{self.name.value}")
         module.name2decl[self.name.value] = self
         self.ref.set_body(*[t.toLLVM(module) for t in self.types])
-    def toLLVM(self, builder):
+    def toLLVM(self, module):
         pass
 
 class Block:
@@ -219,6 +220,9 @@ class Block:
 
 class SlangTransformer(Transformer):
 
+    def __init__(self, *args, path=pathlib.Path(), **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.path = path
 
     # MODULEWISE DECLARATION
     def slang_start                (self, node): return Module(node)
@@ -275,7 +279,7 @@ class SlangTransformer(Transformer):
     def slang_integer    (self, node): return Integer(node[0].value)
     def slang_rational   (self, node): return Rational(node[0].value)
     def slang_string     (self, node): return String(node[0].value)
-    def slang_tname      (self, node): return SType(node[0].value)
+    def slang_tname      (self, node): return SType(node[0], path=self.path)
 
     # NATIVE TYPES
     def slang_int64  (self, _): return Int64()
@@ -294,8 +298,8 @@ def parsed(programstr):
     res = lang.parse(programstr)
     return res
 
-def transformed(programstr):
-    return SlangTransformer().transform(parsed(programstr))
+def transformed(programstr, path=pathlib.Path()):
+    return SlangTransformer(path=path).transform(parsed(programstr))
 
 def assembled(programstr):
     return str(transformed(programstr).toLLVM())

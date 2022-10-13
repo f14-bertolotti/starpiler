@@ -3,5 +3,7 @@ add function types and function cast [DONE]
 add comments [DONE]
 code coverage 100% [DONE 99%]
 syntax visitable [DONE]
+better test .&, ., structs and structs with imports. [DONE]
+refactoring slang (mostly imports are quite shit)
 spplang classes
 spplang -> slang translator
