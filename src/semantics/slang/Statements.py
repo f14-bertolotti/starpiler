@@ -15,6 +15,19 @@ class DeclareAssign:
         builder.store(expr, self.ref)
         builder.name2var[self.name.value] = self
 
+class AutoAssign:
+    def __init__(self, name, expr):
+        self.name, self.expr = name, expr
+    def __str__(self):
+        return f"AutoAssign({self.name},{self.expr})"
+    def toLLVM(self, builder):
+        expr = self.expr.toLLVM(builder)
+        self.ref = builder.alloca(expr.type)
+        self.type = self.expr.getType(builder)
+
+        builder.store(expr, self.ref)
+        builder.name2var[self.name.value] = self
+
 class ReAssign:
     def __init__(self, lexpr, rexpr):
         self.lexpr, self.rexpr = lexpr, rexpr

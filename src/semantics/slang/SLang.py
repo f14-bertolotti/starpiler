@@ -242,6 +242,7 @@ class SlangTransformer(Transformer):
     def slang_return                 (self, node): return Return(node[1])
     def slang_return_void            (self, node): return ReturnVoid()
     def slang_declaration_assignment (self, node): return DeclareAssign(node[0], node[1], node[3])
+    def slang_auto_assignement       (self, node): return AutoAssign(node[1], node[3])
     def slang_assignement            (self, node): return ReAssign(node[0], node[2])
     def slang_ifthen                 (self, node): return IfThen(node[1], node[3])
     def slang_while                  (self, node): return While(node[1], node[3])

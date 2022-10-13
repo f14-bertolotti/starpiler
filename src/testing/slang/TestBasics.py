@@ -833,6 +833,70 @@ class TestBasics(unittest.TestCase):
         """
         self.assertEqual(run(program), 3)        
 
+    def test_auto(self):
+        program = """
+        def int64 start() does 
+            auto x = 10;
+            return x;
+        ;
+        """
+        self.assertEqual(run(program), 10)
+
+    def test_auto_struct(self):
+        program = """
+        struct XY with int64 x; int64 y; XY* xy;;
+    
+        def int64 start() does 
+            auto x = XY{x:0, y:1, xy:0 as XY*};
+            return x.y;
+        ;
+        """
+        self.assertEqual(run(program), 1)
+
+    def test_auto_nested_struct(self):
+        program = """
+        struct XY with int64 x; int64 y; XY* xy;;
+
+        def int64 start() does
+            auto y = XY{x:1, y:2, xy:XY{x:1, y:2, xy:0 as XY*}};
+            return y.xy.y;
+        ;
+        """
+        self.assertEqual(run(program), 2)
+
+    def test_auto_array(self):
+        program = """
+        struct XY with int64 x; int64 y; XY* xy;;
+        def int64 start() does
+            auto y = [1,2,3,4];
+            return y[2];
+        ;
+        """
+        self.assertEqual(run(program),3)
+
+    def test_auto_array_struct(self):
+        program = """
+        struct XY with int64 x; int64 y; XY* xy;;
+        def int64 start() does 
+            auto x = [XY{x:1, y:2, xy:XY{x:1, y:2, xy:0 as XY*}},
+                      XY{x:1,y:1,xy: 0 as XY*}];
+            auto y = [1,2,3,4];
+            return x[0].xy.x;
+        ;
+        """
+        self.assertEqual(run(program), 1)
+    
+    def test_auto_func(self):
+        program = """
+        def int64 increment(int64 x) does return x + 1;;
+        def int64 apply(int8* f, int64 value) does return (f as (int64 -> int64)*)(value);;
+        def int64 start() does 
+            auto f = &increment;
+            return &apply(f as int8*, 10);
+        ;
+        """
+        self.assertEqual(run(program), 11)
+
 
 if __name__ == "__main__":
     unittest.main()
