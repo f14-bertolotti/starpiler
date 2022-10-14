@@ -37,7 +37,7 @@ class TestSyntax(unittest.TestCase):
    def test_classes1(self):
       self.classLanguage.parse("""
          class A with
-            def int64 pi = 3.14;
+            def int64 pi;
             def int64 f(int64 x, int64 y) does return x + y;;
          ;
       """)
@@ -45,7 +45,7 @@ class TestSyntax(unittest.TestCase):
    def test_qualification(self):
       self.classLanguage.parse("""
       class A with 
-         def int64 x = 0; 
+         def int64 x; 
          def int64 getX() does return self.x;;
       ;""")
 
@@ -57,7 +57,17 @@ class TestSyntax(unittest.TestCase):
 
    def test_spplang_class(self):
       self.sppLanguage.parse("""
+      from "a/b/c" import F as D;
+      def void f();
       class X with;
+      """)
+
+   def test_spplang_new(self):
+      self.sppLanguage.parse("""
+      from "a/b/c" import F as D;
+      def void f();
+      class X with;
+      def int64 start() does X x = new X;;
       """)
 
 

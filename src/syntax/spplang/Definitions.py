@@ -1,4 +1,5 @@
 from src.syntax.slang import functionDefinition as slangFunction
+from src.syntax.slang import functionDeclaration as slangFunctionDeclaration
 from src.syntax.slang import globalAssignement 
 from src.syntax.spplang import declarationAssignement, identifier, native, expression, statement, block
 
@@ -11,10 +12,10 @@ from src.syntax import getChangePrefixVisitor
 from src.syntax import getClonerVisitor
 
 methodDefinition = slangFunction.visit(getClonerVisitor(slangFunction)) \
-                                  .visit(getFindAndReplaceVisitor("slang_type"       , native)) \
-                                  .visit(getFindAndReplaceVisitor("slang_identifier" , identifier)) \
-                                  .visit(getFindAndReplaceVisitor("slang_block"      , block)) \
-                                  .visit(getChangePrefixVisitor  ("slang_"           , "spplang_"))
+                                .visit(getFindAndReplaceVisitor("slang_type"       , native)) \
+                                .visit(getFindAndReplaceVisitor("slang_identifier" , identifier)) \
+                                .visit(getFindAndReplaceVisitor("slang_block"      , block)) \
+                                .visit(getChangePrefixVisitor  ("slang_"           , "spplang_"))
 
 fieldDefinition = globalAssignement.visit(getClonerVisitor(globalAssignement)) \
                                    .visit(getFindAndReplaceVisitor("slang_type"                   , native)) \
@@ -24,7 +25,16 @@ fieldDefinition = globalAssignement.visit(getClonerVisitor(globalAssignement)) \
                                    .visit(getChangePrefixVisitor  ("slang_"                       , "spplang_")) \
                                    .visit(getChangePrefixVisitor  ("spplang_global_assignement"   , "spplang_class_assignement"))
 
-definition = P(name="spplang_definition", rules=[methodDefinition, fieldDefinition], mod="?")
+fieldDeclaration = P(name="spplang_field_declaration", rules = [R(T("def"), native, identifier, T(";"))])
+
+definition = P(name="spplang_definition", rules=[methodDefinition, fieldDeclaration], mod="?")
                                      
 classDefinition = P(name="spplang_class", rules=[R(T("class"), identifier, T("with"), R(definition, mod="*"), T(";"))])
 
+functionDefinition = methodDefinition
+functionDeclaration = slangFunctionDeclaration.visit(getClonerVisitor(slangFunctionDeclaration)) \
+                                              .visit(getFindAndReplaceVisitor("slang_type"       , native)) \
+                                              .visit(getFindAndReplaceVisitor("slang_identifier" , identifier)) \
+                                              .visit(getChangePrefixVisitor  ("slang_"           , "spplang_"))
+
+variableDefinition = fieldDefinition
