@@ -419,8 +419,8 @@ tests = {
             "import2"                : {"program" : import2,"result":4},
             "import3"                : {"program" : import3,"result":11},
             "ftype1"                 : {"program" : ftype1,"result":1},
-            "extern1"                : {"program" : extern1,"result":1},
-            "comment"                : {"program" : comment,"result":11},
+            "extern1"                : {"program" : extern1,"result":0},
+            "comment"                : {"program" : comment,"result":0},
             "variable_declaration2"  : {"program":variable_declaration2,"result":1},
             "recursive"              : {"program":recursive,"result":144},
             "pass_by_value"          : {"program":pass_by_value,"result":0},
@@ -435,9 +435,9 @@ tests = {
             "auto"                   : {"program":auto,"result":10},
             "auto_struct"            : {"program":auto_struct,"result":1},
             "auto_nested_struct"     : {"program":auto_nested_struct,"result":2},
-            "auto_func"              : {"program":auto_func,"result":3},
-            "auto_array_struct"      : {"program":auto_array_struct,"result":0},
-            "auto_array"             : {"program":auto_array,"result":0},
+            "auto_func"              : {"program":auto_func,"result":11},
+            "auto_array_struct"      : {"program":auto_array_struct,"result":1},
+            "auto_array"             : {"program":auto_array,"result":3},
 
         }
 

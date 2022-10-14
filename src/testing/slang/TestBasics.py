@@ -84,9 +84,12 @@ class TestBasics(unittest.TestCase):
         
 
 for testname in tests:
-    def f(self):self.assertEqual(run(tests[inspect.stack()[0][3][5:]]["program"]), tests[inspect.stack()[0][3][5:]]["result"])
-    f.__name__ = f"test_{testname}"
-    setattr(TestBasics, f.__name__, TestBasics)
+    def make():
+        def f(self):
+            self.assertEqual(run(program_string=tests[f.__name__[5:]]["program"]), tests[f.__name__[5:]]["result"])
+        f.__name__ = f"test_{testname}"
+        return f
+    setattr(TestBasics, f"test_{testname}", make())
 
 if __name__ == "__main__":
     unittest.main()

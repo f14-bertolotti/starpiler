@@ -305,15 +305,20 @@ def transformed(programstr, path=pathlib.Path()):
 def assembled(programstr):
     return str(transformed(programstr).toLLVM())
 
-def run(programstr):
+def run(program_string=None, program_tree=None, program_ast=None):
+    assert program_string != None or program_tree != None or program_ast != None
     # This shitty code resets the context 
     # since there is no other documented way for doing so
     # probably will brake shit about fuck
     ir.global_context.scope = ir._utils.NameScope()  
     ir.global_context.identified_types.clear()      
 
+    program = None
+    if program_string != None: program = transformed(program_string)
+    elif program_tree != None: program = SlangTransformer(path=pathlib.Path()).transform(program_tree)
+    elif program_ast  != None: program = program_ast
+    assert program != None
 
-    program = transformed(programstr) 
 
     module = program.toLLVM()
     
