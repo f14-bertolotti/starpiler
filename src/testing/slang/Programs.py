@@ -438,6 +438,7 @@ tests = {
             "auto_func"              : {"program":auto_func,"result":11},
             "auto_array_struct"      : {"program":auto_array_struct,"result":1},
             "auto_array"             : {"program":auto_array,"result":3},
+            "auto_global"            : {"program":"def auto x = 1; def int64 start() does return x;;","result":1}
 
         }
 

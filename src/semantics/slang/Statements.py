@@ -20,6 +20,8 @@ class AutoAssign:
         self.name, self.expr = name, expr
     def __str__(self):
         return f"AutoAssign({self.name},{self.expr})"
+    def getType(self, builder):
+        return self.expr.getType(builder)
     def toLLVM(self, builder):
         expr = self.expr.toLLVM(builder)
         self.ref = builder.alloca(expr.type)

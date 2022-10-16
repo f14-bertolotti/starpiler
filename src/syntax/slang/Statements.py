@@ -14,7 +14,8 @@ autoAssignement        = P(name="slang_auto_assignement"       , rules = [R(T("a
 assignement            = P(name="slang_assignement"            , rules = [R(expression, T("="), expression, T(";"))])
 whileloop              = P(name="slang_while"                  , rules = [R(T("while"), expression, T("do"), block, T(";"))])
 ifthen                 = P(name="slang_ifthen"                 , rules = [R(T("if"), expression, T("do"), block, T(";"))])
-globalAssignement      = P(name="slang_global_assignement"     , rules = [R(T("def"), declarationAssignement)])
+globalAssignement      = P(name="slang_global_assignement"     , rules = [R(T("def"), declarationAssignement), 
+                                                                          R(T("def"), autoAssignement)])
 globalDeclaration      = P(name="slang_global_declaration"     , rules = [R(T("def"), native, identifier, T(";"))])
 statement.append(ifthen, whileloop, declarationAssignement, autoAssignement, assignement, returnstmt, returnvoidstmt, skip, R(expression, T(";")))
 

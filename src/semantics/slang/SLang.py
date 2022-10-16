@@ -122,22 +122,25 @@ class FunctionDeclaration:
 
 
 class GlobalAssignement:
-    def __init__(self, type, name, expr):
-        self.type, self.name, self.expr, self.ref = type, name, expr, None
+    def __init__(self, assignement):
+        self.assignement = assignement
 
     def __str__(self): 
-        return f"GlobalAssignement({self.type},{self.name},{self.expr})"
+        return f"GlobalAssignement({self.assignement.type},{self.assignement.name},{self.assignement.expr})"
 
     def LLVMDeclare(self, module):
-        gvar = ir.GlobalVariable(module, self.type.toLLVM(module), self.name.value)
+        builder = ir.IRBuilder()
+        builder.name2var = module.name2decl
+        self.type = self.assignement.expr.getType(builder)
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(module), self.assignement.name.value)
         self.ref = gvar
-        module.name2decl[self.name.value] = self
+        module.name2decl[self.assignement.name.value] = self
         gvar.linkage = "internal"
 
     def toLLVM(self, module):
         builder = module.name2decl["start"].globalsBuilder
         builder.name2var = module.name2decl
-        builder.store(self.expr.toLLVM(builder), self.ref)
+        builder.store(self.assignement.expr.toLLVM(builder), self.ref)
 
 class GlobalDeclaration:
     def __init__(self, type, name):
@@ -232,7 +235,7 @@ class SlangTransformer(Transformer):
     def slang_parameter_seq_def    (self, node): return ParameterSequenceDefinition (*[param for param in node if isinstance(param,ParameterDefinition )])
     def slang_parameter_seq_decl   (self, node): return ParameterSequenceDeclaration(*[param for param in node if isinstance(param,ParameterDeclaration)])
     def slang_block                (self, node): return Block(*node)
-    def slang_global_assignement   (self, node): return GlobalAssignement(node[1].type, node[1].name, node[1].expr)
+    def slang_global_assignement   (self, node): return GlobalAssignement(node[1])
     def slang_global_declaration   (self, node): return GlobalDeclaration(node[1], node[2])
     def slang_import               (self, node): return Import(node[1].value[:-1], node[3], node[5])
     def slang_function_definition  (self, node): return FunctionDefinition(node[1], node[2], node[3], node[5])
