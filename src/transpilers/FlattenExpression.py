@@ -297,6 +297,33 @@ class FlattenExpressionTransformer(Transformer):
                                      Tree(Token("RULE", "slang_struct_value"), trees), 
                                      Token("SEMICOLON", ";")])]}
 
+    def slang_struct_access(self, nodes):
+        newIdentifier = Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.register.unregistered())])
+        leftAssignements  = nodes[0]["assignements"] if isinstance(nodes[0], dict) else []
+        rightAssignements = nodes[2]["assignements"] if isinstance(nodes[2], dict) else []
+        leftTree  = nodes[0]["tree"] if isinstance(nodes[0], dict) else nodes[0]
+        rightTree = nodes[2]["tree"] if isinstance(nodes[2], dict) else nodes[2]
+        return {"tree":newIdentifier,
+                "assignements": leftAssignements + rightAssignements + [Tree(Token("RULE", "slang_auto_assignement"), [
+                                     Token("AUTO", "auto"), 
+                                     newIdentifier, 
+                                     Token("EQUAL", "="), 
+                                     Tree(Token("RULE", "slang_struct_access"), [leftTree, Token("DOT","."), rightTree]), 
+                                     Token("SEMICOLON", ";")])]}
+
+    def slang_indexed(self, nodes):
+        newIdentifier = Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.register.unregistered())])
+        assignements = [asgn for node in nodes for asgn in (node["assignements"] if isinstance(node,dict) else [])]
+        trees = [node["tree"] if isinstance(node,dict) else node for node in nodes]
+        return {"tree":newIdentifier, 
+                "assignements": assignements + [Tree(Token("RULE", "slang_auto_assignement"), [
+                                     Token("AUTO", "auto"), 
+                                     newIdentifier, 
+                                     Token("EQUAL", "="), 
+                                     Tree(Token("RULE", "slang_indexed"), trees), 
+                                     Token("SEMICOLON", ";")])]} 
+
+
 
 
 
@@ -311,16 +338,10 @@ class FlattenExpressionTransformer(Transformer):
 #        return super().transform(*args, **kwargs).string
 #
 def flattenExpression(parseTree):
+
     result = FlattenExpressionTransformer().transform(parseTree)
     return result 
 
     
-
-#flattenExpression(lang.parse("def int64 start() does return 2 * 2 + 1;;"))
-#flattenExpression(lang.parse("""def int64 start() does 
-#                                    int64 x = 10; 
-#                                    int64 y = 11; 
-#                                    return x+y*y;
-#                                ;"""))
 
 
