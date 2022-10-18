@@ -28,6 +28,9 @@ class Production(Larkable, Visitable):
         self.rules = self.rules + list(args)
         return self
 
+    def insert(self, i, value):
+        self.rules.insert(i, value)
+
     def toLark(self):
         right = "\n | ".join([rule.name if isinstance(rule,Production) else rule.toLark() for rule in self])
         return f"{self.mod}{self.name} : {right}"

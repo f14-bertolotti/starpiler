@@ -1,6 +1,6 @@
 from src.syntax.slang import functionDefinition as slangFunction
 from src.syntax.slang import functionDeclaration as slangFunctionDeclaration
-from src.syntax.slang import globalAssignement 
+from src.syntax.slang import globalDeclaration 
 from src.syntax.spplang import declarationAssignement, identifier, native, expression, statement, block
 
 from src.syntax import Production as P
@@ -17,7 +17,7 @@ methodDefinition = slangFunction.visit(getClonerVisitor(slangFunction)) \
                                 .visit(getFindAndReplaceVisitor("slang_block"      , block)) \
                                 .visit(getChangePrefixVisitor  ("slang_"           , "spplang_"))
 
-fieldDefinition = globalAssignement.visit(getClonerVisitor(globalAssignement)) \
+fieldDefinition = globalDeclaration.visit(getClonerVisitor(globalDeclaration)) \
                                    .visit(getFindAndReplaceVisitor("slang_type"                   , native)) \
                                    .visit(getFindAndReplaceVisitor("slang_identifier"             , identifier)) \
                                    .visit(getFindAndReplaceVisitor("slang_expression"             , expression)) \

@@ -1,1 +1,1 @@
-from src.testing.slang.Programs import tests
+from src.testing.slang.Tests import tests

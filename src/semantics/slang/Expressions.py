@@ -231,7 +231,8 @@ class Name(Expression):
     def __eq__(self, other): return other.value == self.value
     def __neq__(self, other): return other.value != self.value
     def getType(self, builder): return builder.name2var[self.value].type
-    def toLLVM(self, builder): return builder.load(builder.name2var[self.value].ref)
+    def toLLVM(self, builder): 
+        return builder.load(builder.name2var[self.value].ref)
 
 class Ref(Expression):
     def __init__(self, name): self.name = name

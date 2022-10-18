@@ -22,6 +22,9 @@ class Rule(Larkable, Visitable):
     def append(self, value):
         self.rule.append(value)
 
+    def insert(self, i, value):
+        self.rule.insert(i, value)
+
     def toLark(self):
         return "(" + " ".join([x.name if isinstance(x, Production) else x.toLark() for x in self]) + f"){self.mod}"
 

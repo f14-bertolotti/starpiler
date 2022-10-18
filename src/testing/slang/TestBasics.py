@@ -86,7 +86,6 @@ class TestBasics(unittest.TestCase):
 for testname in tests:
     def make():
         def f(self):
-            import rich
             self.assertEqual(run(program_string=tests[f.__name__[5:]]["program"]), tests[f.__name__[5:]]["result"])
         f.__name__ = f"test_{testname}"
         return f

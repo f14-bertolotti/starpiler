@@ -1,12 +1,15 @@
 from src.semantics.slang import Type, Void, Int8, Int32, Int64, Double, Pointer, Name
+from src.semantics.slang import Expression
 from llvmlite import ir
 import copy
 
-class DeclareAssign:
+class DeclareAssign(Expression):
     def __init__(self, type, name, expr):
         self.type, self.name, self.expr = type, name, expr
     def __str__(self):
         return f"Ass({self.type},{self.name},{self.expr})"
+    def getType(self, builder):
+        return self.expr.getType(builder)
     def toLLVM(self, builder):
         expr = self.expr.toLLVM(builder)
         self.ref = builder.alloca(expr.type)
@@ -14,8 +17,9 @@ class DeclareAssign:
 
         builder.store(expr, self.ref)
         builder.name2var[self.name.value] = self
+        return expr
 
-class AutoAssign:
+class AutoAssign(Expression):
     def __init__(self, name, expr):
         self.name, self.expr = name, expr
     def __str__(self):
@@ -29,16 +33,20 @@ class AutoAssign:
 
         builder.store(expr, self.ref)
         builder.name2var[self.name.value] = self
+        return expr
 
-class ReAssign:
+class ReAssign(Expression):
     def __init__(self, lexpr, rexpr):
         self.lexpr, self.rexpr = lexpr, rexpr
     def __str__(self):
         return f"RAss({self.lexpr},{self.rexpr})"
+    def getType(self, builder):
+        return self.rexpr.getType(builder)
     def toLLVM(self, builder):
         rexpr = self.rexpr.toLLVM(builder)
         lexpr = self.lexpr.toLLVM(builder)
         builder.store(rexpr, lexpr)
+        return rexpr
 
 class Skip:
     def __init__(self): pass
