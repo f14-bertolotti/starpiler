@@ -121,6 +121,18 @@ class Neg(UnaryOperation):
         elif self.getType(builder) == Double(): return builder.fneg
         self.raiseOperationNotFound(builder)
 
+class SizeOf(UnaryOperation):
+    def __init__(self, x):
+        UnaryOperation.__init__(self, x)
+    def toLLVM(self, builder):
+        const0 = ir.Constant(ir.IntType(64),0)
+        nullptr = builder.inttoptr(const0, self.x.toLLVM(builder.module).as_pointer())
+        ptrsize = builder.gep(nullptr, [ir.Constant(ir.IntType(32),1)])
+        size = builder.ptrtoint(ptrsize, ir.IntType(64))
+        return size
+
+
+
 class Cast(Expression):
     def __init__(self, expr, type):
         self.type, self.expr = type, expr

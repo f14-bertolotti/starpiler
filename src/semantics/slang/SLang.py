@@ -277,6 +277,7 @@ class SlangTransformer(Transformer):
     def slang_struct_value                   (self, node): return StructValue(node[0], node[2:-1:4], node[4:-1:4])
     def slang_struct_access                  (self, node): return StructAccess(node[0], node[2])
     def slang_struct_ref_access              (self, node): return StructRefAccess(node[0], node[2])
+    def slang_size_of                        (self, node): return SizeOf(node[2])
 
     # LITERALS
     def slang_identifier (self, node): return Name(node[0].value.strip())
@@ -292,7 +293,7 @@ class SlangTransformer(Transformer):
     def slang_void   (self, _): return Void()
     def slang_double (self, _): return Double()
     def slang_pointer(self, node): return Pointer(node[0])
-    def slang_ptype  (self, node): return node[1:]
+    def slang_ptype  (self, node): return node[1::2]
     def slang_rtype  (self, node): return node[1]
     def slang_ftype  (self, node): return FType(node[0], node[1])
     def slang_struct (self, node): return StructDeclaration(node[1], node[4:-1:3], node[3:-1:3])
@@ -322,9 +323,8 @@ def run(program_string=None, program_tree=None, program_ast=None):
     elif program_ast  != None: program = program_ast
     assert program != None
 
-
     module = program.toLLVM()
-    
+
     binding.initialize()
     binding.initialize_native_target()
     binding.initialize_native_asmprinter()
@@ -337,7 +337,7 @@ def run(program_string=None, program_tree=None, program_ast=None):
     target_machine = target.create_target_machine()
     backing_mod = binding.parse_assembly("")
     engine = binding.create_mcjit_compiler(backing_mod, target_machine)
-    
+
     engine.add_module(parsedAssembly)
     engine.finalize_object()
     engine.run_static_constructors()

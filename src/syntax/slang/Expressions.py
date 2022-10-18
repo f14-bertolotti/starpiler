@@ -20,6 +20,7 @@ less           = P(name = "slang_less"           , rules=[R(expression, T("<") ,
 lessEqual      = P(name = "slang_less_equal"     , rules=[R(expression, T("<="), expression)])
 notEqual       = P(name = "slang_not_equal"      , rules=[R(expression, T("!="), expression)])
 reference      = P(name = "slang_reference"      , rules=[R(T("&"), identifier)])
+sizeOf         = P(name = "slang_size_of"        , rules=[R(T("size"), T("of"), native)]) 
 
 roundParenthesized           = P(name = "slang_round_parenthesized"           , rules=[R(T("("), expression, T(")"))])
 squareParenthesized          = P(name = "slang_square_parenthesized"           , rules=[R(T("["), expression, T("]"))])
@@ -62,5 +63,6 @@ expression.append(addition,
                   structAccess,
                   structRefAccess,
                   indexed, 
+                  sizeOf,
                   roundParenthesized) 
 

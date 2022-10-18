@@ -361,6 +361,99 @@ def int64 start() does
 ;
 """
 
+struct_func = """
+struct X with
+    (int64 -> int64)* inc;
+;
+
+def int64 inc(int64 x) does return x + 1;;
+
+def int64 start() does
+    X* x = X{};
+    x&.inc = &inc;
+    return 0;; 
+
+"""
+
+struct_class = """
+struct X with 
+    int64 x; 
+    int64 y; 
+    (X*, int64 -> int64)* increment; 
+    (X*, int64, int64 -> X*)* start; 
+; 
+def int64 incrementX(X* this, int64 x) does 
+    return x + this.x + this.y; 
+; 
+def X* startX(X* this, int64 x, int64 y) does 
+    this&.increment = &incrementX; 
+    this&.start = &startX; 
+    this&.x = x; 
+    this&.y = y; 
+    return this; 
+; 
+def int64 start () does 
+    X* x = &startX (X{},1 ,2); 
+    return x.increment(x, 1); 
+;
+"""
+
+struct_class2  = """
+struct Y with 
+        int64 x; 
+        int64 y; 
+        (Y*, int64, int64 -> Y*)* start; 
+        (Y* -> int64)* get_x; 
+        (Y* -> int64)* get_y; 
+        ; 
+
+def Y* startY(Y* this, int64 x, int64 y) does 
+        this&.start = &startY; 
+        this&.get_x = &get_xY; 
+        this&.get_y = &get_yY; 
+        this&.x = x; 
+        this&.y = y; 
+        return this; 
+        ; 
+
+def int64 get_xY(Y* this) does return this.x;; 
+def int64 get_yY(Y* this) does return this.y;; 
+
+struct X with 
+        Y* y; 
+        (X*, Y* -> X*)* start; 
+        ; 
+
+def X* startX(X* this, Y* y) does 
+        this&.start = &startX; 
+        this&.y = y; 
+        return this; 
+        ; 
+
+def int64 start() does 
+        X* x = &startX(X{}, &startY(Y{}, 1, 2)); 
+        auto _1 = x.y; 
+        auto _2 = x.y; 
+        return _1.get_x(_1) + _2.get_y(_2) ; 
+        ;
+
+"""
+
+sizeof_struct = """
+struct Y with
+        int64 x;
+        int64 y;
+;
+
+struct X with
+        int64 x;
+        int64 y;
+        Y* y;
+;
+
+def int64 start() does return size of X;;
+"""
+
 tests = {
             "increment"              : {"program" : "def int64 increment(int64 x) does return x + 1;; def int64 start() does int64 result = &increment(10); return result;;", "result"  : 11},
             "mutableVars"            : {"program" : " def int64 start() does int64 x = 10; &x = 11; return x;; ", "result" : 11},
@@ -427,6 +520,7 @@ tests = {
             "pass_by_ref"            : {"program" : pass_by_ref,"result":1},
             "voidfunc"               : {"program" : voidfunc,"result":1},
             "struct"                 : {"program" : struct,"result":1},
+            "struct_func"            : {"program" : struct_func,"result":0},
             "nested_struct"          : {"program" : nested_struct,"result":1},
             "array_struct"           : {"program" : array_struct,"result":1},
             "import_struct1"         : {"program" : import_struct1,"result":0},
@@ -439,7 +533,13 @@ tests = {
             "auto_array_struct"      : {"program" : auto_array_struct,"result":1},
             "auto_array"             : {"program" : auto_array,"result":3},
             "auto_global"            : {"program" : "def auto x = 1; def int64 start() does return x;;","result":1},
-            "dot_cast"               : {"program" : "struct X with int64 x;; def int64 start() does int8* x = X{x:10} as int8*; return (x as X*).x;;", "result":10}
+            "dot_cast"               : {"program" : "struct X with int64 x;; def int64 start() does int8* x = X{x:10} as int8*; return (x as X*).x;;", "result":10},
+            "func_assign"            : {"program" : "def int64 inc(int64 x) does return x + 1;; def (int64 -> int64)* f = &inc; def int64 start() does return f(9);;", "result":10},
+            "struct_class"           : {"program" : struct_class, "result":4},
+            "struct_class2"          : {"program" : struct_class2, "result":3},
+            "reassign"               : {"program" : "def int64 start() does auto x = 1; auto x = 2; auto x = x; return x;;" , "result":2},
+            "sizeof"                 : {"program" : "def int64 start() does return size of int64;;", "result":8},
+            "sizeof_struct"          : {"program" : sizeof_struct, "result":24},
 
         }
 
