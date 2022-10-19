@@ -5,5 +5,7 @@ code coverage 100% [DONE 99%]
 syntax visitable [DONE]
 better test .&, ., structs and structs with imports. [DONE]
 refactoring slang (mostly imports are quite shit)
-spplang classes
+spplang classes 
+spplang classes introduces identifiers -> check that those are unused
+test spplang classes
 spplang -> slang translator

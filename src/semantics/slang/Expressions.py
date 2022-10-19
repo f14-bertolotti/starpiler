@@ -124,6 +124,7 @@ class Neg(UnaryOperation):
 class SizeOf(UnaryOperation):
     def __init__(self, x):
         UnaryOperation.__init__(self, x)
+    def getType(self,builder): return Int64();
     def toLLVM(self, builder):
         const0 = ir.Constant(ir.IntType(64),0)
         nullptr = builder.inttoptr(const0, self.x.toLLVM(builder.module).as_pointer())

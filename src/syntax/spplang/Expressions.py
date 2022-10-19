@@ -11,17 +11,19 @@ from src.syntax.slang import expression as slangExpression
 from src.syntax.spplang import native, identifier, integer, rational, string
 
 
-qualification = P(name = "spplang_qualification", rules = [R(identifier, R(T("."), identifier, mod="+"))])
-reference     = P(name = "slang_reference"      , rules=[R(T("&"), qualification)])
 expression = slangExpression.visit(getClonerVisitor(slangExpression)) \
                             .visit(getFindAndReplaceVisitor("slang_type"       , native)) \
                             .visit(getFindAndReplaceVisitor("slang_identifier" , identifier)) \
                             .visit(getFindAndReplaceVisitor("slang_integer"    , integer)) \
                             .visit(getFindAndReplaceVisitor("slang_rational"   , rational)) \
                             .visit(getFindAndReplaceVisitor("slang_string"     , string)) \
-                            .visit(getFindAndReplaceVisitor("slang_reference"  , reference)) \
                             .visit(getChangePrefixVisitor("slang_"             , "spplang_"))
-newExpression = P(name = "spplang_new", rules = [R(T("new"), identifier)])
+
+expressionSequence = expression.visit(getMatchesVisitor(lambda x:isinstance(x,P) and x.name == "spplang_expression_sequence"))[0]
+
+qualification = P(name = "spplang_qualification" , rules = [R(identifier, R(T("."), identifier, mod="+"))])
+newExpression = P(name = "spplang_new"           , rules = [R(T("new"), identifier, T("("), T(")")),
+                                                            R(T("new"), identifier, T("("), expressionSequence, T(")"))])
 
 expression.append(qualification)
 expression.append(newExpression)
