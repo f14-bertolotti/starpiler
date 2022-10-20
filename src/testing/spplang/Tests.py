@@ -161,6 +161,33 @@ tests = {
                           &free(x);
                           return 1;
                        ;
-                       """}
+                       """},
+   "sumop"         : {"result" : 1, "program" : 
+                      """
+                      class SumOp with
+                          def int64 a;
+                          def int64 b;
+                          def SumOp* start(SumOp* this, int64 a, int64 b) does 
+                              this&.a = a;
+                              this&.b = b;
+                              return this;
+                          ;
+                          def int64 apply(SumOp* this) does
+                              return this.a + this.b;
+                          ;
+                      ;
+                      def int64 start() does
+                          SumOp* op = new SumOp(1,2);
+                          return op.apply() == 3;
+                      ;
+                      """},
+   "sumop_import"  : {"result" : 1, "program" : 
+                      """
+                      from "src/programs/spplang/SumOp.spp" import SumOp as Sum;
+                      def int64 start() does
+                          Sum* sum = new Sum(1,2);
+                          return sum.apply() == 3;
+                      ;
+                      """}
 
 }

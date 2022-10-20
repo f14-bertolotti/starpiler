@@ -1,0 +1,12 @@
+class SumOp with
+    def int64 a;
+    def int64 b;
+    def SumOp* start(SumOp* this, int64 a, int64 b) does 
+        this&.a = a;
+        this&.b = b;
+        return this;
+    ;
+    def int64 apply(SumOp* this) does
+        return this.a + this.b;
+    ;
+;
