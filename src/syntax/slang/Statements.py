@@ -2,7 +2,7 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.slang import identifier, expression, native
+from src.syntax.slang import identifier, expression, struct_name, native
 
 statement              = P(name="slang_statement"              , mod="?")
 block                  = P(name="slang_block"                  , rules = [R(statement, mod="*")])
@@ -17,6 +17,11 @@ ifthen                 = P(name="slang_ifthen"                 , rules = [R(T("i
 globalAssignement      = P(name="slang_global_assignement"     , rules = [R(T("def"), declarationAssignement, T(";")), 
                                                                           R(T("def"), autoAssignement, T(";"))])
 globalDeclaration      = P(name="slang_global_declaration"     , rules = [R(T("def"), native, identifier, T(";"))])
+
+structDeclaration = P(name = "slang_struct_declaration"    , rules = [R(native, identifier, T(";"))])
+structDefinition  = P(name = "slang_struct_definition"     , rules = [R(native, identifier, T("="), expression, T(";"))])
+struct_name.append(structDeclaration, structDefinition)
+
 
 expression.insert(0, assignement)
 expression.insert(0, declarationAssignement)

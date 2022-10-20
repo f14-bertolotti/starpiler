@@ -197,15 +197,17 @@ class Import:
             module.name2decl = tmp
 
 class StructDeclaration:
-    def __init__(self, name, names, types): 
-        self.name, self.types, self.names, self.type = name, types, names, SType(name)
+    def __init__(self, structName, innerNames):
+        self.type       = SType(structName)
+        self.structName = structName
+        self.innerNames = innerNames
     def __str__(self): 
-        typesstr = ",".join([f"{n}:{t}" for n,t in zip(self.names, self.types)]) 
-        return f"StructDecl({self.name},{typesstr})"
+        typesstr = ",".join(map(str,self.innerNames)) 
+        return f"StructDeclaration({self.structName},{typesstr})"
     def LLVMDeclare(self,module):
-        self.ref = ir.global_context.get_identified_type(f"struct.{self.name.value}")
-        module.name2decl[self.name.value] = self
-        self.ref.set_body(*[t.toLLVM(module) for t in self.types])
+        self.ref = ir.global_context.get_identified_type(f"struct.{self.structName.value}")
+        module.name2decl[self.structName.value] = self
+        self.ref.set_body(*[inner.type.toLLVM(module) for inner in self.innerNames])
     def toLLVM(self, module):
         pass
 
@@ -241,6 +243,12 @@ class SlangTransformer(Transformer):
     def slang_function_definition  (self, node): return FunctionDefinition(node[1], node[2], node[3], node[5])
     def slang_function_declaration (self, node): return FunctionDeclaration(node[1], node[2], node[3])
 
+    def slang_struct_value           (self, node): return StructValue(node[0], node[2:-1:4], node[4:-1:4])
+    def slang_struct_access          (self, node): return StructAccess(node[0], node[2])
+    def slang_struct_ref_access      (self, node): return StructRefAccess(node[0], node[2])
+    def slang_struct_declaration     (self, nodes): return StructNameDeclaration(nodes[0], nodes[1])
+    def slang_struct_definition      (self, nodes): return StructNameDefinition(nodes[0], nodes[1], nodes[3])
+
     # STATEMENTS
     def slang_return                 (self, node): return Return(node[1])
     def slang_return_void            (self, node): return ReturnVoid()
@@ -273,10 +281,7 @@ class SlangTransformer(Transformer):
     def slang_indexed                        (self, node): return Index(node[0], node[1:])
     def slang_array                          (self, node): return Array([child for child in node if isinstance(child, Expression)])
     def slang_expression_sequence            (self, node): return [n for n in node if isinstance(n, Expression)]
-    def slang_function_call                  (self, node): return FunctionCall(node[0], node[2])
-    def slang_struct_value                   (self, node): return StructValue(node[0], node[2:-1:4], node[4:-1:4])
-    def slang_struct_access                  (self, node): return StructAccess(node[0], node[2])
-    def slang_struct_ref_access              (self, node): return StructRefAccess(node[0], node[2])
+    def slang_function_call                  (self, node): return FunctionCall(node[0], [] if len(node) == 3 else node[2])
     def slang_size_of                        (self, node): return SizeOf(node[2])
 
     # LITERALS
@@ -296,7 +301,7 @@ class SlangTransformer(Transformer):
     def slang_ptype  (self, node): return node[1::2]
     def slang_rtype  (self, node): return node[1]
     def slang_ftype  (self, node): return FType(node[0], node[1])
-    def slang_struct (self, node): return StructDeclaration(node[1], node[4:-1:3], node[3:-1:3])
+    def slang_struct (self, node): return StructDeclaration(node[1], node[3:-1])
 
 
 def parsed(programstr):

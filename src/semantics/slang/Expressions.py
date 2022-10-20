@@ -3,6 +3,7 @@ from src.semantics.slang import Int8, Int32, Int64, Double, Pointer, FType
 from abc import abstractmethod
 from llvmlite import ir
 from functools import partial
+import copy
 
 class Expression:
     @abstractmethod
@@ -289,18 +290,39 @@ class Neq(ComparisonOperation):
         if self.getType(builder) == Double(): return partial(builder.fcmp_unordered, "!=")
         self.raiseOperationNotFound(builder)
 
-class StructValue(Expression):
-    def __init__(self, name, names, expressions): self.name, self.names, self.expressions = name, names, expressions
-    def __str__(self):
-        values = ",".join([f"{str(n)}:{str(e)}" for n,e in zip(self.names, self.expressions)])
-        return f"Struct({self.name.value},{values})"
-    def getType(self, builder): return Pointer(builder.name2var[self.name.value].type)
+class StructNameDeclaration: 
+    def __init__(self, type, name): self.type, self.name = type, name
+    def __str__(self): return f"StructNameDeclaration({self.name},{self.type})"
+    def toLLVM(self, builder): pass
+
+class StructNameDefinition: 
+    def __init__(self, type, name, expr): self.type, self.name, self.expr = type, name, expr
+    def __str__(self): return f"StructNameDefinition({self.type},{self.name},{self.expr})"
     def toLLVM(self, builder):
-        ptr = builder.alloca(builder.name2var[self.name.value].ref)
-        for name,expr in zip(self.names, self.expressions):
-            idx = builder.name2var[self.name.value].names.index(name)
+        ptr = builder.alloca(self.type.toLLVM(builder))
+        val = self.expr.toLLVM(builder)
+        builder.store(val,ptr)
+
+class StructValue(Expression):
+    def __init__(self, name, names, expressions): 
+        self.structName = name
+        self.name2expr = dict(zip(names, expressions))
+
+    def __str__(self):
+        values = ",".join([f"{str(n)}:{str(e)}" for n,e in self.name2expr.values()])
+        return f"Struct({self.structName.value},{values})"
+    def getType(self, builder): return Pointer(builder.name2var[self.structName.value].type)
+    def toLLVM(self, builder):
+        name2expr = {inner.name:inner.expr for inner in builder.name2var[self.structName.value].innerNames if isinstance(inner, StructNameDefinition)}
+        name2expr.update(self.name2expr)
+        ptr = builder.alloca(builder.name2var[self.structName.value].ref)
+        tmp, builder.name2var = builder.name2var, copy.deepcopy(builder.name2var)
+        for name,expr in name2expr.items():
+            idx = [inner.name for inner in builder.name2var[self.structName.value].innerNames].index(name)
             pptr = builder.gep(ptr, [ir.Constant(ir.IntType(64),0), ir.Constant(ir.IntType(32), idx)])
             builder.store(expr.toLLVM(builder), pptr)
+            builder.name2var.update({name.value:type("__ANON__",tuple(),{"ref":pptr,"type":expr.getType(builder)})()})
+        builder.name2var = tmp
         return ptr;
 
 class StructAccess(Expression):

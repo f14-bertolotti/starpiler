@@ -505,12 +505,65 @@ def int64 start() does
 
 """
 
+struct_default_value1 = """
+struct X with 
+        int64 x = 12;
+;
+
+def int64 start() does
+        return X{}.x == 12;
+;
+"""
+
+struct_default_value2 = """
+struct X with 
+        int64 x = 12;
+        int64 y = x + 12;
+;
+
+def int64 start() does
+        return X{}.x == 12 * X{}.y == 24;
+;
+"""
+
+struct_default_value3 = """
+def int64 x = 8;
+def int64 z = 12 + x;
+struct X with 
+        int64 x = 12;
+        int64 y = x + 12;
+        int64 z = z + y;
+        int64 w = z;
+;
+
+def int64 start() does
+        return X{}.x == 12 * 
+               X{}.y == 24 * 
+               X{}.z == 44 *
+               X{}.w == 44 *
+               z == 20 * 
+               x == 8;
+;
+"""
+
+struct_default_value4 = """
+def int64 zero() does return 0;;
+struct X with 
+        ( -> int64)* zero = &zero;
+;
+
+def int64 start() does
+        return X{}.zero() == 0; 
+;
+"""
+
+
 
 tests = {
             "increment"              : {"program" : "def int64 increment(int64 x) does return x + 1;; def int64 start() does int64 result = &increment(10); return result;;", "result"  : 11},
-            "mutableVars"            : {"program" : " def int64 start() does int64 x = 10; &x = 11; return x;; ", "result" : 11},
-            "multiplication"         : {"program" : " def int64 start() does return 10 * 10;;", "result" : 100},
-            "division"               : {"program" : " def int64 start() does return 100 / 10;;", "result" : 10},
+            "mutableVars"            : {"program" : "def int64 start() does int64 x = 10; &x = 11; return x;; ", "result" : 11},
+            "multiplication"         : {"program" : "def int64 start() does return 10 * 10;;", "result" : 100},
+            "division"               : {"program" : "def int64 start() does return 100 / 10;;", "result" : 10},
             "floatDivision"          : {"program" : "def double start() does return 100.0 / 10.0;;", "result":10.0},
             "floatMultiplication"    : {"program" : "def double start() does return 10.0 * 10.0;;", "result":100.0},
             "subfloat"               : {"program" : "def double start() does return (1.0 - 1.5);;", "result":-0.5},
@@ -595,6 +648,9 @@ tests = {
             "sizeof_struct"          : {"program" : sizeof_struct, "result":24},
             "return_assign"          : {"program" : return_assign, "result":2},
             "expr_with_assign"       : {"program" : expr_with_assign, "result":12},
-           
+            "struct_default_value1"  : {"program" : struct_default_value1, "result":1},
+            "struct_default_value2"  : {"program" : struct_default_value2, "result":1},
+            "struct_default_value3"  : {"program" : struct_default_value3, "result":1},
+            "struct_default_value4"  : {"program" : struct_default_value4, "result":1},
 
         }

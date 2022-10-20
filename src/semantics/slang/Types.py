@@ -47,7 +47,7 @@ class FType(Type):
 class SType(Type):
     def __init__(self, name, path=Path()): self.name, self.path = name, path
     def __str__(self): return f"{self.name}"
-    def index(self, module, value): return module.path2import[self.path][self.name.value].names.index(value)
-    def typeof(self, module, value): return module.path2import[self.path][self.name.value].types[self.index(module, value)]
+    def index(self, module, value): return [inner.name for inner in module.path2import[self.path][self.name.value].innerNames].index(value)
+    def typeof(self, module, value): return module.path2import[self.path][self.name.value].innerNames[self.index(module, value)].type
     def toLLVM(self,module): 
         return module.path2import[self.path][self.name.value].ref
