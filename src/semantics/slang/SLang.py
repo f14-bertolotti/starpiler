@@ -164,6 +164,7 @@ class Import:
     path2module = dict()
     compiled = set()
     def __init__(self, path, name, rename):
+        if name.value.startswith("_"): raise ValueError("Hidden names cannot be imported")
         self.path, self.name, self.rename = pathlib.Path(os.path.join(os.getcwd(), path)), name, rename
         
         if self.path in Import.path2module: self.module = Import.path2module[self.path]
@@ -198,8 +199,8 @@ class Import:
 
 class StructDeclaration:
     def __init__(self, structName, innerNames):
-        self.type       = SType(structName)
-        self.structName = structName
+        self.type       = structName
+        self.structName = structName.name
         self.innerNames = innerNames
     def __str__(self): 
         typesstr = ",".join(map(str,self.innerNames)) 

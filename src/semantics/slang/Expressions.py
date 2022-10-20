@@ -316,7 +316,7 @@ class StructValue(Expression):
         name2expr = {inner.name:inner.expr for inner in builder.name2var[self.structName.value].innerNames if isinstance(inner, StructNameDefinition)}
         name2expr.update(self.name2expr)
         ptr = builder.alloca(builder.name2var[self.structName.value].ref)
-        tmp, builder.name2var = builder.name2var, copy.deepcopy(builder.name2var)
+        tmp, builder.name2var = builder.name2var, {**builder.module.path2import[builder.name2var[self.structName.value].type.path], **copy.deepcopy(builder.name2var)}
         for name,expr in name2expr.items():
             idx = [inner.name for inner in builder.name2var[self.structName.value].innerNames].index(name)
             pptr = builder.gep(ptr, [ir.Constant(ir.IntType(64),0), ir.Constant(ir.IntType(32), idx)])

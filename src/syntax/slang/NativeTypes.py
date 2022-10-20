@@ -17,7 +17,7 @@ ptype   = P(name = "slang_ptype"  , rules = [R(T("(")),
                                              R(T("("), native, R(T(","), native, mod="*"))])
 
 struct_name = P(name = "slang_struct_name", rules = [], mod="?")
-struct  = P(name = "slang_struct" , rules = [R(T("struct"), identifier, T("with"), R(struct_name,mod="*"), T(";"))])
+struct  = P(name = "slang_struct" , rules = [R(T("struct"), custom, T("with"), R(struct_name,mod="*"), T(";"))])
 rtype   = P(name = "slang_rtype"  , rules = [R(T("->"), native, T(")"))])
 ftype   = P(name = "slang_ftype"  , rules = [R(ptype, rtype)])
 native.append(pointer,ftype)
