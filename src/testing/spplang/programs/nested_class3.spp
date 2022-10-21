@@ -1,0 +1,44 @@
+
+def int8* malloc(int64);
+def void  free  (int8*);
+
+class X with
+   def int64 n;
+   def int64 i;
+   def int8* s;
+   def X*    start(X* this, int64 n) does this&.i = 0; this&.n = n; this&.s = (&malloc)(n * (size of int8)); return this;;
+   def int64  getn(X* this         ) does return this.n;;
+   def void    end(X* this         ) does &free(this.s); return;;
+;
+
+class A with
+   def X* x;
+   def A*    start(A* this, X* x) does this&.x = x; return this;;
+   def int64  getn(A* this)       does this.x.s&[this.x.i] = 65 as int8; this.x&.i = this.x.i + 1; return this.x.getn();;
+;
+
+class B with
+   def X* x;
+   def A* a;
+   def B*    start(B* this, X* x, A* a) does this&.x = x; this&.a = a; return this;;
+   def int64  getn(B* this)             does this.x.s&[this.x.i] = 66 as int8; this.x&.i = this.x.i + 1; return this.a.getn();;
+;
+
+class C with
+   def X* x;
+   def B* b;
+   def C*    start(C* this, X* x, B* b) does this&.x = x; this&.b = b; return this;;
+   def int64  getn(C* this)             does this.x.s&[this.x.i] = 67 as int8; this.x&.i = this.x.i + 1; return this.b.getn();;
+;
+
+def int64 start() does
+   X* x = new X(10);
+   C* c = new C(x, B* b = new B(x, A* a = new A(x)));
+   c.getn();
+   auto res = x.s[0] as int64 == 67 *
+          x.s[1] as int64 == 66 *
+          x.s[2] as int64 == 65;
+   x.end();
+   return res;
+;
+

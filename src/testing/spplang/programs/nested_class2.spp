@@ -1,0 +1,56 @@
+
+class Z with
+    def int64 a;
+    def int64 b;
+    def Z* start(Z* this, int64 a, int64 b) does
+        this&.a = a;
+        this&.b = b;
+        return this;
+    ;
+;
+
+class Y with
+    def Z* z;
+    def Y* start(Y* this, Z* z) does
+        this&.z = z;
+        return this;
+    ;
+    def int64 get_a(Y* this) does
+        return this.z.a;
+    ;
+    def int64 get_b(Y* this) does
+        return this.z.b;
+    ;
+    def Z* get_z(Y* this) does
+        return this.z;
+    ;
+;
+class X with
+    def Y* y;
+    def X* start(X* this, Y* y) does
+        this&.y = y;
+        return this;
+    ;
+    def int64 get_a(X* this) does
+        return this.y.z.a;
+    ;
+    def int64 get_b(X* this) does
+        return this.y.z.b;
+    ;
+    def Y* get_y(X* this) does
+        return this.y;
+    ;
+;
+def int64 start() does
+    X* x = new X(new Y(new Z(1,2)));
+     
+    return x.get_a() == 1 * 
+           x.get_b() == 2 *
+           x.get_y().z.a == 1 *
+           x.get_y().z.b == 2 * 
+           x.get_y().get_a() == 1 * 
+           x.get_y().get_b() == 2 *
+           x.get_y().get_z().a == 1 *
+           x.get_y().get_z().b == 2;
+;
+

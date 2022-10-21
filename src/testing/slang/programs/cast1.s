@@ -1,0 +1,1 @@
+def double start() does return 1 as double;;

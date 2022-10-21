@@ -1,0 +1,1 @@
+struct X with int64 x;; def int64 start() does int8* x = X{x:10} as int8*; return (x as X*).x;;

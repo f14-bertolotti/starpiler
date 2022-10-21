@@ -1,0 +1,1 @@
+def int64 start() does auto x = 1; auto x = 2; auto x = x; return x;;

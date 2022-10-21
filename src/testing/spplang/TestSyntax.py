@@ -67,7 +67,7 @@ class TestSyntax(unittest.TestCase):
       from "a/b/c" import F as D;
       def void f();
       class X with;
-      def int64 start() does X x = new X;;
+      def int64 start() does X x = new X();;
       """)
 
 

@@ -1,0 +1,7 @@
+
+from "src/testing/spplang/programs/SumOp.spp" import SumOp as Sum;
+def int64 start() does
+    Sum* sum = new Sum(1,2);
+    return sum.apply() == 3;
+;
+                      

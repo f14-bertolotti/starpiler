@@ -1,0 +1,1 @@
+def int64 start() does int64 x = 10; int64 y = 9; while x != y do &y = x;; return y; ;

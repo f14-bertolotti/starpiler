@@ -1,0 +1,1 @@
+def int64 start() doesint64 x = 10; int64 y = 5; if x != y do int64 y = y + 1;; return y; ;

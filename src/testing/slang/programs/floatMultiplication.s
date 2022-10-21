@@ -1,0 +1,1 @@
+def double start() does return 10.0 * 10.0;;

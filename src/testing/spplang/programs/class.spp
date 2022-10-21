@@ -1,0 +1,16 @@
+
+class X with
+    def int64 a;
+    def int64 b;
+    def X* start(X* this, int64 a, int64 b) does
+        this&.a = a;
+        this&.b = b;
+        return this;
+    ;
+    def int64 sum(X* this) does return this.a + this.b;;
+;
+def int64 start() does 
+    X* x = new X(1, 2);
+    return x.sum() == 3;
+;
+

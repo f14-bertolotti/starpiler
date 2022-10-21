@@ -1,25 +1,24 @@
 import unittest
 
 from src.semantics.slang import run
-from src.semantics.slang import parsed
 from src.semantics.slang import transformed
 from src.semantics.slang import assembled
 from src.testing.slang import tests
-import inspect
+from pathlib import Path
 
 
 class TestBasics(unittest.TestCase):
 
     def test_program2string(self):
         program = """
-        from "src/programs/slang/Increment.sl" import increment as increment;
+        from "src/testing/slang/programs/Increment.s" import increment as increment;
         def int8* malloc(int8*);
         def int64 X = 1;
         def int64 start() does
             return &increment(X);
         ;
         """
-        self.assertEqual(str(transformed(program)), "Module(Import(/home/f14/Devel/MetaTranspiler/src/programs/slang/Increment.sl,Name(increment),Name(increment)),FunctionDeclaration(FType(Int8*->Int8*),Name(malloc)),GlobalAssignement(Int64,Name(X),Integer(i64 1)),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Call(Ref(Name(increment)),Name(X))))))")
+        self.assertEqual(str(transformed(program)), "Module(Import(/home/f14/Devel/MetaTranspiler/src/testing/slang/programs/Increment.s,Name(increment),Name(increment)),FunctionDeclaration(FType(Int8*->Int8*),Name(malloc)),GlobalAssignement(Int64,Name(X),Integer(i64 1)),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Call(Ref(Name(increment)),Name(X))))))")
 
     def test_program2string_cast(self):
         program = """
@@ -86,7 +85,7 @@ class TestBasics(unittest.TestCase):
 for testname in tests:
     def make():
         def f(self):
-            self.assertEqual(run(program_string=tests[f.__name__[5:]]["program"]), tests[f.__name__[5:]]["result"])
+            self.assertEqual(run(program_string=Path(tests[f.__name__[5:]]["path"]).read_text()), tests[f.__name__[5:]]["result"])
         f.__name__ = f"test_{testname}"
         return f
     setattr(TestBasics, f"test_{testname}", make())

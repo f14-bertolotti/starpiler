@@ -1,0 +1,29 @@
+
+ class Y with 
+     def int64 x;
+     def int64 y;
+     def Y* start(Y* this, int64 x, int64 y) does
+         this&.x = x;
+         this&.y = y;
+         return this;
+     ;
+     def int64 get_x(Y* this) does return this.x;;
+     def int64 get_y(Y* this) does return this.y;;
+ ;
+ 
+ class X with
+ 
+     def Y* y;
+ 
+     def X* start(X* this, Y* y) does
+         this&.y = y;
+         return this;
+     ;
+ ;
+ 
+ 
+ def int64 start() does
+     X* x = new X(new Y(1,2));
+     return x.y.get_x() + x.y.get_y();
+ ;
+ 
