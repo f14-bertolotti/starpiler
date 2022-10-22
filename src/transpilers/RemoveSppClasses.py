@@ -3,8 +3,6 @@ from lark.visitors import Transformer
 from lark.tree import Tree
 from lark import Token
 from src.transpilers import toString
-import copy
-import rich
 
 class UniqueGenerator:
     def __init__(self, program):
@@ -20,30 +18,41 @@ class RemoveSppClasses(Transformer):
     def transform(self, parseTree):
         self.ugen = UniqueGenerator(toString(parseTree))
         self.unique0 = next(self.ugen)
-        self.classname2startname = dict()
         return super().transform(parseTree)
 
 
     def spplang_start(self, nodes):
         return Tree(Token("RULE","spplang_start"), [sub for node in nodes for sub in (node if isinstance(node,list) else [node])])
 
-    def spplang_class(self, nodes):
+    def __default__(self, data, children, meta):
+        return Tree(data, [sub for child in children for sub in (child if isinstance(child, list) else [child])], meta)
+        
 
-        name = nodes[1]
-        fields  = [x for node in nodes if isinstance(node,Tree) and node.data == "spplang_field_declaration" for x in [node.children[1], node.children[2], Token("SEMICOLON",";")]]
-        methods = [node for node in nodes if isinstance(node,Tree) and node.data == "spplang_function_definition"]
-        methodNames = [method.children[2].children[0] for method in methods]
-        methodReturnTypes = [Tree(Token("RULE","spplang_rtype"), [Token("__ANON__","->"), method.children[1], Token("RPAR",")")]) for method in methods]
-        methodParamTypes  = [[param.children[0] for param in method.children[3].children[1:-1:2]] for method in methods ]
-        methodParamTypes = [Tree(Token("RULE","spplang_ptype"),[Token("LPAR","(")] +[x for ptype in methodParamType for x in [ptype, Token("COMMA",",")]][:-1]) for methodParamType in methodParamTypes]
-        methodTypes = [Tree(Token("RULE","spplang_pointer"), [Tree(Token("RULE", "spplang_ftype"), [ptype, rtype]), Token("STAR","*")]) for ptype,rtype in zip(methodParamTypes, methodReturnTypes)]
-        uniqueNames = [next(self.ugen) for _ in range(len(methods))]
+    def spplang_class(self, nodes):
+        className    = nodes[1]
+        classFields  = [node for node in nodes if isinstance(node,Tree) and node.data == "spplang_field_declaration"]
+        classMethods = [node for node in nodes if isinstance(node,Tree) and node.data == "spplang_function_definition"]
+        methodNames  = [method.children[2].children[0] for method in classMethods]
+        uniqueNames  = [next(self.ugen) for _ in range(len(classMethods ))]
+        returnTypes  = [method.children[1] for method in classMethods]
+        paramTypes   = [[node.children[0] for node in method.children[3].children[1:-1:2]] for method in classMethods]
+        methodTypes  = [Tree(Token("RULE","slang_pointer"), [Tree(Token("RULE","slang_ftype"),[Tree(Token("RULE", "slang_ptype"), 
+                                                               [Token("LPAR","("), 
+                                                                *[x for partype in paramstype for x in [partype, Token("COMMA",",")]][:-1]]), 
+                                                             Tree(Token("RULE","slang_rtype"), 
+                                                               [Token("__ANON__","->"), 
+                                                                rettype, 
+                                                                Token("RPAR",")")])]),
+                                                             Token("STAR","*")]) 
+                        for rettype,paramstype in zip(returnTypes, paramTypes)] 
+
+
         
         struct = Tree(Token("RULE", "slang_struct"), [
             Token("STRUCT", "struct"), 
-            name, 
+            Tree(Token("RULE", "slang_tname"), [className]), 
             Token("WITH", "with"), 
-            *copy.deepcopy(fields),
+            *[Tree(Token("RULE", "slang_struct_declaration"), [field.children[1], field.children[2], Token("SEMICOLON",";")]) for field in classFields],
             *[Tree(Token("RULE", "slang_struct_definition"), [
                 mtype, 
                 Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", mname)]), 
@@ -52,7 +61,7 @@ class RemoveSppClasses(Transformer):
                 Token("SEMICOLON", ";")]) for mname,mtype,muniq in zip(methodNames, methodTypes, uniqueNames)], 
             Token("SEMICOLON", ";")])
 
-        methodCopies = [Transformer().transform(method) for method in methods]
+        methodCopies = [Transformer().transform(method) for method in classMethods ]
         for method,unique in zip(methodCopies,uniqueNames): method.children[2].children[0] = Token("__ANON__", unique + method.children[2].children[0].value)
         
         return [struct, *methodCopies]
@@ -80,8 +89,6 @@ class RemoveSppClasses(Transformer):
             Token("RPAR", ")")])
         return rest
 
-
-
     def spplang_function_call(self, nodes):
         if nodes[0].data == "spplang_struct_access":
             return Tree(Token("RULE", "slang_function_call"), [
@@ -104,8 +111,6 @@ class RemoveSppClasses(Transformer):
                 Token("RPAR", ")")])
 
         return Tree(Token("RULE","slang_function_call"), nodes)
- 
-
 
 def removeSppClasses(parseTree):
     res = RemoveSppClasses().transform(parseTree)
