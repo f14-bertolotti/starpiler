@@ -6,7 +6,8 @@ syntax visitable [DONE]
 better test .&, ., structs and structs with imports. [DONE]
 refactoring slang (mostly imports are quite shit)
 spplang classes [DONE]
-spplang test by the parse tree and not the string
-spplang classes introduces identifiers -> check that those are unused 
-test spplang classes
-spplang -> slang translator
+spplang test by the parse tree and not the string [DONE]
+spplang classes introduces identifiers -> check that those are unused [DONE]
+test spplang classes [DONE]
+add more spplang tests
+spplang -> slang translator [DONE]

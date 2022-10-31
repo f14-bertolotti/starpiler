@@ -151,6 +151,7 @@ class Cast(Expression):
         if etype == Int32() and self.type in {Int8()}           : return builder.trunc(expr, self.type.toLLVM(builder.module))
         if etype == Int8()  and self.type in {Int32(), Int64()} : return builder.zext (expr, self.type.toLLVM(builder.module))
         if etype == Int32() and self.type in {Int64()}          : return builder.zext (expr, self.type.toLLVM(builder.module))
+        if etype == Double() and self.type == Int64(): return builder.fptosi(expr, self.type.toLLVM(builder.module))
         if etype in {Int32(), Int8(), Int64()} and self.type == Double(): return builder.sitofp(expr, self.type.toLLVM(builder.module))
 
         assert False, f"unkown cast for {expr.type} -> {self.type}"
@@ -197,7 +198,7 @@ class Rational(Expression):
 
 class String(Expression):
     def __init__(self, value): 
-        self.value = value[1:-1] + "\0" 
+        self.value = eval(value) + "\0" 
         self.type = ir.ArrayType(ir.IntType(8), len(self.value))
     def __str__(self): return f"String({self.value})"
     def getType(self,_): return Pointer(Int8()) 
@@ -207,7 +208,7 @@ class String(Expression):
         gvar.linkage = "internal"
         gvar.unnamed_addr = True
         gvar.align = 1
-        gvar.initializer = self.type(bytearray(self.value.encode("utf8")))
+        gvar.initializer = self.type(bytearray(self.value.encode("ASCII")))
         return gvar.gep([ir.Constant(ir.IntType(64), 0), ir.Constant(ir.IntType(64), 0)])
 
 class Array(Expression):

@@ -10,7 +10,7 @@ from src.syntax import getClonerVisitor
 from src.syntax import getChangePrefixVisitor
 
 
-identifier = P(name = "spplang_identifier", rules = [R(T("(?!size|of|new|auto|return|if|while)[a-z_A-Z]\w*", regex=True))]) 
+identifier = P(name = "spplang_identifier", rules = [R(T("[a-z_A-Z]\w*", regex=True))]) 
 rational = rational.visit(getClonerVisitor(rational)) \
                    .visit(getChangePrefixVisitor("slang_", "spplang_"))
 integer = integer.visit(getClonerVisitor(integer)) \

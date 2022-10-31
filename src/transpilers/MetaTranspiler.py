@@ -15,11 +15,14 @@ class MetaTranspiler:
                 return parseTree
             
             for delta in self.deltas:
+                try:
+                    newParseTree = delta(parseTree)
+                except: continue 
 
-                newParseTree = delta(parseTree)
                 newParseTree.path = parseTree.path + [delta.__name__]
 
                 if newParseTree not in visited:
                     visited.add(newParseTree)
                     queue.append(newParseTree)
 
+        raise ValueError("could not transpile")

@@ -3,10 +3,11 @@ from src.syntax import Visitable
 
 class Production(Larkable, Visitable):
     
-    def __init__(self, name, rules=[], mod=""):
+    def __init__(self, name, rules=[], mod="", priority=0):
         Larkable .__init__(self)
         Visitable.__init__(self)
 
+        self.priority = priority
         self.rules = rules
         self.name = name
         self.mod = mod
@@ -24,6 +25,10 @@ class Production(Larkable, Visitable):
         self.name = name
         return self
 
+    def setPriority(self, priority):
+        self.priority = priority
+        return self
+
     def append(self, *args):
         self.rules = self.rules + list(args)
         return self
@@ -33,7 +38,7 @@ class Production(Larkable, Visitable):
 
     def toLark(self):
         right = "\n | ".join([rule.name if isinstance(rule,Production) else rule.toLark() for rule in self])
-        return f"{self.mod}{self.name} : {right}"
+        return f"{self.mod}{self.name}.{self.priority} : {right}"
     
     def getVisitable(self): 
         return self.rules

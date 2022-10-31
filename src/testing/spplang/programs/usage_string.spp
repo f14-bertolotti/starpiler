@@ -1,0 +1,48 @@
+from "src/testing/spplang/programs/String.spp" import String as String;
+
+def int64 test1() does 
+    String* string0 = new String("aaa");
+    String* string1 = new String("abc").repeat(4).substring(1,6).catFromString(string0);
+    String* string2 = new String("bcabcaaa");
+    int64 res = string1.equals(string2);
+    string0.end();
+    string1.end();
+    string2.end();
+    return res;
+;
+
+def int64 test2() does 
+    String* string0 = new String("").fromInt64(1234);
+    String* string1 = new String("1234");
+    int64 res = string0.equals(string1);
+    string0.end();
+    string1.end();
+    return res;
+;
+
+def int64 test3() does 
+    String* string0 = new String("");
+    String* string1 = new String("a");
+    String* string2 = new String("aaa");
+    string0.catFromString(string1);
+    string0.catFromString(string1);
+    string0.catFromString(string1);
+    int64 res = string0.equals(string2);
+    string0.end();
+    string1.end();
+    string2.end();
+    return res;
+;
+
+
+def int64 test4() does
+    String* string0 = new String("").catFromInt8ptr("1").repeat(3).catFromInt8ptr("222");
+    String* string1 = new String("111222");
+    int64 result = string0.equals(string1);
+    string0.end();
+    return result;
+;
+
+def int64 start() does
+    return  &test1() * &test2() * &test3() * &test4();
+;

@@ -25,6 +25,7 @@ class Module:
 
     def toLLVM(self):
 
+
         self.LLVMModule.path2import[pathlib.Path()] = self.LLVMModule.name2decl
 
         for dcl in self.declarations:
@@ -115,9 +116,14 @@ class FunctionDeclaration:
         return f"FunctionDeclaration({self.type},{self.name})"
         
     def LLVMDeclare(self, module):
-        self.ref = ir.Function(module, self.type.toLLVM(module), name=self.name.value)
-        module.name2decl[self.name.value] = self
-
+        if self.name.value not in module.globals:
+            self.ref = ir.Function(module, self.type.toLLVM(module), name=self.name.value)
+            module.name2decl[self.name.value] = self
+        else:
+            for d in module.path2import.values():
+                if self.name.value in d: 
+                    module.name2decl[self.name.value] = d[self.name.value]
+            
     def toLLVM(self, module): pass
 
 
@@ -260,6 +266,7 @@ class SlangTransformer(Transformer):
     def slang_while                  (self, node): return While(node[1], node[3])
     def slang_statement              (self, node): return node[0]
     def slang_skip                   (self,    _): return Skip();
+    def slang_stmt_expr              (self, node): return node[0]
 
     # EXPRESSIONS
     def slang_addition                       (self, node): return Add(node[0], node[2])

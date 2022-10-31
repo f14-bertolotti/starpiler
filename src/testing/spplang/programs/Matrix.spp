@@ -1,0 +1,54 @@
+from "src/testing/spplang/programs/String.spp" import String as String;
+
+def int8* malloc(int64);
+def void  free(int8*);
+
+
+class Matrix with 
+
+    def int64 rows;
+    def int64 cols;
+    def int64* mem;
+
+    def Matrix* start(Matrix* this, int64 n, int64 m) does
+        this&.mem = &malloc(size of int64 * n * m) as int64*;
+        this&.rows = n;
+        this&.cols = m;
+        return this;
+    ;
+
+    def Matrix* fill(Matrix* this, int64 value) does
+        int64 i = 0;
+        while i < this.rows do
+            int64 j = 0;
+            while j < this.cols do
+                this.mem&[i * this.cols + j] = value;
+                &j = j + 1;
+            ;
+            &i = i + 1;
+        ;
+        return this;
+    ;
+
+
+    def int64 get(Matrix* this, int64 i, int64 j) does
+        return this.mem[i * this.cols + j];
+    ;
+
+    def void end(Matrix* this) does
+        &free(this.mem as int8*);
+        return;
+    ;
+
+;
+
+
+def int64 start() does
+    Matrix* matrix = new Matrix(3,3).fill(5);
+    int64 result = matrix.get(0,0) == 5 * matrix.get(0,1) == 5 * matrix.get(0,2) == 5 *
+                   matrix.get(1,0) == 5 * matrix.get(1,1) == 5 * matrix.get(1,2) == 5 *
+                   matrix.get(2,0) == 5 * matrix.get(2,1) == 5 * matrix.get(2,2) == 5;
+    matrix.end();
+    return result;
+;
+

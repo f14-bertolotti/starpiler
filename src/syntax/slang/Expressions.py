@@ -39,7 +39,8 @@ structRefAccess = P(name = "slang_struct_ref_access", rules = [R(expression, T("
 
 array = P(name = "slang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])
 
-expression.append(addition, 
+expression.append(identifier,
+                  addition, 
                   subtraction, 
                   multiplication, 
                   division, 
@@ -53,7 +54,6 @@ expression.append(addition,
                   negative, 
                   rational, 
                   integer, 
-                  identifier, 
                   string, 
                   array, 
                   functionCall, 

@@ -3,6 +3,7 @@ from lark.visitors import Transformer
 from lark.tree import Tree
 from lark import Token
 from src.transpilers import toString
+from pathlib import Path
 
 class UniqueGenerator:
     def __init__(self, program):
@@ -20,13 +21,18 @@ class RemoveSppClasses(Transformer):
         self.unique0 = next(self.ugen)
         return super().transform(parseTree)
 
-
     def spplang_start(self, nodes):
         return Tree(Token("RULE","spplang_start"), [sub for node in nodes for sub in (node if isinstance(node,list) else [node])])
 
     def __default__(self, data, children, meta):
         return Tree(data, [sub for child in children for sub in (child if isinstance(child, list) else [child])], meta)
-        
+
+    def spplang_import(self, nodes):
+        raise ValueError("spplang_import should be removed")
+    
+    def slang_import(self, nodes):
+        self.ugen.program += Path(nodes[1].children[0].value[1:-1]).read_text()
+        return Tree(Token("RULE", "slang_import"), nodes)
 
     def spplang_class(self, nodes):
         className    = nodes[1]
@@ -105,10 +111,10 @@ class RemoveSppClasses(Transformer):
                     nodes[0].children[2]]),
                 Token("LPAR", "("), 
                 Tree(Token("RULE", "slang_expression_sequence"), [
-                    Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)])]), 
-                    *([Token("COMMA",",")] if len(nodes) == 4 else []),
-                    *nodes[2:-1],
+                    Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)]), 
+                    *([Token("COMMA",","), *nodes[2].children] if len(nodes) == 4 else [])]),
                 Token("RPAR", ")")])
+
 
         return Tree(Token("RULE","slang_function_call"), nodes)
 
