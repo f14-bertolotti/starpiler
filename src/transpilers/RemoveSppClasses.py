@@ -22,7 +22,50 @@ class RemoveSppClasses(Transformer):
         return super().transform(parseTree)
 
     def spplang_start(self, nodes):
-        return Tree(Token("RULE","spplang_start"), [sub for node in nodes for sub in (node if isinstance(node,list) else [node])])
+        mallocDeclaration = Tree(Token('RULE', 'slang_function_declaration'), [
+        Token('DEF', 'def'), 
+        Tree(Token('RULE', 'slang_pointer'), [
+            Tree(Token('RULE', 'slang_int8'), [
+                Token('INT8', 'int8')]), 
+            Token('STAR', '*')]), 
+        Tree(Token('RULE', 'slang_identifier'), [
+            Token('__ANON__', 'malloc')]), 
+        Tree(Token('RULE', 'slang_parameter_seq_decl'), [
+            Token('LPAR', '('), 
+            Tree(Token('RULE', 'slang_parameter_declaration'), [
+                Tree(Token('RULE', 'slang_int64'), [
+                    Token('INT64', 'int64')])]), 
+            Token('RPAR', ')')]), 
+        Token('SEMICOLON', ';')])
+        memcpyDeclaration = Tree(Token('RULE', 'slang_function_declaration'), [
+        Token('DEF', 'def'), 
+        Tree(Token('RULE', 'slang_pointer'), [
+            Tree(Token('RULE', 'slang_int8'), [
+                Token('INT8', 'int8')]), 
+            Token('STAR', '*')]), 
+        Tree(Token('RULE', 'slang_identifier'), [
+            Token('__ANON__', 'memcpy')]), 
+        Tree(Token('RULE', 'slang_parameter_seq_decl'), [
+            Token('LPAR', '('), 
+            Tree(Token('RULE', 'slang_parameter_declaration'), [
+                Tree(Token('RULE', 'slang_pointer'), [
+                    Tree(Token('RULE', 'slang_int8'), [
+                        Token('INT8', 'int8')]), 
+                    Token('STAR', '*')])]), 
+            Token('COMMA', ','), 
+            Tree(Token('RULE', 'slang_parameter_declaration'), [
+                Tree(Token('RULE', 'slang_pointer'), [
+                    Tree(Token('RULE', 'slang_int8'), [
+                        Token('INT8', 'int8')]), 
+                    Token('STAR', '*')])]), 
+            Token('COMMA', ','), 
+            Tree(Token('RULE', 'slang_parameter_declaration'), [
+                Tree(Token('RULE', 'slang_int64'), [
+                    Token('INT64', 'int64')])]), 
+            Token('RPAR', ')')]), 
+        Token('SEMICOLON', ';')])
+        return Tree(Token("RULE","spplang_start"), [mallocDeclaration, memcpyDeclaration] + [sub for node in nodes for sub in (node if isinstance(node,list) else [node])])
+
 
     def __default__(self, data, children, meta):
         return Tree(data, [sub for child in children for sub in (child if isinstance(child, list) else [child])], meta)
@@ -81,10 +124,48 @@ class RemoveSppClasses(Transformer):
                         Token("__ANON__", "auto"),
                         Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)]), 
                         Token("EQUAL", "="), 
-                        Tree(Token("RULE", "slang_struct_value"), [
-                            nodes[1], 
-                            Token("LBRACE", "{"), 
-                            Token("RBRACE", "}")])]), 
+                        Tree(Token('RULE', 'slang_cast'), [
+                            Tree(Token('RULE', 'slang_function_call'), [
+                                Tree(Token('RULE', 'slang_reference'), [
+                                    Token('AMPERSAND', '&'), 
+                                    Tree(Token('RULE', 'slang_identifier'), [Token('__ANON__', 'memcpy')])]), 
+                                Token('LPAR', '('), 
+                                Tree(Token('RULE', 'slang_expression_sequence'), [
+                                    Tree(Token('RULE', 'slang_function_call'), [
+                                        Tree(Token('RULE', 'slang_reference'), [
+                                            Token('AMPERSAND', '&'), 
+                                            Tree(Token('RULE', 'slang_identifier'), [Token('__ANON__', 'malloc')])]), 
+                                        Token('LPAR', '('), 
+                                        Tree(Token('RULE', 'slang_expression_sequence'), [
+                                            Tree(Token('RULE', 'slang_size_of'), [
+                                                Token('SIZE', 'size'), 
+                                                Token('OF', 'of'), 
+                                                Tree(Token('RULE', 'slang_tname'), [
+                                                    nodes[1]])])]), 
+                                        Token('RPAR', ')')]), 
+                                    Token('COMMA', ','), 
+                                    Tree(Token('RULE', 'slang_cast'), [
+                                        Tree(Token('RULE', 'slang_struct_value'), [
+                                            nodes[1],
+                                            Token('LBRACE', '{'), 
+                                            Token('RBRACE', '}')]), 
+                                        Token('AS', 'as'), 
+                                        Tree(Token('RULE', 'slang_pointer'), [
+                                            Tree(Token('RULE', 'slang_int8'), [
+                                                Token('INT8', 'int8')]), 
+                                            Token('STAR', '*')])]), 
+                                    Token('COMMA', ','), 
+                                    Tree(Token('RULE', 'slang_size_of'), [
+                                        Token('SIZE', 'size'), 
+                                        Token('OF', 'of'), 
+                                        Tree(Token('RULE', 'slang_tname'), [
+                                            nodes[1]])])]), 
+                                Token('RPAR', ')')]), 
+                            Token('AS', 'as'), 
+                            Tree(Token('RULE', 'slang_pointer'), [
+                                Tree(Token('RULE', 'slang_tname'), [nodes[1]]), 
+                                Token('STAR', '*')])])
+                        ]), 
                     Token("RPAR", ")")]), 
                 Token("DOT", "."), 
                 Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", "start")])]), 
@@ -94,6 +175,7 @@ class RemoveSppClasses(Transformer):
                 *([] if len(nodes) == 4 else [Token("COMMA", ","), *nodes[3].children])]),
             Token("RPAR", ")")])
         return rest
+
 
     def spplang_function_call(self, nodes):
         if nodes[0].data == "spplang_struct_access":

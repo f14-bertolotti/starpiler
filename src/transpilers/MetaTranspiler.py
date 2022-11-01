@@ -1,4 +1,6 @@
 
+from src.transpilers.ToString import toString
+
 class MetaTranspiler:
     def __init__(self, deltas, exitCondition):
         self.exitCondition = exitCondition
@@ -12,6 +14,7 @@ class MetaTranspiler:
         while queue:
             parseTree = queue.pop(0)
             if self.exitCondition(parseTree): 
+                # print(toString(parseTree))
                 return parseTree
             
             for delta in self.deltas:
@@ -26,3 +29,4 @@ class MetaTranspiler:
                     queue.append(newParseTree)
 
         raise ValueError("could not transpile")
+ 

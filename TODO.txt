@@ -10,4 +10,5 @@ spplang test by the parse tree and not the string [DONE]
 spplang classes introduces identifiers -> check that those are unused [DONE]
 test spplang classes [DONE]
 add more spplang tests
+new should malloc and not allocate on stack (spp) [DONE]
 spplang -> slang translator [DONE]
