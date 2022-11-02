@@ -20,7 +20,8 @@ class MetaTranspiler:
             for delta in self.deltas:
                 try:
                     newParseTree = delta(parseTree)
-                except: continue 
+                except: 
+                    continue 
 
                 newParseTree.path = parseTree.path + [delta.__name__]
 

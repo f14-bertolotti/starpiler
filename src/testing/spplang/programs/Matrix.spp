@@ -3,7 +3,6 @@ from "src/testing/spplang/programs/String.spp" import String as String;
 def int8* malloc(int64);
 def void  free(int8*);
 
-
 class Matrix with 
 
     def int64 rows;
@@ -30,6 +29,22 @@ class Matrix with
         return this;
     ;
 
+    def String* toString(Matrix* this) does
+        String* result = new String("");
+        int64 i = 0;
+        while i < this.rows do
+            int64 j = 0;
+            while j < this.cols do
+                result.catFromInt64(this.mem[i * this.cols + j]);
+                result.catFromInt8ptr(" ");
+                &j = j + 1;
+            ;
+            result.catFromInt8ptr("\n");
+            &i = i + 1;
+        ;
+        result.catFromInt8ptr("\n");
+        return result;
+    ;
 
     def int64 get(Matrix* this, int64 i, int64 j) does
         return this.mem[i * this.cols + j];
@@ -45,10 +60,15 @@ class Matrix with
 
 def int64 start() does
     Matrix* matrix = new Matrix(3,3).fill(5);
+    String* string = matrix.toString();
+    String* resstr = new String("5 5 5 \n5 5 5 \n5 5 5 \n\n");
+    int64 strres = string.equals(resstr);
+    string.end();
+    resstr.end();
     int64 result = matrix.get(0,0) == 5 * matrix.get(0,1) == 5 * matrix.get(0,2) == 5 *
                    matrix.get(1,0) == 5 * matrix.get(1,1) == 5 * matrix.get(1,2) == 5 *
                    matrix.get(2,0) == 5 * matrix.get(2,1) == 5 * matrix.get(2,2) == 5;
     matrix.end();
-    return result;
+    return strres * result;
 ;
 

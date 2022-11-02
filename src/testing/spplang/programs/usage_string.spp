@@ -40,6 +40,7 @@ def int64 test4() does
     String* string1 = new String("111222");
     int64 result = string0.equals(string1);
     string0.end();
+    string1.end();
     return result;
 ;
 

@@ -30,11 +30,11 @@ class String with
     ;
 
     def String* repeat(String* this, int64 times) does
-        int8* ptr = &malloc((this.length - 1) * times + 1);
+        int8* ptr = &malloc(this.length * times + 1);
         int64 rep = 0;
         while rep < times do
             int8* cur = ptr&[this.length * rep];
-            &strcpy(cur, this.mem);
+            &strncpy(cur, this.mem, this.length);
             &rep = rep + 1;
         ;
         &free(this.mem);
@@ -78,6 +78,15 @@ class String with
         &free(this.mem);
         this&.mem = ptr;
         this&.length = this.length + otherlen;
+        return this;
+    ;
+
+    def String* catFromInt64(String* this, int64 other) does
+        int64 digits = &ceil(&log10((&abs(other)+1) as double)) as int64;
+        int8* buffer = &malloc(digits + 1);
+        &sprintf(buffer, "%d\0", other);
+        this.catFromInt8ptr(buffer);
+        &free(buffer);
         return this;
     ;
 

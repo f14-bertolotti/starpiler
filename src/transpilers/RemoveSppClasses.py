@@ -3,6 +3,7 @@ from lark.visitors import Transformer
 from lark.tree import Tree
 from lark import Token
 from src.transpilers import toString
+from src.transpilers import addBeforeReturn
 from pathlib import Path
 
 class UniqueGenerator:
@@ -64,7 +65,20 @@ class RemoveSppClasses(Transformer):
                     Token('INT64', 'int64')])]), 
             Token('RPAR', ')')]), 
         Token('SEMICOLON', ';')])
-        return Tree(Token("RULE","spplang_start"), [mallocDeclaration, memcpyDeclaration] + [sub for node in nodes for sub in (node if isinstance(node,list) else [node])])
+        freeDeclaration = Tree(Token('RULE', 'slang_function_declaration'), [
+            Token('DEF', 'def'), 
+            Tree(Token('RULE', 'slang_void'), [
+                Token('VOID', 'void')]), 
+            Tree(Token('RULE', 'slang_identifier'), [Token('__ANON__', 'free')]), 
+            Tree(Token('RULE', 'slang_parameter_seq_decl'), [
+                Token('LPAR', '('), 
+                Tree(Token('RULE', 'slang_parameter_declaration'), [
+                    Tree(Token('RULE', 'slang_pointer'), [
+                        Tree(Token('RULE', 'slang_int8'), [
+                            Token('INT8', 'int8')]), Token('STAR', '*')])]), 
+                Token('RPAR', ')')]), 
+            Token('SEMICOLON', ';')])
+        return Tree(Token("RULE","spplang_start"), [freeDeclaration, mallocDeclaration, memcpyDeclaration] + [sub for node in nodes for sub in (node if isinstance(node,list) else [node])])
 
 
     def __default__(self, data, children, meta):
@@ -78,9 +92,40 @@ class RemoveSppClasses(Transformer):
         return Tree(Token("RULE", "slang_import"), nodes)
 
     def spplang_class(self, nodes):
+
         className    = nodes[1]
         classFields  = [node for node in nodes if isinstance(node,Tree) and node.data == "spplang_field_declaration"]
         classMethods = [node for node in nodes if isinstance(node,Tree) and node.data == "spplang_function_definition"]
+
+        # add the "end" method if there is no "end" method
+        if not any(method.children[2].children[0].value == "end" for method in classMethods):
+
+            classMethods.append(Tree(Token('RULE', 'slang_function_definition'), [
+                Token('DEF', 'def'), 
+                Tree(Token('RULE', 'slang_void'), [Token('VOID', 'void')]), 
+                Tree(Token('RULE', 'slang_identifier'), [Token('__ANON__', 'end')]), 
+                Tree(Token('RULE', 'slang_parameter_seq_def'), [Token('LPAR', '('), Token('RPAR', ')')]), 
+                Token('DOES', 'does'), 
+                Tree(Token('RULE', 'slang_block'), [
+                    Tree(Token('RULE', 'slang_return_void'), [
+                        Token('RETURN', 'return'), 
+                        Token('SEMICOLON', ';')])]), 
+                Token('SEMICOLON', ';')]))
+
+        # adds &free(this as int8*) before each return in the "end" method;
+        classMethods = [addBeforeReturn(Tree(Token('RULE', 'slang_stmt_expr'), [
+            Tree(Token('RULE', 'slang_function_call'), [
+                Tree(Token('RULE', 'slang_reference'), [
+                    Token('AMPERSAND', '&'), 
+                    Tree(Token('RULE', 'slang_identifier'), [Token('__ANON__', 'free')])]), 
+                Token('LPAR', '('), 
+                Tree(Token('RULE', 'slang_expression_sequence'), [
+                    Tree(Token('RULE', 'slang_cast'), [
+                        Tree(Token('RULE', 'slang_identifier'), [Token('__ANON__', 'this')]), 
+                        Token('AS', 'as'), 
+                        Tree(Token('RULE', 'slang_pointer'), [Tree(Token('RULE', 'slang_int8'), [Token('INT8', 'int8')]), Token('STAR', '*')])])]), 
+                Token('RPAR', ')')]), Token('SEMICOLON', ';')]), method) if method.children[2].children[0].value == "end" else method for method in classMethods] 
+                
         methodNames  = [method.children[2].children[0] for method in classMethods]
         uniqueNames  = [next(self.ugen) for _ in range(len(classMethods ))]
         returnTypes  = [method.children[1] for method in classMethods]
@@ -95,8 +140,6 @@ class RemoveSppClasses(Transformer):
                                                              Token("STAR","*")]) 
                         for rettype,paramstype in zip(returnTypes, paramTypes)] 
 
-
-        
         struct = Tree(Token("RULE", "slang_struct"), [
             Token("STRUCT", "struct"), 
             Tree(Token("RULE", "slang_tname"), [className]), 
