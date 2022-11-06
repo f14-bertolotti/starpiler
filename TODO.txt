@@ -12,3 +12,4 @@ test spplang classes [DONE]
 add more spplang tests
 new should malloc and not allocate on stack (spp) [DONE]
 spplang -> slang translator [DONE]
+fix SppToSImport deltas

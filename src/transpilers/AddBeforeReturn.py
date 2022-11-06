@@ -12,8 +12,8 @@ class AddBeforeReturn(Transformer):
     def __default__(self, data, children, meta):
         return super().__default__(data, [sub for child in children for sub in (child if isinstance(child,list) else [child])], meta)
 
-    def spplang_return_void(self, nodes):
-        return [self.tree, Tree(Token("RULE", "spplang_return_void"), nodes)]
+    def slang_return_void(self, nodes):
+        return [self.tree, Tree(Token("RULE", "slang_return_void"), nodes)]
 
 
 def addBeforeReturn(addedTree, otherTree):

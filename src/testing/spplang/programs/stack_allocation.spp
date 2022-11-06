@@ -1,0 +1,24 @@
+
+class Point with
+    def double x;
+    def double y;
+    def Point* start(Point* this, double x, double y) does
+        this&.x = x; this&.y = y; return this;
+    ;
+    def Point* set(Point* this, double x, double y) does
+        this&.x = x; this&.y = y; return this;
+    ;
+;
+
+
+
+def int64 start() does
+    Point* point_heap  = new Point(0.0,0.0);
+    Point* point_stack = Point{x:1.0, y:1.0};
+    point_stack.set(0.0, 0.0);
+    int64 result = ((point_stack.x == point_heap.x) as int64) *
+                   ((point_stack.y == point_heap.y) as int64);
+    point_heap.end();
+    return result;
+;
+

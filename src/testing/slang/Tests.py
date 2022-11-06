@@ -97,5 +97,6 @@ tests = {
     "mmul"                   : {"path": "src/testing/slang/programs/mmul.s", "result": 1},
     "dfs"                    : {"path": "src/testing/slang/programs/dfs.s", "result": 1},
     "malloc_struct"          : {"path": "src/testing/slang/programs/malloc_struct.s", "result": 1},
+    "point"                  : {"path": "src/testing/slang/programs/point.s", "result": 1},
 }
 

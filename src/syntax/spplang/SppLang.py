@@ -10,7 +10,7 @@ from lark import Lark
 
 imports = P(name = "spplang_import", rules = [R(T("from"), string, T("import"), identifier, T("as"), identifier, T(";"))])
 
-globalDefinition = P(name = "spplang_globals", rules = [functionDeclaration, classDefinition,functionDefinition,variableDefinition], mod="?")
+globalDefinition = P(name = "spplang_globals", rules = [functionDeclaration, classDefinition, functionDefinition, variableDefinition], mod="?")
 
-lang = Lark(L(P(name = "spplang_start", rules=[R(R(imports, mod="*"), R(globalDefinition, mod="*"))])).toLark(), keep_all_tokens=True)
+lang = Lark(L(P(name = "spplang_start", rules=[R(R(imports, mod="*"), R(globalDefinition, mod="*"))])).toLark(), keep_all_tokens=True, propagate_positions=True)
 

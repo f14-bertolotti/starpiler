@@ -1,0 +1,18 @@
+
+class Point with
+    def double x = 1.0;
+    def double y = x;
+    def Point* start(Point* this) does
+        return this;
+    ;
+;
+
+def int64 start() does
+    Point* point1 = new Point();
+    Point* point2 = Point{};
+    int64 result = ((point1.x == point2.x) as int64) *
+                   ((point1.y == point2.y) as int64);
+    point1.end();
+    return result;
+;
+

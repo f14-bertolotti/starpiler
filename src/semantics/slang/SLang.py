@@ -25,7 +25,6 @@ class Module:
 
     def toLLVM(self):
 
-
         self.LLVMModule.path2import[pathlib.Path()] = self.LLVMModule.name2decl
 
         for dcl in self.declarations:
