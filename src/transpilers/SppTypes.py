@@ -2,14 +2,50 @@ from lark.visitors import v_args, Visitor, Transformer, Interpreter
 from lark.tree import Tree
 from lark import Token
 from src.semantics.types import Double, Int64, Int32, Int8, Void, Pointer, SType, FType
-import copy
+from src.syntax.spplang import lang as spplang
+from pathlib import Path
 
-# TODO check types
-class SppType(Visitor):
-
+class NativeTypes(Visitor):
     def __init__(self, namespace, *args, **kwargs):
         self.namespace = namespace
         super().__init__(*args, **kwargs)
+
+    def spplang_ftype(self, tree):
+        tree.meta.type = FType(tree.children[0].meta.type, tree.children[1].meta.type)
+
+    def spplang_ptype(self, tree):
+        tree.meta.type = [node.meta.type for node in tree.children if isinstance(node, Tree)]
+
+    def spplang_rtype(self, tree):
+        tree.meta.type = tree.children[1].meta.type
+
+    def spplang_pointer(self, tree):
+        tree.meta.type = Pointer(tree.children[0].meta.type)
+
+    def spplang_tname(self, tree):
+        tree.meta.type = self.namespace[tree.children[0].children[0].value]
+
+    def spplang_void(self, tree):
+        tree.meta.type = Void()
+
+    def spplang_int8(self, tree):
+        tree.meta.type = Int8()
+
+    def spplang_int32(self, tree):
+        tree.meta.type = Int32()
+
+    def spplang_int64(self, tree):
+        tree.meta.type = Int64()
+
+    def spplang_double(self, tree):
+        tree.meta.type = Double()
+
+    def spplang_identfier(self, tree):
+        if tree.children[0].value in self.namespace: tree.meta.type = tree.children[0].value
+
+class ExpressionType(NativeTypes):
+    def __init__(self, namespace, *args, **kwargs):
+        super().__init__(namespace, *args, **kwargs)
 
     def spplang_integer(self, tree):
         tree.meta.type = Int64()
@@ -18,27 +54,20 @@ class SppType(Visitor):
         tree.meta.type = Double()
     
     def spplang_array(self, tree):
-        # TODO check type consistency
         tree.meta.type = Pointer(tree.children[1].meta.type)
 
     def spplang_reference(self, tree):
         tree.meta.type = Pointer(tree.children[1].meta.type)
 
     def spplang_expression_identifier(self, tree):
-        if tree.children[0].children[0].value not in self.namespace: raise ValueError(f"Undefined identifier \"{tree.children[0].children[0].value}\" in {tree.meta.start_pos}, {tree.meta.end_pos}")
-        tree.meta.type = self.namespace[tree.children[0].children[0].value]
+        if tree.children[0].children[0].value in self.namespace: 
+            tree.meta.type = self.namespace[tree.children[0].children[0].value]
 
     def spplang_function_call(self, tree):
-        if not isinstance(tree.children[0],FType): raise ValueError(f"Not a callable called in {tree.meta.start_pos}, {tree.meta.end_pos}")
-    
-        if len(tree.children) == 4: # callable with parameters
-            if len(tree.children[0].meta.ptype) != len(tree.children[2].type): raise ValueError(f"Incoherent params type number in {tree.meta.start_pos}, {tree.meta.end_pos}")
-            if not all(l == r for l,r in zip(tree.children[0].meta.ptype,tree.children[2].type)): raise ValueError(f"Incoherent types in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: {tree.children[0].meta.ptype}. Got: {tree.children[2].meta.type}")
-
-        if (len(tree.children) == 3 and len(tree.children[0].meta.ptype) != ""): raise ValueError(f"Incoherent params type number in {tree.meta.start_pos}, {tree.meta.end_pos}") 
-        
-        tree.meta.type = tree.children[0].meta.rtype 
-        return Tree(Token("RULE", "spplang_function_call"), tree.children, meta)
+        if not isinstance(tree.children[0].meta.type,Pointer) and \
+           not isinstance(tree.children[0].meta.type.base, FType) : 
+            raise ValueError(f"Not a callable called in {tree.meta.start_pos}, {tree.meta.end_pos}")
+        tree.meta.type = tree.children[0].meta.type.base.rtype 
 
     def spplang_cast(self, tree):
         tree.meta.type = tree.children[2].meta.type
@@ -99,11 +128,10 @@ class SppType(Visitor):
             raise ValueError("Invalid spplang_struct_value tree")
 
     def spplang_struct_access(self, tree):
-        if tree.children[2].children[0] not in tree.children[0].meta.type: raise ValueError(f"{tree.children[0].meta.type} has no {tree.children[2].children[0]}")
-        tree.meta.type = tree.children[0].meta.type[tree.children[1].children[0]]
+        tree.meta.type = tree.children[0].meta.type.base[tree.children[2].children[0].children[0].value]
 
     def spplang_struct_ref_access(self, tree):
-        tree.meta.type = Pointer(self.namespace[tree.children[0].meta.type.base][tree.children[2].children[0].children[0].value])
+        tree.meta.type = Pointer(tree.children[0].meta.type.base[tree.children[2].children[0].children[0].value])
 
     def spplang_indexed(self, tree):
         tree.meta.type = tree.children[0].meta.type.base
@@ -132,90 +160,95 @@ class SppType(Visitor):
     def spplang_reference_square_parenthesized(self, tree):
         if tree.children[1].meta.type != Int64: raise ValueError(f"Unexpected type in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: int64. Got: {tree.children[1].meta.type}")
 
+class ClassType(NativeTypes):
+    def __init__(self, namespace, *args, **kwargs):
+        super().__init__(namespace, *args, **kwargs)
 
-class SppGlobalTypes(Transformer):
+    def spplang_method_definition(self, tree):
+        tree.meta.type = Pointer(FType([node.meta.type for node in tree.children[3].children if isinstance(node,Tree) and node.data == "spplang_parameter_definition"], 
+                                       tree.children[1].meta.type))
 
-    def __init__(self, *args, **kwargs):
-        self.global2type = dict()
-        super().__init__(self, *args, **kwargs)
+    def spplang_parameter_definition(self, tree):
+        tree.meta.type = tree.children[0].meta.type
+ 
+    def spplang_field_definition(self, tree):
+        tree.meta.type = tree.children[1].meta.type
 
-    @v_args(meta=True, inline=True)
-    def spplang_ftype(self, meta, ptype, rtype):
-        meta.type = FType(ptype, rtype)
-        return Tree(Token("RULE","spplang_ftype"), [ptype, rtype], meta)
+    def spplang_field_declaration(self, tree):
+        tree.meta.type = tree.children[1].meta.type
 
-    @v_args(meta=True, inline=True)
-    def spplang_pointer(self, meta, typ, star):
-        meta.type = Pointer(typ.meta.type)
-        return  Tree(Token("RULE","spplang_pointer"), [typ, star], meta)
+class FunctionDeclarationType(NativeTypes):
+    def __init__(self, namespace, *args, **kwargs):
+        super().__init__(namespace, *args, **kwargs)
 
-    @v_args(meta=True, inline=True)
-    def spplang_tname(self, meta, name):
-        meta.type = name.children[0].value
-        return Tree(Token("RULE","spplang_tname"), [name], meta)
+    def spplang_parameter_declaration(self, tree):
+        if tree.children[0].data != "spplang_vararg_parameter": tree.meta.type = tree.children[0].meta.type
 
-    @v_args(meta=True, inline=True)
-    def spplang_void(self, meta, name):
-        meta.type = Void()
-        return Tree(Token("RULE","spplang_void"), [name], meta)
+class FunctionDefinitionType(NativeTypes):
+    def __init__(self, namespace, *args, **kwargs):
+        super().__init__(namespace, *args, **kwargs)
 
-    @v_args(meta=True, inline=True)
-    def spplang_int8(self, meta, name):
-        meta.type = Int8()
-        return Tree(Token("RULE","spplang_int8"), [name], meta)
-
-    @v_args(meta=True, inline=True)
-    def spplang_int32(self, meta, name):
-        meta.type = Int32()
-        return Tree(Token("RULE","spplang_int32"), [name], meta)
-
-    @v_args(meta=True, inline=True)
-    def spplang_int64(self, meta, name):
-        meta.type = Int64()
-        return Tree(Token("RULE","spplang_int64"), [name], meta)
-
-    @v_args(meta=True, inline=True)
-    def spplang_double(self, meta, name):
-        meta.type = Double()
-        return Tree(Token("RULE","spplang_double"), [name], meta)
-
-    @v_args(meta=True)
-    def spplang_class(self, meta, nodes):
-        meta.type = SType(nodes[1].children[0].value, {node.children[2].children[0].value:node.children[1].meta.type for node in nodes[3:-1]})
-        if nodes[1].children[0].value in self.global2type: raise ValueError(f"Redefined global name \"{nodes[1].children[0].value}\"")
-        self.global2type[nodes[1].children[0].value] = meta.type
-        return Tree(Token("RULE", "spplang_class"), nodes, meta)
-
-    @v_args(meta=True)
-    def spplang_function_definition(self, meta, nodes):
-        meta.type = FType([node.children[0].meta.type for node in nodes[3].children if isinstance(node,Tree) and node.data == "spplang_parameter_definition"], nodes[1].meta.type)
-        self.global2type[nodes[2].children[0].value] = meta.type
-        if nodes[1].children[0].value in self.global2type: raise ValueError(f"Redefined global name \"{nodes[1].children[0].value}\"")
-        return Tree(Token("RULE", "spplang_function_definition"), nodes, meta)
-
-    @v_args(meta=True)
-    def spplang_global_assignement(self, meta, nodes):
-        meta.type = nodes[1].meta.type 
-        self.global2type[nodes[2].children[0].value] = meta.type
-        if nodes[1].children[0].value in self.global2type: raise ValueError(f"Redefined global name \"{nodes[1].children[0].value}\"")
-        return Tree(Token("RULE", "spplang_function_definition"), nodes, meta)
-
-    # TODO import
+    def spplang_parameter_definition(self, tree):
+        if tree.children[0].data != "spplang_vararg_parameter": tree.meta.type = tree.children[0].meta.type
 
 class NameSpace(Interpreter):
-    def __init__(self, globals2type):
-        self.currentNameSpace = globals2type
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        self.currentNameSpace = dict()
+        super().__init__(*args, **kwargs)
 
     def spplang_class(self, tree):
+        tree.meta.type = self.currentNameSpace[tree.children[1].children[0].value] = SType(tree.children[1].children[0].value,dict())
+        ClassType(self.currentNameSpace).visit(tree)
+
         self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace}, self.currentNameSpace
+        for node in tree.children[3:-1]:
+            if isinstance(node, Tree) and node.data in {"spplang_method_definition", "spplang_field_definition", "spplang_field_declaration"}:
+                tree.meta.type[node.children[2].children[0].value] = node.meta.type
+                self.currentNameSpace[node.children[2].children[0].value] = node.meta.type
+            else: raise ValueError(f"Unexpected node {node}")
+
         self.visit_children(tree)
         self.currentNameSpace = tmpNameSpace
+
+    def spplang_function_declaration(self, tree):
+        FunctionDeclarationType(self.currentNameSpace).visit(tree)
+        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = \
+            FType([node.children[0].meta.type for node in tree.children[3].children if isinstance(node,Tree) and \
+                                                                                       node.data == "spplang_parameter_declaration" and \
+                                                                                       node.children[0].data != "spplang_vararg_parameter"], 
+                  tree.children[1].meta.type, 
+                  vararg = any([isinstance(node,Tree) and node.data == "spplang_vararg_parameter" for node in tree.children[3].children]))
+
+
+
+    def spplang_global_assignement(self, tree):
+        NativeTypes(self.currentNameSpace).visit(tree)
+        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = tree.children[1].meta.type
         
     def spplang_function_definition(self, tree):
-        self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace}, self.currentNameSpace
+        FunctionDefinitionType(self.currentNameSpace).visit(tree)
+        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = FType([node.meta.type for node in tree.children[3].children if isinstance(node, Tree)],
+                                                                                           tree.children[1].meta.type)
+        self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace, **{node.children[1].children[0].value : node.meta.type for node in tree.children[3].children if isinstance(node,Tree) and node.data == "spplang_parameter_definition"}}, self.currentNameSpace
         self.visit_children(tree)
         self.currentNameSpace = tmpNameSpace
+
+    def spplang_method_definition(self, tree):
+        FunctionDefinitionType(self.currentNameSpace).visit(tree)
+        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = tree.children[1].meta.type
+        self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace, **{node.children[1].children[0].value : node.meta.type for node in tree.children[3].children if isinstance(node,Tree) and node.data == "spplang_parameter_definition"}}, self.currentNameSpace
+        self.visit_children(tree)
+        self.currentNameSpace = tmpNameSpace
+
+    def spplang_import(self, tree):
+        path = tree.children[1].children[0].value[1:-1]
+        oldname = tree.children[3].children[0].value
+        newname = tree.children[5].children[0].value
+        importTree = spplang.parse(Path(path).read_text())
+        namespace = NameSpace()
+        namespace.visit(importTree)
+        namespace.currentNameSpace[oldname].name = newname
+        tree.meta.type = namespace.currentNameSpace[oldname]
 
     def spplang_ifthen(self, tree):
         self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace}, self.currentNameSpace
@@ -227,47 +260,16 @@ class NameSpace(Interpreter):
         self.visit_children(tree)
         self.currentNameSpace = tmpNameSpace
 
-    def spplang_parameter_definition(self, tree):
-        tree.meta.type = self.currentNameSpace[tree.children[1].children[0].value] = tree.children[0].meta.type
-        self.visit_children(tree)
-
-    def spplang_method_definition(self, tree):
-        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = FType([node.children[0].meta.type for node in tree.children[3].children if isinstance(node,Tree) and node.data == "spplang_parameter_definition"], tree.children[1].meta.type)
-        self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace}, self.currentNameSpace
-        self.visit_children(tree)
-        self.currentNameSpace = tmpNameSpace
-
-    def spplang_field_definition(self, tree):
-        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = tree.children[1].meta.type
-
-    def spplang_field_declaration(self, tree):
-        tree.meta.type = self.currentNameSpace[tree.children[2].children[0].value] = tree.children[1].meta.type
-        
     def spplang_stmt_expr(self, tree):
-        #if tree.children[0].data in {"spplang_declaration_assignment", "spplang_auto_assignment"}:
-        #    tree.children[0].meta.type = self.currentNameSpace[tree.children[0].children[1].children[0].children[0].value] = SppType(self.currentNameSpace).visit(tree.children[0].children[3]).meta.type
-        #else:
-        tree.meta.type = SppType(self.currentNameSpace).visit(tree.children[0]).meta.type
+        tree.meta.type = ExpressionType(self.currentNameSpace).visit(tree.children[0]).meta.type
 
-
-class ToSringTransformer(Transformer):
-        
-    def __default__(self, data, children, meta):
-        result = super().__default__(data, children, meta)
-        result.string = " ".join([child.value if isinstance(child, Token) else child.string for child in children]) 
-        if hasattr(meta, "type"): result.string = f"[{meta.type} {result.string}]"
-        return result
-        
-    def transform(self, *args, **kwargs):
-        return super().transform(*args, **kwargs).string
-
+    def spplang_return(self, tree):
+        tree.meta.type = ExpressionType(self.currentNameSpace).visit(tree.children[1]).meta.type
 
 def sppTypes(parseTree):
-    transformer = SppGlobalTypes()
-    parseTree = transformer.transform(parseTree)
-    NameSpace(transformer.global2type).visit(parseTree)
-    print(ToSringTransformer().transform(parseTree))
-    return transformer.global2type
+    parseTree = Transformer().transform(parseTree)
+    NameSpace().visit(parseTree)
+    return parseTree
  
 
 
