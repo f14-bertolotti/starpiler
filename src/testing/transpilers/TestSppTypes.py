@@ -1,26 +1,10 @@
 import unittest
-import rich
+from lark.tree           import Tree
 from src.semantics.types import Double, Int64, Int32, Int8, Void, Pointer, SType, FType
-from src.syntax.spplang import lang
-from src.transpilers import addSppEndMethod
-from src.transpilers import sppTypes
-from lark.visitors import Visitor
-from lark.tree import Tree
-
-class NodeMatcher(Visitor):
-
-    def __init__(self, condition, *args, **kwargs):
-        self.condition = condition
-        self.matches   = list()
-        super().__init__(*args, **kwargs)
-
-    def visit(self, *args, **kwargs):
-        super().visit(*args, **kwargs)
-        return self.matches
-
-    def __default__(self, tree):
-        if self.condition(tree): self.matches.append(tree)
-        super().__default__(tree)
+from src.syntax.spplang  import lang
+from src.transpilers     import addSppEndMethod
+from src.transpilers     import sppTypes
+from src.utils           import NodeMatcher
 
 class Test(unittest.TestCase):
 
@@ -67,11 +51,11 @@ class Test(unittest.TestCase):
                self.assertEqual(function.meta.type, res)
 
     def test_class_definition(self):
-        restype0 = SType ("X",{"x":Int64(), "y":Int64()})
-        restype1 = SType ("X",{"x":Int64(), "y":Int64()})
+        restype0        = SType ("X",{"x":Int64(), "y":Int64()})
+        restype1        = SType ("X",{"x":Int64(), "y":Int64()})
         restype1["end"] = Pointer(FType([Pointer(restype1)], Void()))
-        restype2 = SType ("X",{})
-        restype2["x"] = Pointer(restype2)
+        restype2        = SType ("X",{})
+        restype2["x"]   = Pointer(restype2)
         treeAndRes = [(sppTypes(lang.parse("class X with def int64 x; def int64 y;;"))                  , restype0),
                       (sppTypes(addSppEndMethod(lang.parse("class X with def int64 x; def int64 y;;"))) , restype1),
                       (sppTypes(lang.parse("class X with def X* x;;"))                                  , restype2)]
@@ -81,8 +65,8 @@ class Test(unittest.TestCase):
                 self.assertEqual(classtree.meta.type, res)
 
     def test_class_import(self):
-        restype0 = SType("Y",{"a":Int64(),"b":Int64()})
-        restype0["start"] = Pointer(FType([Pointer(restype0), Int64(), Int64()], Pointer(restype0))) 
+        restype0          = SType("Y",{"a":Int64(),"b":Int64()})
+        restype0["start"] = Pointer(FType([Pointer(restype0), Int64(), Int64()], Pointer(restype0)))
         restype0["sum"]   = Pointer(FType([Pointer(restype0)], Int64()))
 
         treeAndRes = [(sppTypes(addSppEndMethod(lang.parse("from \"src/testing/spplang/programs/class.spp\" import X as Y;"))), restype0)]

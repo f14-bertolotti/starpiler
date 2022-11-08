@@ -1,8 +1,8 @@
 from lark.visitors import Transformer
-from lark import Token
-from lark.tree import Tree
-import rich
-class ToSringTransformer(Transformer):
+from lark          import Token
+from lark.tree     import Tree
+
+class Node2String(Transformer):
         
     def __default__(self, data, children, meta):
         result = super().__default__(data, children, meta)
@@ -12,6 +12,3 @@ class ToSringTransformer(Transformer):
     def transform(self, *args, **kwargs):
         return super().transform(*args, **kwargs).string
 
-
-def toString(parseTree):
-    return ToSringTransformer().transform(parseTree)
