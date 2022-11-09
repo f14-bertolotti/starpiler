@@ -1,8 +1,10 @@
 
-from src.transpilers.AddSppEndMethod     import addSppEndMethod
-from src.transpilers.AddBeforeReturn     import addBeforeReturn
-from src.transpilers.SppTypes            import sppTypes
-from src.transpilers.SppClassesToSStruct import sppClassesToSStruct
+from src.transpilers.AddSppEndMethod    import addSppEndMethod
+from src.transpilers.AddBeforeReturn    import addBeforeReturn
+from src.transpilers.SppTypes           import sppTypes
+from src.transpilers.SppClassesToS      import sppClassesToS
+from src.transpilers.SppNewToS          import sppNewToS
+from src.transpilers.SppStructAccessToS import sppStructAccessToS
 
 #from src.transpilers.IsSLangCondition import isSLang
 #from src.transpilers.IsSppLangCondition import isSppLang

@@ -59,9 +59,9 @@ class ExpressionType(NativeTypes):
     def spplang_reference(self, tree):
         tree.meta.type = Pointer(tree.children[1].meta.type)
 
-    def spplang_expression_identifier(self, tree):
-        if tree.children[0].children[0].value in self.namespace: 
-            tree.meta.type = self.namespace[tree.children[0].children[0].value]
+    def spplang_identifier(self, tree):
+        if tree.children[0].value in self.namespace: 
+            tree.meta.type = self.namespace[tree.children[0].value]
 
     def spplang_function_call(self, tree):
         if not isinstance(tree.children[0].meta.type,Pointer) and \
@@ -119,19 +119,19 @@ class ExpressionType(NativeTypes):
 
     def spplang_struct_value(self, tree):
         if len(tree.children) == 3: 
-            tree.meta.type = self.namespace[tree.children[0].children[0].value]
+            tree.meta.type = self.namespace[tree.children[0].value]
         elif len(tree.children) == 4:
             idsAndExpr = [node for node in tree.children if isinstance(node,Tree) and node.data in {"spplang_identifier","spplang_expression"}]
             name2expr = {n[0]:n[1].meta.type for i in range(0, len(idsAndExpr)//2) for n in tree.children[i*2:(i+1)*2]}
-            tree.meta.type = self.namespace[tree.children[0].children[0].value]
+            tree.meta.type = self.namespace[tree.children[0].value]
         else:
             raise ValueError("Invalid spplang_struct_value tree")
 
     def spplang_struct_access(self, tree):
-        tree.meta.type = tree.children[0].meta.type.base[tree.children[2].children[0].children[0].value]
+        tree.meta.type = tree.children[0].meta.type.base[tree.children[2].children[0].value]
 
     def spplang_struct_ref_access(self, tree):
-        tree.meta.type = Pointer(tree.children[0].meta.type.base[tree.children[2].children[0].children[0].value])
+        tree.meta.type = Pointer(tree.children[0].meta.type.base[tree.children[2].children[0].value])
 
     def spplang_indexed(self, tree):
         tree.meta.type = tree.children[0].meta.type.base

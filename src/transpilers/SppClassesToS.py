@@ -1,5 +1,5 @@
 
-from lark.visitors import Transformer
+from lark.visitors import v_args, Transformer
 from lark.tree import Tree
 from lark import Token
 from pathlib import Path
@@ -24,7 +24,7 @@ class UniqueGenerator:
         self.counter += 1
         return f"_{self.counter-1}_"
 
-class SppClassesToSStruct(Transformer):
+class SppClassesToS(Transformer):
 
     def __init__(self, *args, **kwargs):
         self.insertMallocDeclaration = False
@@ -36,19 +36,21 @@ class SppClassesToSStruct(Transformer):
         self.ugen = UniqueGenerator(Node2String().transform(parseTree))
         self.unique0 = next(self.ugen)
         return super().transform(parseTree)
-
-    def spplang_start(self, nodes):
+    
+    @v_args(meta = True)
+    def spplang_start(self, meta, nodes):
         toplevels = [sub for node in nodes for sub in (node if isinstance(node,list) else [node])]
         if self.insertMallocDeclaration: toplevels.insert(0, mallocDeclaration);
         if self.insertMemcpyDeclaration: toplevels.insert(0, memcpyDeclaration);
         if self.insertFreeDeclaration  : toplevels.insert(0,   freeDeclaration);
-        return Tree(Token("RULE","spplang_start"), toplevels)
+        return Tree(Token("RULE","spplang_start"), toplevels, meta)
 
 
     def __default__(self, data, children, meta):
         return Tree(data, [sub for child in children for sub in (child if isinstance(child, list) else [child])], meta)
 
-    def spplang_class(self, nodes):
+    @v_args(meta = True)
+    def spplang_class(self, meta, nodes):
         # check minimal constraints for spplang rules
         # TODO
         
@@ -77,7 +79,7 @@ class SppClassesToSStruct(Transformer):
             Token("STRUCT", "struct"), 
             Tree(Token("RULE", "slang_tname"), [nodes[1]]), 
             Token("WITH", "with"), 
-            Token("SEMICOLON", ";")])
+            Token("SEMICOLON", ";")], meta)
 
         additionalFunctions = list()
         for node in nodes[3:-1]:
@@ -87,7 +89,7 @@ class SppClassesToSStruct(Transformer):
                                            Tree(Token("RULE", "slang_struct_declaration"), [
                                                node.children[1], 
                                                node.children[2], 
-                                               Token("SEMICOLON", ";")])
+                                               Token("SEMICOLON", ";")], meta=node.meta)
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_field_definition":
                 # add struct definition
@@ -97,7 +99,7 @@ class SppClassesToSStruct(Transformer):
                                                node.children[2], 
                                                Token("EQUAL", "="), 
                                                node.children[4], 
-                                               Token("SEMICOLON", ";")])
+                                               Token("SEMICOLON", ";")], meta=node.meta)
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_method_definition":
                 uniqueName = next(self.ugen)
@@ -114,7 +116,7 @@ class SppClassesToSStruct(Transformer):
                                              Tree(Token("RULE","slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}")]), 
                                              Token("EQUAL", "="), 
                                              Tree(Token("RULE", "slang_reference"), [Token("AMPERSAND", "&"), Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", f"{uniqueName}{node.children[2].children[0]}")])]), 
-                                             Token("SEMICOLON", ";")])
+                                             Token("SEMICOLON", ";")], meta=node.meta)
                 # add parameter types to function definition type
                 for param in filter(lambda x: isinstance(x,Tree), node.children[3].children):
                     baseFunctionDefinition.children[0].children[0].children[0].children.append(param.children[0])
@@ -136,97 +138,10 @@ class SppClassesToSStruct(Transformer):
 
         return [baseStruct, *additionalFunctions]
 
-
-    #def spplang_new(self, nodes):
-    #    self.insertMallocDeclaration = True
-    #    self.insertMemcpyDeclaration = True
-    #    rest = Tree(Token("RULE", "slang_function_call"), [
-    #        Tree(Token("RULE", "slang_struct_access"), [
-    #            Tree(Token("RULE", "slang_round_parenthesized"), [
-    #                Token("LPAR", "("), 
-    #                Tree(Token("RULE", "slang_auto_assignement"), [
-    #                    Token("__ANON__", "auto"),
-    #                    Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)]), 
-    #                    Token("EQUAL", "="), 
-    #                    Tree(Token("RULE", "slang_cast"), [
-    #                        Tree(Token("RULE", "slang_function_call"), [
-    #                            Tree(Token("RULE", "slang_reference"), [
-    #                                Token("AMPERSAND", "&"), 
-    #                                Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", "memcpy")])]), 
-    #                            Token("LPAR", "("), 
-    #                            Tree(Token("RULE", "slang_expression_sequence"), [
-    #                                Tree(Token("RULE", "slang_function_call"), [
-    #                                    Tree(Token("RULE", "slang_reference"), [
-    #                                        Token("AMPERSAND", "&"), 
-    #                                        Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", "malloc")])]), 
-    #                                    Token("LPAR", "("), 
-    #                                    Tree(Token("RULE", "slang_expression_sequence"), [
-    #                                        Tree(Token("RULE", "slang_size_of"), [
-    #                                            Token("SIZE", "size"), 
-    #                                            Token("OF", "of"), 
-    #                                            Tree(Token("RULE", "slang_tname"), [
-    #                                                nodes[1]])])]), 
-    #                                    Token("RPAR", ")")]), 
-    #                                Token("COMMA", ","), 
-    #                                Tree(Token("RULE", "slang_cast"), [
-    #                                    Tree(Token("RULE", "slang_struct_value"), [
-    #                                        nodes[1],
-    #                                        Token("LBRACE", "{"), 
-    #                                        Token("RBRACE", "}")]), 
-    #                                    Token("AS", "as"), 
-    #                                    Tree(Token("RULE", "slang_pointer"), [
-    #                                        Tree(Token("RULE", "slang_int8"), [
-    #                                            Token("INT8", "int8")]), 
-    #                                        Token("STAR", "*")])]), 
-    #                                Token("COMMA", ","), 
-    #                                Tree(Token("RULE", "slang_size_of"), [
-    #                                    Token("SIZE", "size"), 
-    #                                    Token("OF", "of"), 
-    #                                    Tree(Token("RULE", "slang_tname"), [
-    #                                        nodes[1]])])]), 
-    #                            Token("RPAR", ")")]), 
-    #                        Token("AS", "as"), 
-    #                        Tree(Token("RULE", "slang_pointer"), [
-    #                            Tree(Token("RULE", "slang_tname"), [nodes[1]]), 
-    #                            Token("STAR", "*")])])
-    #                    ]), 
-    #                Token("RPAR", ")")]), 
-    #            Token("DOT", "."), 
-    #            Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", "start")])]), 
-    #        Token("LPAR", "("), 
-    #        Tree(Token("RULE", "slang_expression_sequence"), [
-    #            Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)]), 
-    #            *([] if len(nodes) == 4 else [Token("COMMA", ","), *nodes[3].children])]),
-    #        Token("RPAR", ")")])
-    #    return rest
-
-
-    #def spplang_function_call(self, nodes):
-    #    if nodes[0].data == "spplang_struct_access":
-    #        return Tree(Token("RULE", "slang_function_call"), [
-    #            Tree(Token("RULE", "slang_struct_access"), [
-    #                Tree(Token("RULE", "slang_round_parenthesized"), [
-    #                    Token("LPAR", "("), 
-    #                    Tree(Token("RULE", "slang_auto_assignement"), [
-    #                        Token("AUTO", "auto"), 
-    #                        Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)]), 
-    #                        Token("EQUAL", "="), 
-    #                        nodes[0].children[0]]), 
-    #                    Token("RPAR", ")")]), 
-    #                Token("DOT", "."), 
-    #                nodes[0].children[2]]),
-    #            Token("LPAR", "("), 
-    #            Tree(Token("RULE", "slang_expression_sequence"), [
-    #                Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", self.unique0)]), 
-    #                *([Token("COMMA",","), *nodes[2].children] if len(nodes) == 4 else [])]),
-    #            Token("RPAR", ")")])
-
-
         return Tree(Token("RULE","slang_function_call"), nodes)
 
-def sppClassesToSStruct(parseTree):
-    if hasattr(parseTree, "path") and "sppClassesToSStruct" in parseTree.path: raise ValueError("sppClassesToSStruct is applicable only once")
-    res = SppClassesToSStruct().transform(parseTree)
+def sppClassesToS(parseTree):
+    res = SppClassesToS().transform(parseTree)
     return res
 
 
