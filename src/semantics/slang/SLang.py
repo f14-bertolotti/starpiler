@@ -94,7 +94,7 @@ class FunctionDefinition:
         return f"FunctionDefinition({self.name},{self.parameters},{self.block})"
 
     def LLVMDeclare(self, module):
-        self.ref = ir.Function(module, self.type.toLLVM(module), name=self.name.value)
+        self.ref = ir.Function(module, self.type.toLLVM(module), name=f"{self.name.value}{id(self)}")
         module.name2decl[self.name.value] = self
 
     def toLLVM(self, module):
@@ -103,6 +103,7 @@ class FunctionDefinition:
         builder.name2var = {**module.name2decl}
         self.parameters.toLLVM(builder, self.ref.args)
         self.block.toLLVM(builder)
+
 
 class FunctionDeclaration:
     def __init__(self, rtype, name, parameters): 
@@ -116,7 +117,7 @@ class FunctionDeclaration:
         
     def LLVMDeclare(self, module):
         if self.name.value not in module.globals:
-            self.ref = ir.Function(module, self.type.toLLVM(module), name=self.name.value)
+            self.ref = ir.Function(module, self.type.toLLVM(module), name=f"{self.name.value}")
             module.name2decl[self.name.value] = self
         else:
             for d in module.path2import.values():
@@ -137,7 +138,7 @@ class GlobalAssignement:
         builder = ir.IRBuilder()
         builder.name2var = module.name2decl
         self.type = self.assignement.expr.getType(builder)
-        gvar = ir.GlobalVariable(module, self.type.toLLVM(module), self.assignement.name.value)
+        gvar = ir.GlobalVariable(module, self.type.toLLVM(module), f"{self.assignement.name.value}{id(self)}")
         self.ref = gvar
         module.name2decl[self.assignement.name.value] = self
         gvar.linkage = "internal"
@@ -354,7 +355,7 @@ def run(program_string=None, program_tree=None, program_ast=None):
     engine.finalize_object()
     engine.run_static_constructors()
 
-    func_ptr = engine.get_function_address("start")
+    func_ptr = engine.get_function_address(module.name2decl["start"].ref._name)
 
     rtype = module.name2decl["start"].type.rtype
 

@@ -1,10 +1,13 @@
+def void free(int8*);
+def int8* malloc(int64);
 class XY with 
     def int8 * string; 
     def XY * start(XY * this) does 
+        this&.string = &malloc(64);
         return this;
     ; 
     def void end(XY* this) does 
-        &free(this as int8*);
+        &free(this.string as int8*);
         return;
     ;
 ; 

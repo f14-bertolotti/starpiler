@@ -15,15 +15,6 @@ mallocDeclaration = Lark(Language(functionDeclaration).toLark(), keep_all_tokens
 memcpyDeclaration = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True).parse("def int8* memcpy(int8*, int8*, int64);")
 freeDeclaration   = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True).parse("def void free(int8*);")
 
-class UniqueGenerator:
-    def __init__(self, program):
-        self.program = program
-        self.counter = 0
-    def __next__(self):
-        while f"_{self.counter}_" in self.program: self.counter += 1
-        self.counter += 1
-        return f"_{self.counter-1}_"
-
 class SppClassesToS(Transformer):
 
     def __init__(self, *args, **kwargs):
@@ -32,11 +23,6 @@ class SppClassesToS(Transformer):
         self.insertFreeDeclaration   = False
         self.name2class = dict()
 
-    def transform(self, parseTree):
-        self.ugen = UniqueGenerator(Node2String().transform(parseTree))
-        self.unique0 = next(self.ugen)
-        return super().transform(parseTree)
-    
     @v_args(meta = True)
     def spplang_start(self, meta, nodes):
         toplevels = [sub for node in nodes for sub in (node if isinstance(node,list) else [node])]
@@ -51,17 +37,14 @@ class SppClassesToS(Transformer):
 
     @v_args(meta = True)
     def spplang_class(self, meta, nodes):
-        # check minimal constraints for spplang rules
-        # TODO
         
-        # check at most one "end" method 
+        # check exactly one "end" method 
         endMethods = [node for node in nodes[3:-1] if isinstance(node,Tree) and node.data == "spplang_method_definition" and node.children[2].children[0] == "end" ] 
         if len(endMethods) != 1: raise ValueError("class has 0 or >1 \"end\" methods")
 
         # check exactly one "start" method
         startMethods = [node for node in nodes[3:-1] if isinstance(node,Tree) and node.data == "spplang_method_definition" and node.children[2].children[0] == "start"]
-        if len(startMethods) != 1: 
-            raise ValueError("class has 0 or >1 \"start\" methods")
+        if len(startMethods) != 1: raise ValueError("class has 0 or >1 \"start\" methods")
         
         # add end method if not present
         if len(endMethods) == 0:
@@ -70,8 +53,7 @@ class SppClassesToS(Transformer):
             nodes.insert(-1, endMethods[-1])
 
         # adds &free(this as int8*) before each return in the "end" method;
-        self.insertFreeDeclaration = True
-        freeStmt = Lark(Language(stmtexpr).toLark(), keep_all_tokens=True).parse("&free(this as int8*);")
+        freeStmt = Lark(Language(stmtexpr).toLark(), keep_all_tokens=True).parse("&__free(this as int8*);")
         endMethods[-1] = addBeforeReturn(freeStmt, endMethods[-1])
              
         # base struct
@@ -102,7 +84,6 @@ class SppClassesToS(Transformer):
                                                Token("SEMICOLON", ";")], meta=node.meta)
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_method_definition":
-                uniqueName = next(self.ugen)
                 # add function definition in struct
                 baseFunctionDefinition = Tree(Token("RULE", "slang_struct_definition"), [
                                              Tree(Token("RULE","slang_pointer"), [
@@ -115,7 +96,7 @@ class SppClassesToS(Transformer):
                                                  Token("STAR","*")]), 
                                              Tree(Token("RULE","slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}")]), 
                                              Token("EQUAL", "="), 
-                                             Tree(Token("RULE", "slang_reference"), [Token("AMPERSAND", "&"), Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", f"{uniqueName}{node.children[2].children[0]}")])]), 
+                                             Tree(Token("RULE", "slang_reference"), [Token("AMPERSAND", "&"), Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}{abs(hash(node))}")])]), 
                                              Token("SEMICOLON", ";")], meta=node.meta)
                 # add parameter types to function definition type
                 for param in filter(lambda x: isinstance(x,Tree), node.children[3].children):
@@ -127,7 +108,7 @@ class SppClassesToS(Transformer):
                 baseFunctionDefinition.children[0].children[0].children[1].children.insert(-1,node.children[1])
                 # add function definition to the base struct
                 baseStruct.children.insert(-1, baseFunctionDefinition)
-                node.children[2].children[0] = Token("__ANON__", f"{uniqueName}{node.children[2].children[0]}")
+                node.children[2].children[0] = Token("__ANON__", f"{node.children[2].children[0]}{abs(hash(node))}")
                 node.data = "spplang_function_definition"
                 additionalFunctions.append(node)
             elif isinstance(node, Token):

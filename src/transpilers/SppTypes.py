@@ -7,7 +7,7 @@ from pathlib import Path
 
 class NativeTypes(Visitor):
     def __init__(self, namespace, *args, **kwargs):
-        self.namespace = namespace
+        self.namespace = namespace 
         super().__init__(*args, **kwargs)
 
     def spplang_ftype(self, tree):
@@ -64,7 +64,7 @@ class ExpressionType(NativeTypes):
             tree.meta.type = self.namespace[tree.children[0].value]
 
     def spplang_function_call(self, tree):
-        if not isinstance(tree.children[0].meta.type,Pointer) and \
+        if not isinstance(tree.children[0].meta.type, Pointer) and \
            not isinstance(tree.children[0].meta.type.base, FType) : 
             raise ValueError(f"Not a callable called in {tree.meta.start_pos}, {tree.meta.end_pos}")
         tree.meta.type = tree.children[0].meta.type.base.rtype 
@@ -114,18 +114,11 @@ class ExpressionType(NativeTypes):
     def spplang_declaration_assignment(self, tree):
         self.namespace[tree.children[1].children[0].value] = tree.meta.type = tree.children[0].meta.type
 
-    def spplang_auto_assignment(self, tree):
-         self.namespace[tree.children[1].children[0].value] = tree.meta.type = tree.children[4].meta.type
+    def spplang_auto_assignement(self, tree):
+         self.namespace[tree.children[1].children[0].value] = tree.meta.type = tree.children[3].meta.type
 
     def spplang_struct_value(self, tree):
-        if len(tree.children) == 3: 
-            tree.meta.type = self.namespace[tree.children[0].value]
-        elif len(tree.children) == 4:
-            idsAndExpr = [node for node in tree.children if isinstance(node,Tree) and node.data in {"spplang_identifier","spplang_expression"}]
-            name2expr = {n[0]:n[1].meta.type for i in range(0, len(idsAndExpr)//2) for n in tree.children[i*2:(i+1)*2]}
-            tree.meta.type = self.namespace[tree.children[0].value]
-        else:
-            raise ValueError("Invalid spplang_struct_value tree")
+        tree.meta.type = self.namespace[tree.children[0].children[0].value]
 
     def spplang_struct_access(self, tree):
         tree.meta.type = tree.children[0].meta.type.base[tree.children[2].children[0].value]
@@ -134,7 +127,10 @@ class ExpressionType(NativeTypes):
         tree.meta.type = Pointer(tree.children[0].meta.type.base[tree.children[2].children[0].value])
 
     def spplang_indexed(self, tree):
-        tree.meta.type = tree.children[0].meta.type.base
+        cur = tree.children[0].meta.type
+        for node in tree.children:
+            if node.data == "spplang_square_parenthesized": cur = cur.base
+        tree.meta.type = cur
 
     def spplang_size_of(self, tree):
         tree.meta.type = Int64()
@@ -143,7 +139,7 @@ class ExpressionType(NativeTypes):
         tree.meta.type = tree.children[1].meta.type
 
     def spplang_new(self, tree):
-        tree.meta.type = self.namespace[tree.children[1].children[0].value]
+        tree.meta.type = Pointer(self.namespace[tree.children[1].children[0].value])
 
     def spplang_parameter_declaration(self, tree):
         tree.meta.type = tree.children[0].type
@@ -155,10 +151,10 @@ class ExpressionType(NativeTypes):
         tree.meta.type = [node.meta.type for node in tree.children if isinstance(node,Tree) and node.data=="spplang_expression"]
 
     def spplang_square_parenthesized(self, tree):
-        if tree.children[1].meta.type != Int64: raise ValueError(f"Unexpected type in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: int64. Got: {tree.children[1].meta.type}")
+        if tree.children[1].meta.type != Int64(): raise ValueError(f"Unexpected type in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: int64. Got: {tree.children[1].meta.type}")
 
     def spplang_reference_square_parenthesized(self, tree):
-        if tree.children[1].meta.type != Int64: raise ValueError(f"Unexpected type in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: int64. Got: {tree.children[1].meta.type}")
+        if tree.children[1].meta.type != Int64(): raise ValueError(f"Unexpected type in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: int64. Got: {tree.children[1].meta.type}")
 
 class ClassType(NativeTypes):
     def __init__(self, namespace, *args, **kwargs):
@@ -246,17 +242,19 @@ class NameSpace(Interpreter):
         newname = tree.children[5].children[0].value
         importTree = spplang.parse(Path(path).read_text())
         namespace = NameSpace()
-        namespace.visit(importTree)
+        namespace.visit_children(importTree)
         namespace.currentNameSpace[oldname].name = newname
-        tree.meta.type = namespace.currentNameSpace[oldname]
+        self.currentNameSpace[newname] = tree.meta.type = namespace.currentNameSpace[oldname]
 
     def spplang_ifthen(self, tree):
         self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace}, self.currentNameSpace
+        ExpressionType(self.currentNameSpace).visit(tree.children[1]).meta.type
         self.visit_children(tree)
         self.currentNameSpace = tmpNameSpace
 
     def spplang_while(self, tree):
         self.currentNameSpace, tmpNameSpace = {**self.currentNameSpace}, self.currentNameSpace
+        ExpressionType(self.currentNameSpace).visit(tree.children[1]).meta.type
         self.visit_children(tree)
         self.currentNameSpace = tmpNameSpace
 
@@ -268,6 +266,7 @@ class NameSpace(Interpreter):
 
 def sppTypes(parseTree):
     parseTree = Transformer().transform(parseTree)
+    from src.utils import NodeRenamer
     NameSpace().visit(parseTree)
     return parseTree
  

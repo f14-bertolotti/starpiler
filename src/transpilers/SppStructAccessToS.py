@@ -19,7 +19,7 @@ class SppStructAccessToS(Transformer):
            len(nodes[0].meta.type.base.ptypes) > 0  and \
            nodes[0].meta.type.base.ptypes[0] == nodes[0].children[0].meta.type: # non-static method
     
-            basicCall = Tree(Token("RULE", "spplang_function_call"), [
+            basicCall = Tree(Token("RULE", "slang_function_call"), [
                 Tree(Token("RULE", "slang_struct_access"), [
                     Tree(Token("RULE", "slang_round_parenthesized"), [
                         Token("LPAR", "("),
@@ -28,22 +28,22 @@ class SppStructAccessToS(Transformer):
                             Tree(Token("RULE","slang_identifier"), [Token("__ANON__", "__")]),
                             Token("EQUAL", "="),
                             nodes[0].children[0]
-                        ]),
+                        ], nodes[0].children[0].meta),
                         Token("RPAR",")")
                     ]),
                     Token("DOT", "."),
                     nodes[0].children[2]
-                ]),
+                ], nodes[0].children[2].meta),
                 Token("LPAR", "("),
                 Tree(Token("RULE", "slang_expression_sequence"), [
                     Tree(Token("RULE","slang_identifier"), [Token("__ANON__", "__")])
                 ]),
                 Token("RPAR", ")")
-            ])
+            ], meta)
             if len(nodes) == 4: basicCall.children[2].children += [Token("COMMA",",")] + nodes[2].children
             return basicCall
         
-        return Tree(Token("RULE","spplang_function_call"), nodes, meta)
+        return Tree(Token("RULE","slang_function_call"), nodes, meta)
 
 def sppStructAccessToS(parseTree):
     return SppStructAccessToS().transform(parseTree)

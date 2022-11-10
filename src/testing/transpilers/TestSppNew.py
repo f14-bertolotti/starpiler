@@ -26,10 +26,11 @@ class Test(unittest.TestCase):
             X* x = new X(1,2);;
         """
         spp_tree = sppNewToS(sppClassesToS(sppTypes(addSppEndMethod(spplang.parse(program)))))
-        s_tree   = functionCallLang.parse("(auto __ = &__memcpy(&__malloc(size of X), X{} as int8*, size of X) as X*).start(__,1,2)");
+        s_tree   = functionCallLang.parse("(X* __ = __memcpy(__malloc(size of X), X{} as int8*, size of X) as X*).start(__,1,2)");
 
         NodeRenamer(lambda x: f"s{x[3:]}" if x.startswith("spplang_") else x).visit(spp_tree)
-        self.assertEqual(Node2String().transform(s_tree), Node2String().transform(spp_tree.children[-1].children[-2].children[0].children[0].children[-1]))
+        self.assertEqual(Node2String().transform(s_tree), 
+                         Node2String().transform(spp_tree.children[-1].children[-2].children[0].children[0].children[-1]))
         
     def test_simple_new2(self):
         program = """
@@ -41,7 +42,7 @@ class Test(unittest.TestCase):
             X* x = new X();;
         """
         spp_tree = sppNewToS(sppClassesToS(sppTypes(addSppEndMethod(spplang.parse(program)))))
-        s_tree   = functionCallLang.parse("(auto __ = &__memcpy(&__malloc(size of X), X{} as int8*, size of X) as X*).start(__)");
+        s_tree   = functionCallLang.parse("(X* __ = __memcpy(__malloc(size of X), X{} as int8*, size of X) as X*).start(__)");
 
         NodeRenamer(lambda x: f"s{x[3:]}" if x.startswith("spplang_") else x).visit(spp_tree)
         self.assertEqual(Node2String().transform(s_tree), Node2String().transform(spp_tree.children[-1].children[-2].children[0].children[0].children[-1]))

@@ -16,15 +16,16 @@ class SppNewToS(Transformer):
         globalAssignements = [node for node in nodes if isinstance(node, Tree) and node.data == "spplang_global_assignement"]
         if not any(ass.children[2].children[0].value == "__malloc" for ass in globalAssignements):
             nodes.insert(0,    funDeclarationLang.parse("def int8* malloc(int64);"))
-            nodes.insert(1, globalAssignementLang.parse("def auto __malloc = &malloc;"))
+            nodes.insert(1, globalAssignementLang.parse("def (int64 -> int8*)* __malloc = &malloc;"))
         if not any(ass.children[2].children[0].value == "__memcpy" for ass in globalAssignements):
             nodes.insert(0,    funDeclarationLang.parse("def int8* memcpy(int8*, int8*, int64);"))
-            nodes.insert(1, globalAssignementLang.parse("def auto __memcpy = &memcpy;"))
+            nodes.insert(1, globalAssignementLang.parse("def (int8*, int8*, int64 -> int8*)* __memcpy = &memcpy;"))
         return Tree(Token("RULE","spplang_start"), nodes, meta)
 
     @v_args(meta=True)
     def spplang_new(self, meta, nodes):
-        newexpr = functionCallLang.parse(f"(auto __ = &__memcpy(&__malloc(size of {nodes[1].children[0].value}), {nodes[1].children[0].value}" + "{}" + f"as int8*, size of {nodes[1].children[0].value}) as {nodes[1].children[0].value}*).start(__)")
+        newexpr = functionCallLang.parse(f"({nodes[1].children[0].value}* __ = __memcpy(__malloc(size of {nodes[1].children[0].value}), {nodes[1].children[0].value}" + "{}" + f"as int8*, size of {nodes[1].children[0].value}) as {nodes[1].children[0].value}*).start(__)")
+        newexpr.meta.type = meta.type
         if len(nodes) == 5: newexpr.children[2].children += [Token("COMMA",",")] + nodes[3].children
         return newexpr
 

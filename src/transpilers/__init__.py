@@ -5,6 +5,9 @@ from src.transpilers.SppTypes           import sppTypes
 from src.transpilers.SppClassesToS      import sppClassesToS
 from src.transpilers.SppNewToS          import sppNewToS
 from src.transpilers.SppStructAccessToS import sppStructAccessToS
+from src.transpilers.SppToSImport       import sppToSImport
+from src.transpilers.SppToSIdentities   import sppToSIdentities
+from src.transpilers.SppToSGlobalAssignement import sppToSGlobalAssignement
 
 #from src.transpilers.IsSLangCondition import isSLang
 #from src.transpilers.IsSppLangCondition import isSppLang
