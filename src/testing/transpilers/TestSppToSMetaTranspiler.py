@@ -5,20 +5,20 @@ from src.syntax.spplang import lang
 from src.semantics.slang import run
 from pathlib import Path
 
-from src.transpilers.spp.s import transpile
+from src.transpilers.spp.s import deltas
+from src.transpilers.s import metric, metric01
+from src.transpilers import MetaTranspiler
 
-from src.utils import SPrettyPrinter
-
-class TestBasics(unittest.TestCase): pass
+class Test(unittest.TestCase): pass
 
 for testname in tests:
     def make():
         def f(self):
             parsedTree = (lang.parse(Path(tests[f.__name__[5:]]["path"]).read_text()))
-            self.assertEqual(run(program_tree=transpile(parsedTree)), tests[f.__name__[5:]]["result"])
+            self.assertEqual(run(program_tree=MetaTranspiler(deltas, metric01).search(parsedTree)), tests[f.__name__[5:]]["result"])
         f.__name__ = f"test_{testname}"
         return f
-    setattr(TestBasics, f"test_{testname}", make())
+    setattr(Test, f"test_{testname}", make())
 
 if __name__ == "__main__":
     unittest.main()
