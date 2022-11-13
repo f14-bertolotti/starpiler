@@ -1,9 +1,13 @@
-from lark.visitors import v_args, Visitor, Transformer, Interpreter
+from lark.visitors import Visitor, Transformer, Interpreter
 from lark.tree import Tree
-from lark import Token
 from src.semantics.types import Double, Int64, Int32, Int8, Void, Pointer, SType, FType
 from src.syntax.spplang import lang as spplang
 from pathlib import Path
+import copy
+
+class Clone(Transformer):
+    def __default__(self, data, children, meta):
+        return Tree(data, children, meta)
 
 class NativeTypes(Visitor):
     def __init__(self, namespace, *args, **kwargs):
@@ -187,6 +191,7 @@ class FunctionDefinitionType(NativeTypes):
     def spplang_parameter_definition(self, tree):
         if tree.children[0].data != "spplang_vararg_parameter": tree.meta.type = tree.children[0].meta.type
 
+cachedPaths = dict()
 class NameSpace(Interpreter):
     def __init__(self, *args, **kwargs):
         self.currentNameSpace = dict()
@@ -240,8 +245,14 @@ class NameSpace(Interpreter):
         path = tree.children[1].children[0].value[1:-1]
         oldname = tree.children[3].children[0].value
         newname = tree.children[5].children[0].value
-        importTree = spplang.parse(Path(path).read_text())
+
         namespace = NameSpace()
+        if path in cachedPaths:
+            importTree = cachedPaths[path]
+        else:
+            importTree = spplang.parse(Path(path).read_text())
+            cachedPaths[path] = importTree
+
         namespace.visit_children(importTree)
         namespace.currentNameSpace[oldname].name = newname
         self.currentNameSpace[newname] = tree.meta.type = namespace.currentNameSpace[oldname]
@@ -264,9 +275,10 @@ class NameSpace(Interpreter):
     def spplang_return(self, tree):
         tree.meta.type = ExpressionType(self.currentNameSpace).visit(tree.children[1]).meta.type
 
-def sppTypes(parseTree):
-    parseTree = Transformer().transform(parseTree)
-    from src.utils import NodeRenamer
+
+
+def types(parseTree):
+    parseTree = Clone().transform(parseTree)
     NameSpace().visit(parseTree)
     return parseTree
  

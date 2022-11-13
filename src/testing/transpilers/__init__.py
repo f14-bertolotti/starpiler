@@ -1,5 +1,6 @@
 
-from src.testing.transpilers.TestSppTypes           import Test as Test0
-from src.testing.transpilers.TestSppClassesToS      import Test as Test1
-from src.testing.transpilers.TestSppNew             import Test as Test2
-from src.testing.transpilers.TestSppStructAccessToS import Test as Test3
+from src.testing.transpilers.TestSppTypes             import Test as TestSppTypes
+from src.testing.transpilers.TestSppToSClasses        import Test as TestSppToSClasses
+from src.testing.transpilers.TestSppToSNew            import Test as TestSppToSNew
+from src.testing.transpilers.TestSppToSClassAccesses  import Test as TestSppToSClassAccesses
+from src.testing.transpilers.TestSppToSMetaTranspiler import Test as TestSppToSMetaTranspiler

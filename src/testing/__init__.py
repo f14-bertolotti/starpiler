@@ -1,3 +1,7 @@
 
 from src.testing.slang import TestBasics
-from src.testing.transpilers import Test0, Test1
+from src.testing.transpilers import TestSppTypes
+from src.testing.transpilers import TestSppToSClasses
+from src.testing.transpilers import TestSppToSNew
+from src.testing.transpilers import TestSppToSClassAccesses
+from src.testing.transpilers import TestSppToSMetaTranspiler

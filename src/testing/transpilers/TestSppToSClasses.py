@@ -1,20 +1,19 @@
 import unittest
 
-from src.syntax.spplang import lang as spplang
-from src.syntax.slang   import lang as slang
-from src.transpilers    import sppTypes, addSppEndMethod, sppClassesToS
-from src.utils          import Node2String, NodeRenamer, NodeMatcher
-from lark.visitors      import Visitor
-from lark.tree          import Tree
-from lark               import Token
+from src.syntax.spplang    import lang as spplang
+from src.syntax.slang      import lang as slang
+from src.transpilers.spp   import types, addEndMethods
+from src.transpilers.spp.s import classes
+from src.utils             import Node2String, NodeRenamer, NodeMatcher
+from lark.tree             import Tree
 
 class Test(unittest.TestCase):
 
     def test_simple_class(self):
         program = "class X with def int64 x; def int64 y; def X* start(X* this, int64 x, int64 y) does return this;;;"
-        tree0 = sppClassesToS(addSppEndMethod(sppTypes(spplang.parse(program))))
-        tree1 = sppClassesToS(sppTypes(addSppEndMethod(spplang.parse(program))))
-        tree2 = sppClassesToS(addSppEndMethod(spplang.parse(program)))
+        tree0 = classes(addEndMethods(types(spplang.parse(program))))
+        tree1 = classes(types(addEndMethods(spplang.parse(program))))
+        tree2 = classes(addEndMethods(spplang.parse(program)))
         renamer = NodeRenamer(lambda x: x.replace("spplang", "slang"))
         renamer.visit(tree0)
         renamer.visit(tree1)
@@ -32,9 +31,9 @@ class Test(unittest.TestCase):
       
     def test_rec_class(self):
         program = "class X with def int64 x; def int64 y; def X* rec; def X* start(X* this, int64 x, int64 y, X* rec) does return this;;;"
-        tree0 = sppClassesToS(addSppEndMethod(sppTypes(spplang.parse(program))))
-        tree1 = sppClassesToS(sppTypes(addSppEndMethod(spplang.parse(program))))
-        tree2 = sppClassesToS(addSppEndMethod(spplang.parse(program)))
+        tree0 = classes(addEndMethods(types(spplang.parse(program))))
+        tree1 = classes(types(addEndMethods(spplang.parse(program))))
+        tree2 = classes(addEndMethods(spplang.parse(program)))
         renamer = NodeRenamer(lambda x: x.replace("spplang", "slang"))
         renamer.visit(tree0)
         renamer.visit(tree1)

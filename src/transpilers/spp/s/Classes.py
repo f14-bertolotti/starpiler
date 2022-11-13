@@ -2,38 +2,45 @@
 from lark.visitors import v_args, Transformer
 from lark.tree import Tree
 from lark import Token
-from pathlib import Path
-
-from src.transpilers import addBeforeReturn
-from src.utils import Node2String
-
-# slang memcpy, malloc, and free declarations
 from lark import Lark
-from src.syntax import Language
-from src.syntax.slang import functionDefinition, stmtexpr, functionDeclaration
-mallocDeclaration = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True).parse("def int8* malloc(int64);")
-memcpyDeclaration = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True).parse("def int8* memcpy(int8*, int8*, int64);")
-freeDeclaration   = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True).parse("def void free(int8*);")
 
-class SppClassesToS(Transformer):
+from src.syntax import Language
+from src.transpilers import addBeforeReturn
+from src.syntax.slang import functionDefinition, stmtexpr, functionCall, functionDeclaration, globalAssignement
+
+import copy
+
+functionCallLang      = Lark(Language(       functionCall).toLark(), keep_all_tokens=True)
+globalAssignementLang = Lark(Language(  globalAssignement).toLark(), keep_all_tokens=True)
+funDeclarationLang    = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True)
+statementExpressionLang = Lark(Language(stmtexpr).toLark(), keep_all_tokens=True)
+
+freeDeclaration = funDeclarationLang.parse("def void free(int8*);")
+freeAssignement = globalAssignementLang.parse("def (int8* -> void)* __free = &free;")
+freeStatement   = statementExpressionLang.parse("&__free(this as int8*);")
+
+class Classes(Transformer):
 
     def __init__(self, *args, **kwargs):
-        self.insertMallocDeclaration = False
-        self.insertMemcpyDeclaration = False
-        self.insertFreeDeclaration   = False
-        self.name2class = dict()
+        self.add_free   = False
+        self.free_added = False
+        super().__init__(*args, **kwargs)
 
-    @v_args(meta = True)
+    def transform(self, *args, **kwargs):
+        res = super().transform(*args, **kwargs)
+        if self.add_free and not self.free_added: raise ValueError("could not add free declaration")
+        return res
+
+
+    @v_args(meta=True)
     def spplang_start(self, meta, nodes):
-        toplevels = [sub for node in nodes for sub in (node if isinstance(node,list) else [node])]
-        if self.insertMallocDeclaration: toplevels.insert(0, mallocDeclaration);
-        if self.insertMemcpyDeclaration: toplevels.insert(0, memcpyDeclaration);
-        if self.insertFreeDeclaration  : toplevels.insert(0,   freeDeclaration);
-        return Tree(Token("RULE","spplang_start"), toplevels, meta)
-
-
-    def __default__(self, data, children, meta):
-        return Tree(data, [sub for child in children for sub in (child if isinstance(child, list) else [child])], meta)
+        free = []
+        globalAssignements = [node for node in nodes if isinstance(node, Tree) and node.data == "slang_global_assignement"]
+        if self.add_free and not any(ass.children[1].children[2].children[0].value == "__free" for ass in globalAssignements):
+            free = [copy.deepcopy(freeDeclaration), copy.deepcopy(freeAssignement)] 
+            self.free_added = True
+        return Tree(Token("RULE","spplang_start"), free + [sub for child in nodes for sub in (child if isinstance(child, list) else [child])], copy.deepcopy(meta))
+    
 
     @v_args(meta = True)
     def spplang_class(self, meta, nodes):
@@ -46,16 +53,11 @@ class SppClassesToS(Transformer):
         startMethods = [node for node in nodes[3:-1] if isinstance(node,Tree) and node.data == "spplang_method_definition" and node.children[2].children[0] == "start"]
         if len(startMethods) != 1: raise ValueError("class has 0 or >1 \"start\" methods")
         
-        # add end method if not present
-        if len(endMethods) == 0:
-            endMethods.append(Lark(Language(functionDefinition).toLark(), keep_all_tokens=True).parse(f"def void end({nodes[1].children[0]}* this) does return;;"))
-            endMethods[-1].data = "spplang_function_definition"
-            nodes.insert(-1, endMethods[-1])
-
         # adds &free(this as int8*) before each return in the "end" method;
-        freeStmt = Lark(Language(stmtexpr).toLark(), keep_all_tokens=True).parse("&__free(this as int8*);")
-        endMethods[-1] = addBeforeReturn(freeStmt, endMethods[-1])
-             
+        endMethods[-1] = addBeforeReturn(copy.deepcopy(freeStatement), endMethods[-1])
+        self.add_free = True
+
+
         # base struct
         baseStruct = Tree(Token("RULE", "slang_struct"), [
             Token("STRUCT", "struct"), 
@@ -71,7 +73,7 @@ class SppClassesToS(Transformer):
                                            Tree(Token("RULE", "slang_struct_declaration"), [
                                                node.children[1], 
                                                node.children[2], 
-                                               Token("SEMICOLON", ";")], meta=node.meta)
+                                               Token("SEMICOLON", ";")], meta=copy.deepcopy(node.meta))
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_field_definition":
                 # add struct definition
@@ -81,7 +83,7 @@ class SppClassesToS(Transformer):
                                                node.children[2], 
                                                Token("EQUAL", "="), 
                                                node.children[4], 
-                                               Token("SEMICOLON", ";")], meta=node.meta)
+                                               Token("SEMICOLON", ";")], meta=copy.deepcopy(node.meta))
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_method_definition":
                 # add function definition in struct
@@ -97,7 +99,7 @@ class SppClassesToS(Transformer):
                                              Tree(Token("RULE","slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}")]), 
                                              Token("EQUAL", "="), 
                                              Tree(Token("RULE", "slang_reference"), [Token("AMPERSAND", "&"), Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}{abs(hash(node))}")])]), 
-                                             Token("SEMICOLON", ";")], meta=node.meta)
+                                             Token("SEMICOLON", ";")], meta=copy.deepcopy(node.meta))
                 # add parameter types to function definition type
                 for param in filter(lambda x: isinstance(x,Tree), node.children[3].children):
                     baseFunctionDefinition.children[0].children[0].children[0].children.append(param.children[0])
@@ -119,11 +121,9 @@ class SppClassesToS(Transformer):
 
         return [baseStruct, *additionalFunctions]
 
-        return Tree(Token("RULE","slang_function_call"), nodes)
-
-def sppClassesToS(parseTree):
-    res = SppClassesToS().transform(parseTree)
-    return res
+def classes(parseTree):
+    if parseTree.data != "spplang_start": raise ValueError("top level insertions may be required")
+    return Classes().transform(parseTree)
 
 
 
