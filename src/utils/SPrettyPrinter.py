@@ -2,7 +2,6 @@ from lark.visitors import v_args, Transformer
 from lark.tree import Tree
 from lark import Token
 from src.utils import Node2String
-from src.syntax.slang import lang
 
 class SPrettyPrinter(Node2String):
 

@@ -1,7 +1,6 @@
 from lark.visitors import v_args, Transformer
 from lark.tree import Tree
 from lark import Token
-import copy
 
 class GlobalAssignements(Transformer):
 
@@ -23,7 +22,7 @@ class GlobalAssignements(Transformer):
             Token("DEF","def"),
             Tree(Token("RULE", "slang_declaration_assignment"), nodes),
             Token("SEMICOLON",";")
-        ], copy.deepcopy(meta))
+        ], meta)
 
 def globalAssignements(parseTree):
     return GlobalAssignements().transform(parseTree)

@@ -1,7 +1,6 @@
 from lark.visitors import v_args, Transformer
 from lark.tree import Tree
 from lark import Token
-import copy
 
 from src.semantics.types import Pointer
 class ClassAccesses(Transformer):
@@ -20,12 +19,11 @@ class ClassAccesses(Transformer):
            nodes[2].children[0].value not in nodes[0].meta.type.base: 
             raise ValueError(f"Type {nodes[0].meta.type.base} has not identifier {nodes[2].children[0].value}")
         self.applied = True
-        return Tree(Token("RULE","slang_struct_access"), nodes, copy.deepcopy(meta))
+        return Tree(Token("RULE","slang_struct_access"), nodes, meta)
 
     @v_args(meta=True)
     def spplang_function_call(self, meta, nodes):
         self.applied = True
-        meta = copy.deepcopy(meta)
         if nodes[0].data == "slang_struct_access" and \
            len(nodes[0].meta.type.base.ptypes) > 0  and \
            nodes[0].meta.type.base.ptypes[0] == nodes[0].meta.type: # non-static method
@@ -39,7 +37,7 @@ class ClassAccesses(Transformer):
                             Tree(Token("RULE","slang_identifier"), [Token("__ANON__", "__")]),
                             Token("EQUAL", "="),
                             nodes[0].children[0]
-                        ], copy.deepcopy(nodes[0].children[0].meta)),
+                        ], nodes[0].children[0].meta),
                         Token("RPAR",")")
                     ]),
                     Token("DOT", "."),

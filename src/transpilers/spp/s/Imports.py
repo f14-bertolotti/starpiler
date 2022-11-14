@@ -1,5 +1,5 @@
 
-from lark.visitors import Transformer
+from lark.visitors import v_args, Transformer
 from src.syntax.spplang import lang
 from lark.tree import Tree
 from lark import Token
@@ -25,7 +25,8 @@ class Imports(Transformer):
         return res
 
 
-    def spplang_import(self, nodes):
+    @v_args(meta=True)
+    def spplang_import(self, meta, nodes):
         importpath = nodes[1].children[0].value[1:-1] 
         sppParseTree = cachedPaths[importpath] if importpath in cachedPaths else lang.parse(Path(importpath).read_text())
         if importpath not in cachedPaths: cachedPaths[importpath] = sppParseTree
@@ -43,7 +44,7 @@ class Imports(Transformer):
                    Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", nodes[3].children[0].value)]), 
                    Token("AS", "as"), 
                    Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", nodes[5].children[0].value)]), 
-                   Token("SEMICOLON", ";")])
+                   Token("SEMICOLON", ";")], meta)
 
 def imports(parseTree): 
     return Imports().transform(parseTree)

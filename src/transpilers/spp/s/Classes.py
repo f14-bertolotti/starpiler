@@ -39,7 +39,7 @@ class Classes(Transformer):
         if self.add_free and not any(ass.children[1].children[2].children[0].value == "__free" for ass in globalAssignements):
             free = [copy.deepcopy(freeDeclaration), copy.deepcopy(freeAssignement)] 
             self.free_added = True
-        return Tree(Token("RULE","spplang_start"), free + [sub for child in nodes for sub in (child if isinstance(child, list) else [child])], copy.deepcopy(meta))
+        return Tree(Token("RULE","spplang_start"), free + [sub for child in nodes for sub in (child if isinstance(child, list) else [child])], meta)
     
 
     @v_args(meta = True)
@@ -73,7 +73,7 @@ class Classes(Transformer):
                                            Tree(Token("RULE", "slang_struct_declaration"), [
                                                node.children[1], 
                                                node.children[2], 
-                                               Token("SEMICOLON", ";")], meta=copy.deepcopy(node.meta))
+                                               Token("SEMICOLON", ";")], meta=node.meta)
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_field_definition":
                 # add struct definition
@@ -83,7 +83,7 @@ class Classes(Transformer):
                                                node.children[2], 
                                                Token("EQUAL", "="), 
                                                node.children[4], 
-                                               Token("SEMICOLON", ";")], meta=copy.deepcopy(node.meta))
+                                               Token("SEMICOLON", ";")], meta=node.meta)
                                            )
             elif isinstance(node, Tree) and node.data == "spplang_method_definition":
                 # add function definition in struct
@@ -99,7 +99,7 @@ class Classes(Transformer):
                                              Tree(Token("RULE","slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}")]), 
                                              Token("EQUAL", "="), 
                                              Tree(Token("RULE", "slang_reference"), [Token("AMPERSAND", "&"), Tree(Token("RULE", "slang_identifier"), [Token("__ANON__", f"{node.children[2].children[0]}{abs(hash(node))}")])]), 
-                                             Token("SEMICOLON", ";")], meta=copy.deepcopy(node.meta))
+                                             Token("SEMICOLON", ";")], meta=node.meta)
                 # add parameter types to function definition type
                 for param in filter(lambda x: isinstance(x,Tree), node.children[3].children):
                     baseFunctionDefinition.children[0].children[0].children[0].children.append(param.children[0])
