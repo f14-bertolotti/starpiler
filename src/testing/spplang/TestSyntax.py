@@ -11,8 +11,6 @@ from src.syntax.spplang import classDefinition
 from src.syntax.spplang import lang
 from src.syntax import Language
 
-
-
 class TestSyntax(unittest.TestCase):
 
    def __init__(self, *args, **kwargs):
