@@ -52,7 +52,7 @@ class Structs(Transformer):
         start = copy.deepcopy(startMethod)
         end  .children[3].children[1].children[0].children[0].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
         start.children[3].children[1].children[0].children[0].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
-        start.children[1].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
+        start.children[1].children[0].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
 
 
         classTree.children.insert(-1, start)

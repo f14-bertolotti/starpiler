@@ -1,5 +1,6 @@
 from src.transpilers.spp.IsSpp                import isSpp
 from src.transpilers.spp.s.Classes            import classes
+from src.transpilers.spp.s.FunctionCall       import functionCall
 from src.transpilers.spp.s.GlobalAssignements import globalAssignements
 from src.transpilers.spp.s.Identities         import identities
 from src.transpilers.spp.s.News               import news

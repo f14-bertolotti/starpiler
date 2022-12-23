@@ -34,7 +34,7 @@ class Double(Type):
     def __len__(self): return 8
 class Pointer(Type):
     def __init__(self, base): self.base = base
-    def __str__(self): return f"{self.base}*"
+    def __str__(self): return f"({self.base})*"
     def toLLVM(self,module): return PointerType(self.base.toLLVM(module))
     def __len__(self): return 4
 class FType(Type):

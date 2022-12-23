@@ -1,6 +1,7 @@
 from lark.visitors import v_args, Transformer
 from lark.tree import Tree
 from lark import Token
+import copy
 
 from src.semantics.types import Pointer
 class ClassAccesses(Transformer):

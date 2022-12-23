@@ -2,6 +2,7 @@
 from lark import Token
 from lark.tree import Tree
 from lark.visitors import v_args, Transformer
+import copy
 
 class Identities(Transformer):
     def __init__(self, *args, **kwargs):

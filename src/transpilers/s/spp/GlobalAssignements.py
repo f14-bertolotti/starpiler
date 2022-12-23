@@ -7,20 +7,16 @@ class GlobalAssignements(Transformer):
     def __init__(self, *args, **kwargs):
         self.applied = False
         super().__init__(*args, **kwargs)
+
     def transform(self, *args, **kwargs):
         res = super().transform(*args, **kwargs)
         if not self.applied: raise ValueError("Not applied")
         return res
 
-
     @v_args(meta=True)
-    def spplang_global_assignement(self, meta, nodes):
-        self.applied = True    
-        return Tree(Token("RULE", "slang_global_assignement"), [
-            Token("DEF","def"),
-            Tree(Token("RULE", "slang_declaration_assignment"), nodes[1:]),
-            Token("SEMICOLON",";")
-        ], meta)
+    def slang_global_assignement(self, meta, nodes):
+        self.applied = True
+        return Tree(Token("RULE", "spplang_global_assignement"), [nodes[0]] + nodes[1].children, meta)
 
 def globalAssignements(parseTree):
     return GlobalAssignements().transform(parseTree)

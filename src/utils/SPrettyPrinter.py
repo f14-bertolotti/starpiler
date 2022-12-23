@@ -5,7 +5,6 @@ from src.utils import Node2String
 
 class SPrettyPrinter(Node2String):
 
-
     @v_args(tree=True)
     def slang_struct(self, tree):
         tree.string = f"{tree.children[0]} {tree.children[1].string} {tree.children[2]} \n\t" + \
@@ -29,14 +28,9 @@ class SPrettyPrinter(Node2String):
         tree.string += "\n"
         return tree
 
-
-
     @v_args(tree=True)
     def slang_start(self, tree):
         tree.string = "\n".join(child.string for child in tree.children)
         return tree
    
-
-
-
 

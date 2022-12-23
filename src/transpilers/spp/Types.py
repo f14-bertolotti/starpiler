@@ -122,7 +122,7 @@ class ExpressionType(NativeTypes):
          self.namespace[tree.children[1].children[0].value] = tree.meta.type = tree.children[3].meta.type
 
     def spplang_struct_value(self, tree):
-        tree.meta.type = self.namespace[tree.children[0].children[0].value]
+        tree.meta.type = Pointer(self.namespace[tree.children[0].children[0].value])
 
     def spplang_struct_access(self, tree):
         tree.meta.type = tree.children[0].meta.type.base[tree.children[2].children[0].value]

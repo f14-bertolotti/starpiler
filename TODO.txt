@@ -14,4 +14,5 @@ spplang -> slang translator [DONE]
 fix SppToSImport deltas [DONE]
 
 add more spplang tests
-meta cloning takes to much time, refactor meta to fit only the necessary
+meta cloning takes to much time, refactor meta to fit only the necessary [DONE]
+better exception

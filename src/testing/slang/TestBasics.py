@@ -18,7 +18,7 @@ class TestBasics(unittest.TestCase):
             return &increment(X);
         ;
         """
-        self.assertEqual(str(transformed(program)), "Module(Import(/home/f14/Devel/MetaTranspiler/src/testing/slang/programs/Increment.s,Name(increment),Name(increment)),FunctionDeclaration(FType(Int8*->Int8*),Name(malloc)),GlobalAssignement(Int64,Name(X),Integer(i64 1)),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Call(Ref(Name(increment)),Name(X))))))")
+        self.assertEqual(str(transformed(program)), "Module(Import(/home/f14/Devel/MetaTranspiler/src/testing/slang/programs/Increment.s,Name(increment),Name(increment)),FunctionDeclaration(FType((Int8)*->(Int8)*),Name(malloc)),GlobalAssignement(Int64,Name(X),Integer(i64 1)),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Call(Ref(Name(increment)),Name(X))))))")
 
     def test_program2string_cast(self):
         program = """
@@ -32,7 +32,7 @@ class TestBasics(unittest.TestCase):
         def int64* array = [0,1,2,3,4];
         def int64 start() does return array[0];;
         """
-        self.assertEqual(str(transformed(program)), "Module(GlobalAssignement(Int64*,Name(array),Array(Integer(i64 0),Integer(i64 1),Integer(i64 2),Integer(i64 3),Integer(i64 4))),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Index(Name(array),[Integer(i64 0)])))))")
+        self.assertEqual(str(transformed(program)), "Module(GlobalAssignement((Int64)*,Name(array),Array(Integer(i64 0),Integer(i64 1),Integer(i64 2),Integer(i64 3),Integer(i64 4))),FunctionDefinition(Name(start),ParamSeqDef(),Block(Return(Index(Name(array),[Integer(i64 0)])))))")
 
     def test_program2string_binary_op(self):
         program = """

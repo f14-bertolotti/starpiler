@@ -1,4 +1,5 @@
 from src.testing.slang import TestBasics as SlangTestBasics
+from src.testing.slang import TestToSpp  as SlangTestToSpp
 
 from src.testing.spplang import TestBasics as SpplangTestBasics
 from src.testing.spplang import TestSyntax as SpplangTestSyntax

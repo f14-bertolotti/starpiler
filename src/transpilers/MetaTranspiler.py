@@ -20,7 +20,7 @@ class MetaTranspiler:
             #if i > 1000: exit(0)
             #input()
             metric,_ , parseTree = heapq.heappop(queue)
-            #print(metric, parseTree.path)
+            # print(metric, parseTree.path)
             if metric == 0: 
                 #print("="*10,"DONE","="*10)
                 #print(SPrettyPrinter().transform(parseTree))
