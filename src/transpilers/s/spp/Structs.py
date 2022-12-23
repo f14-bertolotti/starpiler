@@ -1,19 +1,24 @@
-from lark import Lark, Token
-from lark.tree import Tree
-from lark.visitors import Transformer
+from lark.visitors import v_args, Transformer
 from src.syntax.spplang import methodDefinition
 from src.syntax import Language
+from lark.tree import Tree
+from lark import Token, Lark
+import copy
 
-class SStructToSppClass(Transformer):
+startMethod = Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def _* start(_* this) does return this;;")
+endMethod   = Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def void end(_* this) does return;;")
 
-    def slang_struct(self, nodes):
+class Structs(Transformer):
+    
+    @v_args(meta=True)
+    def slang_struct(self, meta, nodes):
 
         # create basic class with start method
         classTree = Tree(Token('RULE', 'spplang_class'), [
             Token('CLASS', 'class'), 
-            nodes[1].children[0], 
+            Tree(Token("RULE","spplang_identifier"), [Token("__ANON__", nodes[1].children[0].children[0].value)]), 
             Token('WITH', 'with'),  
-            Token('SEMICOLON', ';')])
+            Token('SEMICOLON', ';')], meta)
 
         
         for node in nodes[3:-1]:
@@ -25,7 +30,7 @@ class SStructToSppClass(Transformer):
                                               Token('DEF', 'def'), 
                                               node.children[0], 
                                               node.children[1], 
-                                              Token('SEMICOLON', ';')])
+                                              Token('SEMICOLON', ';')], node.meta)
                                           )
                 
             elif node.data == "slang_struct_definition": 
@@ -38,16 +43,24 @@ class SStructToSppClass(Transformer):
                                               node.children[1],
                                               Token("EQUAL", "="),
                                               node.children[3],
-                                              Token('SEMICOLON', ';')]))
+                                              Token('SEMICOLON', ';')], node.meta)
+                                          )
             else:
                 raise ValueError("Unknown node")
 
-        classTree.children.insert(-1, Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def {nodes[1].children[0].children[0].value}* start({nodes[1].children[0].children[0].value}* this) does return this;;"))
-        classTree.children.insert(-1, Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def void end({nodes[1].children[0].children[0].value}* this) does &free(this as int8*);return;;"))
+        end   = copy.deepcopy(endMethod)
+        start = copy.deepcopy(startMethod)
+        end  .children[3].children[1].children[0].children[0].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
+        start.children[3].children[1].children[0].children[0].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
+        start.children[1].children[0].children[0] = Token("__ANON__", nodes[1].children[0].children[0].value)
+
+
+        classTree.children.insert(-1, start)
+        classTree.children.insert(-1, end)
 
         return classTree
 
-def sStructToSppClass(parseTree):
-    return SStructToSppClass().transform(parseTree)
+def structs(parseTree):
+    return Structs().transform(parseTree)
 
 

@@ -15,12 +15,10 @@ class GlobalAssignements(Transformer):
 
     @v_args(meta=True)
     def spplang_global_assignement(self, meta, nodes):
-        nodes.pop(-1)
-        nodes.pop(0)
         self.applied = True    
         return Tree(Token("RULE", "slang_global_assignement"), [
             Token("DEF","def"),
-            Tree(Token("RULE", "slang_declaration_assignment"), nodes),
+            Tree(Token("RULE", "slang_declaration_assignment"), nodes[1].children),
             Token("SEMICOLON",";")
         ], meta)
 

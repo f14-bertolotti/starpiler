@@ -18,7 +18,7 @@ for testname in tests:
             self.assertEqual(run(program_tree=MetaTranspiler(deltas, metric01).search(parsedTree)), tests[f.__name__[5:]]["result"])
         f.__name__ = f"test_{testname}"
         return f
-    if testname == "nested_class3": setattr(Test, f"test_{testname}", make())
+    setattr(Test, f"test_{testname}", make())
     
 
 if __name__ == "__main__":
