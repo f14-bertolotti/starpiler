@@ -19,6 +19,7 @@ for testname in tests:
         f.__name__ = f"test_{testname}"
         return f
     setattr(Test, f"test_{testname}", make())
+    
 
 if __name__ == "__main__":
     unittest.main()

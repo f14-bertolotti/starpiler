@@ -41,7 +41,7 @@ class News(Transformer):
             self.additional_decl = True
             nodes.insert(0, memcpyDeclaration)
             nodes.insert(1, memcpyAssignement)
-        return Tree(Token("RULE","spplang_start"), nodes, copy.deepcopy(meta))
+        return Tree(Token("RULE","spplang_start"), nodes, meta)
 
     @v_args(meta=True)
     def spplang_new(self, meta, nodes):

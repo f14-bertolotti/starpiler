@@ -27,9 +27,9 @@ class AddEndMethods(Transformer):
         if endNames == 0:
             end = copy.deepcopy(endMethod)
             end.children[3].children[1].children[0].children[0].children[0].children[0] = Token("__ANON__", className)
-            return Tree(Token("RULE", "spplang_class"), nodes[:-1] + [end,nodes[-1]], copy.deepcopy(meta))
+            return Tree(Token("RULE", "spplang_class"), nodes[:-1] + [end,nodes[-1]], meta)
         elif endNames == 1:
-            return Tree(Token("RULE", "spplang_class"), nodes, copy.deepcopy(meta))
+            return Tree(Token("RULE", "spplang_class"), nodes, meta)
         else:
             raise ValueError("multiple \"end\" names defined")
 

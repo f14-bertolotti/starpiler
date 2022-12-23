@@ -39,7 +39,7 @@ class Classes(Transformer):
         if self.add_free and not any(ass.children[1].children[2].children[0].value == "__free" for ass in globalAssignements):
             free = [copy.deepcopy(freeDeclaration), copy.deepcopy(freeAssignement)] 
             self.free_added = True
-        return Tree(Token("RULE","spplang_start"), free + [sub for child in nodes for sub in (child if isinstance(child, list) else [child])], copy.deepcopy(meta))
+        return Tree(Token("RULE","spplang_start"), free + [sub for child in nodes for sub in (child if isinstance(child, list) else [child])], meta)
     
 
     @v_args(meta = True)
