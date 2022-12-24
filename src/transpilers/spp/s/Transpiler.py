@@ -10,12 +10,13 @@ from src.transpilers.spp.s import classAccesses
 from src.transpilers.spp import types
 from src.transpilers.spp import addEndMethods
 
+from src.utils import NotAppliedException
+
 
 def transpile(parseTree):
     for delta in [addEndMethods, types, functionCall, classes, news, classAccesses, imports, globalAssignements, identities]: 
         try: parseTree = delta(parseTree)
-        except Exception as e: 
-            continue#import traceback; traceback.print_exc(); print(delta, e);print(("="*20+"\n")*5); continue
+        except NotAppliedException: continue
     return parseTree
 
 

@@ -1,17 +1,19 @@
-from lark.visitors import v_args, Transformer
+from lark.visitors      import v_args
 from src.syntax.spplang import methodDefinition
-from src.syntax import Language
-from lark.tree import Tree
-from lark import Token, Lark
+from src.syntax         import Language
+from lark.tree          import Tree
+from lark               import Token, Lark
+from src.utils          import AppliedTransformer
 import copy
 
 startMethod = Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def _* start(_* this) does return this;;")
 endMethod   = Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def void end(_* this) does return;;")
 
-class Structs(Transformer):
+class Structs(AppliedTransformer):
     
     @v_args(meta=True)
     def slang_struct(self, meta, nodes):
+        self.applied = True
 
         # create basic class with start method
         classTree = Tree(Token('RULE', 'spplang_class'), [

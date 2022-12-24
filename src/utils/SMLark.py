@@ -4,11 +4,11 @@ from lark import Lark
 
 class SmallMeta:
     def __init__(self, start_line=None, end_line=None, start_column=None, end_column=None, type=None): 
-        self.start_line = start_line
-        self.end_line = end_line
+        self.start_line   = start_line
+        self.end_line     = end_line
         self.start_column = start_column
-        self.end_column = end_column
-        self.type = type
+        self.end_column   = end_column
+        self.type         = type
     def __str__(self):
         return f"({self.start_line},{self.start_column}-{self.end_line},{self.end_column}-{self.type})"
     def clone(self):

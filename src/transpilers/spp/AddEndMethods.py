@@ -1,23 +1,15 @@
-from lark.visitors import Transformer, v_args
+from lark.visitors      import v_args
+from src.utils          import AppliedTransformer
 from src.syntax.spplang import methodDefinition as mdlang
-from src.syntax.spplang import functionDeclaration as fclang
-from src.syntax.spplang import variableDefinition as galang
-from src.syntax import Language
-from lark import Lark, Token
-from lark.tree import Tree
+from src.syntax         import Language
+from lark               import Lark, Token
+from lark.tree          import Tree
+
 import copy
 
 endMethod = Lark(Language(mdlang).toLark(), keep_all_tokens=True).parse(f"def void end(_* this) does return;;")
 
-class AddEndMethods(Transformer):
-
-    def __init__(self, *args, **kwargs):
-        self.applied = False
-        super().__init__(*args, **kwargs)
-    def transform(self, *args, **kwargs):
-        res = super().transform(*args, **kwargs)
-        if not self.applied: raise ValueError("could not find any spplang_class")
-        return res
+class AddEndMethods(AppliedTransformer):
 
     @v_args(meta=True)
     def spplang_class(self, meta, nodes):

@@ -1,25 +1,18 @@
-from lark.visitors import v_args, Transformer
+from lark.visitors import v_args
 from lark.tree import Tree
 from lark import Token
+from src.utils import AppliedTransformer
 import copy
 
 from src.semantics.types import Pointer
-class ClassAccesses(Transformer):
-
-    def __init__(self, *args, **kwargs):
-        self.applied = False
-        super().__init__(*args, **kwargs)
-    def transform(self, *args, **kwargs):
-        res = super().transform(*args, **kwargs)
-        if not self.applied: raise ValueError("Not applied")
-        return res
+class ClassAccesses(AppliedTransformer):
 
     @v_args(meta=True)
     def spplang_struct_access(self, meta, nodes):
+        self.applied = True
         if not isinstance(nodes[0].meta.type, Pointer) or \
            nodes[2].children[0].value not in nodes[0].meta.type.base: 
             raise ValueError(f"Type {nodes[0].meta.type.base} has not identifier {nodes[2].children[0].value}")
-        self.applied = True
         return Tree(Token("RULE","slang_struct_access"), nodes, meta)
 
     @v_args(meta=True)

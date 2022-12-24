@@ -1,17 +1,10 @@
-from lark.visitors import v_args, Transformer
-from lark.tree import Tree
-from lark import Token
+from lark.visitors import v_args
+from lark.tree     import Tree
+from lark          import Token
 
-class GlobalAssignements(Transformer):
+from src.utils import AppliedTransformer
 
-    def __init__(self, *args, **kwargs):
-        self.applied = False
-        super().__init__(*args, **kwargs)
-
-    def transform(self, *args, **kwargs):
-        res = super().transform(*args, **kwargs)
-        if not self.applied: raise ValueError("Not applied")
-        return res
+class GlobalAssignements(AppliedTransformer):
 
     @v_args(meta=True)
     def slang_global_assignement(self, meta, nodes):

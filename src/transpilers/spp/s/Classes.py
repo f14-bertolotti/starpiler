@@ -1,19 +1,20 @@
 
 from lark.visitors import v_args, Transformer
-from lark.tree import Tree
-from lark import Token
-from lark import Lark
+from lark.tree     import Tree
+from lark          import Token
+from lark          import Lark
 
-from src.syntax import Language
-from src.transpilers import addBeforeReturn
-from src.syntax.slang import functionDefinition, stmtexpr, functionCall, functionDeclaration, globalAssignement
+from src.syntax       import Language
+from src.transpilers  import addBeforeReturn
+from src.syntax.slang import stmtexpr, functionCall, functionDeclaration, globalAssignement
+from src.utils        import NotAppliedException
 
 import copy
 
-functionCallLang      = Lark(Language(       functionCall).toLark(), keep_all_tokens=True)
-globalAssignementLang = Lark(Language(  globalAssignement).toLark(), keep_all_tokens=True)
-funDeclarationLang    = Lark(Language(functionDeclaration).toLark(), keep_all_tokens=True)
-statementExpressionLang = Lark(Language(stmtexpr).toLark(), keep_all_tokens=True)
+functionCallLang        = Lark(Language(       functionCall).toLark(), keep_all_tokens = True)
+globalAssignementLang   = Lark(Language(  globalAssignement).toLark(), keep_all_tokens = True)
+funDeclarationLang      = Lark(Language(functionDeclaration).toLark(), keep_all_tokens = True)
+statementExpressionLang = Lark(Language(stmtexpr).toLark(), keep_all_tokens            = True)
 
 freeDeclaration = funDeclarationLang.parse("def void free(int8*);")
 freeAssignement = globalAssignementLang.parse("def (int8* -> void)* __free = &free;")
@@ -28,7 +29,7 @@ class Classes(Transformer):
 
     def transform(self, *args, **kwargs):
         res = super().transform(*args, **kwargs)
-        if self.add_free and not self.free_added: raise ValueError("could not add free declaration")
+        if self.add_free and not self.free_added: raise NotAppliedException()
         return res
 
 

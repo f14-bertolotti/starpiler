@@ -27,7 +27,7 @@ class NativeTypes(Visitor):
         tree.meta.type = Pointer(tree.children[0].meta.type)
 
     def spplang_tname(self, tree):
-        tree.meta.type = self.namespace[tree.children[0].children[0].value]
+        tree.meta.type = self.namespace[tree.children[0].children[0].value] if tree.children[0].children[0].value != "auto" else "auto"
 
     def spplang_void(self, tree):
         tree.meta.type = Void()

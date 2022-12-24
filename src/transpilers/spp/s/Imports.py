@@ -1,9 +1,9 @@
 
-from lark.visitors import v_args, Transformer
+from lark.visitors      import v_args
 from src.syntax.spplang import lang
-from lark.tree import Tree
-from lark import Token
-from pathlib import Path
+from lark.tree          import Tree
+from lark               import Token
+from pathlib            import Path
 
 from src.transpilers.spp   import addEndMethods
 from src.transpilers.spp   import types
@@ -11,22 +11,16 @@ from src.transpilers.spp.s import classes
 from src.transpilers.spp.s import news
 from src.transpilers.spp.s import classAccesses
 from src.transpilers.spp.s import identities
+
 from src.utils import SPrettyPrinter
+from src.utils import AppliedTransformer
+from src.utils import NotAppliedException
 
-import tempfile, os
+import tempfile
 
-class Imports(Transformer):
+
+class Imports(AppliedTransformer):
     path2cached = dict()
-
-    def __init__(self, *args, **kwargs):
-        self.applied = False
-        super().__init__(*args, **kwargs)
-
-    def transform(self, *args, **kwargs):
-        res = super().transform(*args, **kwargs)
-        if not self.applied: raise ValueError("Not applied")
-        return res
-
 
     @v_args(meta=True)
     def spplang_import(self, meta, nodes):
@@ -36,10 +30,9 @@ class Imports(Transformer):
             Imports.path2cached[importpath] = tempfile.NamedTemporaryFile()
 
             parseTree = lang.parse(importpath.read_text())
-            for fun in [types, addEndMethods, Imports().transform, classes, news, classAccesses, identities]:
-                try:
-                    parseTree = fun(parseTree)
-                except ValueError as e: continue
+            for delta in [types, addEndMethods, Imports().transform, classes, news, classAccesses, identities]:
+                try: parseTree = delta(parseTree)
+                except NotAppliedException: continue
             Imports.path2cached[importpath].write(SPrettyPrinter().transform(parseTree).encode("utf-8"))
             Imports.path2cached[importpath].flush()
 

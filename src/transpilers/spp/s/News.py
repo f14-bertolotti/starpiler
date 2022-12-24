@@ -1,9 +1,10 @@
 from lark.visitors import v_args, Transformer
-from lark.tree import Tree
-from lark import Lark, Token
+from lark.tree     import Tree
+from lark          import Lark, Token
 
 from src.syntax.slang import functionCall, functionDeclaration, globalAssignement
-from src.syntax import Language
+from src.syntax       import Language
+from src.utils        import NotAppliedException
 
 import copy
 
@@ -26,7 +27,7 @@ class News(Transformer):
         super().__init__(*args, **kwargs)
     def transform(self, *args, **kwargs):
         res = super().transform(*args, **kwargs)
-        if self.is_spplang_new and not self.additional_decl: raise ValueError("could not add memcpy and malloc")
+        if self.is_spplang_new and not self.additional_decl: raise NotAppliedException() 
         return res 
 
 

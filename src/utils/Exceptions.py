@@ -1,0 +1,3 @@
+
+
+class NotAppliedException(Exception): pass
