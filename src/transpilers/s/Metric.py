@@ -12,9 +12,9 @@ def metric(node):
 
 def metric01(node):
     if isinstance(node, Tree) and not node.data.startswith("slang_"):
-        return min(sum(map(metric, node.children)) + 1, 1)
+        return min(sum(map(metric01, node.children)) + 1, 1)
     elif isinstance(node, Tree): 
-        return min(sum(map(metric, node.children)) + 0, 1)
+        return min(sum(map(metric01, node.children)) + 0, 1)
     else:
         return 0
  

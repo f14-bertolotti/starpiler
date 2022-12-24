@@ -32,8 +32,9 @@ class MetaTranspiler:
                     new = delta(parseTree)
                     #print("\t", self.metric(new), delta.__name__)
                     new.path = parseTree.path + [delta.__name__]
-                    heapq.heappush(queue, tuple((self.metric(new), i, new)))
-                    visited.add(new)
+                    if new not in visited:
+                        heapq.heappush(queue, tuple((self.metric(new), i, new)))
+                        visited.add(new)
                 except: 
                     #import traceback
                     #print(">>> ", traceback.print_exc())
