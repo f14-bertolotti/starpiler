@@ -5,7 +5,7 @@ from src.syntax.ssharplang import lang
 from lark import Token
 from lark.tree import Tree
 
-class Test(unittest.TestCase):
+class TestSyntax(unittest.TestCase):
 
     def test_empty_class(self):
         program = "class A {}"

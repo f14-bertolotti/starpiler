@@ -22,23 +22,19 @@ notEqual       = P(name = "ssharplang_not_equal"      , rules=[R(expression, T("
 reference      = P(name = "ssharplang_reference"      , rules=[R(T("&"), identifier)])
 sizeOf         = P(name = "ssharplang_size_of"        , rules=[R(T("size"), T("of"), native)]) 
 
-roundParenthesized           = P(name = "ssharplang_round_parenthesized"           , rules=[R(T("("), expression, T(")"))])
-squareParenthesized          = P(name = "ssharplang_square_parenthesized"           , rules=[R(T("["), expression, T("]"))])
-referenceSquareParenthesized = P(name = "ssharplang_reference_square_parenthesized" , rules=[R(T("&["), expression, T("]"))])
-parenthesized                = P(name = "ssharplang_parenthesized"                , rules=[squareParenthesized, referenceSquareParenthesized], mod="?")
+squareParenthesized          = P(name = "ssharplang_square_parenthesized"         , rules=[R(T("["), expression, T("]"))])
+roundParenthesized           = P(name = "ssharplang_round_parenthesized"          , rules=[R(T("("), expression, T(")"))])
+parenthesized                = P(name = "ssharplang_parenthesized"                , rules=[squareParenthesized], mod="?")
 indexed                      = P(name = "ssharplang_indexed"                      , rules=[R(expression, R(parenthesized, mod="+"))])
 
 expressionSequence = P(name = "ssharplang_expression_sequence" , rules=[expression, R(expression, R(T(","), expression, mod="*"))])
-functionCall       = P(name = "ssharplang_function_call"       , rules=[R(expression, T("("), expressionSequence, T(")")), 
-                                                                   R(expression, T("("),T(")"))])
-cast               = P(name = "ssharplang_cast"               , rules=[R(expression, T("as"), native)])
-
-structValue = P(name = "ssharplang_struct_value",  rules = [R(identifier, T("{"), identifier, T(":"), expression, R(T(","), identifier, T(":"), expression, mod="*"), T("}")),
-                                                       R(identifier, T("{"), T("}"))])
-structAccess    = P(name = "ssharplang_struct_access"    , rules = [R(expression, T("."), identifier)])
-structRefAccess = P(name = "ssharplang_struct_ref_access", rules = [R(expression, T("&."),identifier)]) 
+functionCall       = P(name = "ssharplang_function_call"       , rules=[R(identifier, T("("), expressionSequence, T(")")), R(expression, T("("),T(")"))])
+cast               = P(name = "ssharplang_cast"                , rules=[R(expression, T("as"), native)])
 
 array = P(name = "ssharplang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])
+newExpression = P(name = "ssharplang_new" , rules = [R(T("new"), identifier, T("("), expressionSequence, T(")")),
+                                                                  R(T("new"), identifier, T("("), T(")"))])
+
 
 expression.append(identifier,
                   addition, 
@@ -60,10 +56,8 @@ expression.append(identifier,
                   functionCall, 
                   cast, 
                   reference, 
-                  structValue,
-                  structAccess,
-                  structRefAccess,
                   indexed, 
                   sizeOf,
+                  newExpression,
                   roundParenthesized) 
 

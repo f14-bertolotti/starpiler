@@ -6,3 +6,4 @@ from src.utils.SppPrettyPrinter   import SppPrettyPrinter
 from src.utils.SMLark             import SMLark
 from src.utils.Exceptions         import NotAppliedException
 from src.utils.AppliedTransformer import AppliedTransformer 
+from src.utils.CloneTransformer   import CloneTransformer

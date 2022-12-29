@@ -14,6 +14,18 @@ class Int64(Type):
 class Double(Type): 
     def __str__(self): return "double"
 
+class Array(Type):
+    def __init__(self, base): self.base = base
+    def __str__(self): return self.toString([])
+    def toString(self, visited): 
+        return f"Array({self.base.toString(visited)})"  
+
+class Object(Type):
+    def __init__(self, base): self.base = base
+    def __str__(self): return self.toString([])
+    def toString(self, visited): 
+        return f"Object({self.base.toString(visited)})"  
+
 class Pointer(Type):
     def __init__(self, base): self.base = base
     def __str__(self): return self.toString([])

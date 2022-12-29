@@ -20,8 +20,8 @@ class ClassAccesses(AppliedTransformer):
         self.applied = True
         if nodes[0].data == "slang_struct_access" and \
            len(nodes[0].meta.type.base.ptypes) > 0  and \
-           nodes[0].meta.type.base.ptypes[0] == nodes[0].meta.type: # non-static method
-    
+           nodes[0].meta.type.base.ptypes[0] == nodes[0].children[0].meta.type: # non-static method
+
             basicCall = Tree(Token("RULE", "slang_function_call"), [
                 Tree(Token("RULE", "slang_struct_access"), [
                     Tree(Token("RULE", "slang_round_parenthesized"), [

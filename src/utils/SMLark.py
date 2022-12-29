@@ -1,14 +1,15 @@
 from lark.visitors import Transformer
 from lark.tree import Tree
 from lark import Lark
+from src.semantics.types import Type
 
 class SmallMeta:
     def __init__(self, start_line=None, end_line=None, start_column=None, end_column=None, type=None): 
-        self.start_line   = start_line
-        self.end_line     = end_line
-        self.start_column = start_column
-        self.end_column   = end_column
-        self.type         = type
+        self.start_line:int|None   = start_line
+        self.end_line:int|None     = end_line
+        self.start_column:int|None = start_column
+        self.end_column:int|None   = end_column
+        self.type:Type|None        = type
     def __str__(self):
         return f"({self.start_line},{self.start_column}-{self.end_line},{self.end_column}-{self.type})"
     def clone(self):

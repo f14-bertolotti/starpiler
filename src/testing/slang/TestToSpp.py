@@ -47,9 +47,6 @@ for testname in tests:
             SparseTree    = lang.parse(programString)
             SppParseTree  = SToSppTranspile(SparseTree)
             SparseTree    = SppToSTranspile(SppParseTree)
-            #import rich
-            #rich.print(SppParseTree)
-            #rich.print(programString)
 
             self.assertEqual(run(program_tree=SparseTree), tests[f.__name__[5:]]["result"])
         f.__name__ = f"test_{testname}"
