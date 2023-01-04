@@ -1,0 +1,77 @@
+from "src/testing/spplang/programs/gc/LinkedNode.spp" import LinkedNode as LinkedNode;
+
+def int64 printf( int8 * , ... ) ;
+def void free(int8*);
+
+class GC with
+    def LinkedNode* node;
+
+    def GC* start(GC* this) does
+        this&.node = 0 as LinkedNode*;
+        return this;
+    ;
+
+    def GC* add(GC* this, int8* elem, int64 size) does 
+        LinkedNode* node = new LinkedNode(elem, size);
+        if this.node as int64 == 0 do 
+            this&.node = node;
+            return this;
+        ;
+        this.node.append(node);
+        return this;
+    ;
+
+    def GC* mark(GC* this, int8* root) does
+        LinkedNode* root = this.node.fromElementPointer(root);
+
+        if root as int64 != 0 do 
+            root&.marked = 1;
+
+            int64 start = root.element as int64;
+            int64 stop  = start + root.bsize;
+            while start < stop do
+                LinkedNode* node = this.node.fromElementPointer((start as int8**)[0]);
+                if node as int64 != 0 do 
+                    this.mark((start as int8**)[0]);
+                ;
+                &start = start + 8;
+            ;
+        ;
+
+        return this;
+    ;
+
+    def GC* sweep(GC* this) does
+        LinkedNode* current = this.node;
+        LinkedNode* markedNodes = 0 as LinkedNode*;
+        LinkedNode* unmarkedNodes = 0 as LinkedNode*;
+        while current.isLast() == 0 do
+            LinkedNode* newNode = new LinkedNode(current.element, current.bsize);
+            if current.marked == 1 *   markedNodes as int64 != 0 do    markedNodes.append(newNode);;
+            if current.marked == 1 *   markedNodes as int64 == 0 do &  markedNodes = newNode;;
+            if current.marked == 0 * unmarkedNodes as int64 != 0 do  unmarkedNodes.append(newNode);;
+            if current.marked == 0 * unmarkedNodes as int64 == 0 do &unmarkedNodes = newNode;;
+            LinkedNode* tmp = current;
+            &current = current.next;
+            &free(tmp as int8*);
+        ;
+        LinkedNode* newNode = new LinkedNode(current.element, current.bsize);
+        if current.marked == 1 *   markedNodes as int64 != 0 do    markedNodes.append(newNode);;
+        if current.marked == 1 *   markedNodes as int64 == 0 do &  markedNodes = newNode;;
+        if current.marked == 0 * unmarkedNodes as int64 != 0 do  unmarkedNodes.append(newNode);;
+        if current.marked == 0 * unmarkedNodes as int64 == 0 do &unmarkedNodes = newNode;;
+        &free(current as int8*);
+
+        unmarkedNodes.end();
+        this&.node = markedNodes;
+        return this;
+    ;
+
+    def void end(GC* this) does
+        this.node.end();
+        &free(this as int8*);
+        return;
+    ;
+
+;
+

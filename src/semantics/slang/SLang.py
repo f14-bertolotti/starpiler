@@ -313,8 +313,7 @@ class SlangTransformer(Transformer):
 
 
 def parsed(programstr):
-    res = lang.parse(programstr)
-    return res
+    return lang.parse(programstr)
 
 def transformed(programstr, path=pathlib.Path()):
     return SlangTransformer(path=path).transform(parsed(programstr))

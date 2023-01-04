@@ -3,7 +3,6 @@ from src.semantics.slang import Int8, Int32, Int64, Double, Pointer, FType
 from abc import abstractmethod
 from llvmlite import ir
 from functools import partial
-import copy
 
 class Expression:
     @abstractmethod
@@ -317,7 +316,7 @@ class StructValue(Expression):
         name2expr = {inner.name:inner.expr for inner in builder.name2var[self.structName.value].innerNames if isinstance(inner, StructNameDefinition)}
         name2expr.update(self.name2expr)
         ptr = builder.alloca(builder.name2var[self.structName.value].ref)
-        tmp, builder.name2var = builder.name2var, {**builder.module.path2import[builder.name2var[self.structName.value].type.path], **copy.deepcopy(builder.name2var)}
+        tmp, builder.name2var = builder.name2var, {**builder.module.path2import[builder.name2var[self.structName.value].type.path], **builder.name2var}
         for name,expr in name2expr.items():
             idx = [inner.name for inner in builder.name2var[self.structName.value].innerNames].index(name)
             pptr = builder.gep(ptr, [ir.Constant(ir.IntType(64),0), ir.Constant(ir.IntType(32), idx)])
@@ -339,7 +338,8 @@ class StructAccess(Expression):
 class StructRefAccess(Expression):
     def __init__(self, accessed, index): self.accessed, self.index = accessed, index
     def __str__(self): return f"Access({self.accessed},{self.index})"
-    def getType(self, builder): return self.accessed.struct[self.index]
+    def getType(self, builder): 
+        return self.accessed.getType(builder).base.typeof(builder.module, self.index)
     def toLLVM(self, builder):
         expr = self.accessed.toLLVM(builder)
         idx = self.accessed.getType(builder).base.index(builder.module, self.index)

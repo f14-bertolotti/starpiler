@@ -1,0 +1,43 @@
+from "src/testing/spplang/programs/gc/LinkedNode.spp" import LinkedNode as LinkedNode;
+
+
+
+def int64 printf( int8 * , ... ) ;
+def void  free(int64);
+
+class Elem with
+    def int64 value;
+    def Elem* start(Elem* this, int64 value) does
+        this&.value = value;
+        return this;
+    ;
+;
+
+def int64 start() does
+    Elem* elem1 = new Elem(1);
+    Elem* elem2 = new Elem(2);
+    Elem* elem3 = new Elem(3);
+
+    LinkedNode* node1 = new LinkedNode(elem1 as int8*, size of Elem);
+    LinkedNode* node2 = new LinkedNode(elem2 as int8*, size of Elem);
+    LinkedNode* node3 = new LinkedNode(elem3 as int8*, size of Elem);
+
+    node1.append(node2).append(node3);
+
+    int64 result = elem3.value == 3 * 
+           (node3.getLast().element as Elem*).value == 3 * 
+           node1.size() == 3 * 
+           node2.size() == 2 *
+           node3.size() == 1;
+
+    &free(elem1 as int8*);
+    &free(elem2 as int8*);
+    &free(elem3 as int8*);
+    &free(node1 as int8*);
+    &free(node2 as int8*);
+    &free(node3 as int8*);
+
+    return result;
+;
+
+

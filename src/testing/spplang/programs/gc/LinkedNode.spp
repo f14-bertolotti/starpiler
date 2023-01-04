@@ -1,0 +1,75 @@
+
+def int64 printf( int8 * , ... ) ;
+def void free(int8*);
+
+class LinkedNode with
+    
+    def LinkedNode* next;
+    def int8*    element;
+    def int64      bsize;
+    def int64     marked;
+
+    def LinkedNode* start(LinkedNode* this, int8* element, int64 size) does
+        this&.next = (0 as LinkedNode*);
+        this&.element = element;
+        this&.bsize = size;
+        this&.marked = 0;
+        return this;
+    ;
+
+    def int64 isLast(LinkedNode* this) does
+        if this.next as int64 == 0 do return 1;;
+        return 0;
+    ;
+
+    def LinkedNode* getLast(LinkedNode* this) does 
+        if this.isLast() do return this;;
+        return this.next.getLast();
+    ;
+
+    def int64 size(LinkedNode* this) does 
+        if this.isLast() do return 1;;
+        return 1 + this.next.size();
+    ;
+
+    def LinkedNode* append(LinkedNode* this, LinkedNode* node) does
+        LinkedNode* last = this.getLast();
+        last&.next = node;
+        return node;
+    ;
+
+    def LinkedNode* print(LinkedNode* this) does
+         &printf("LinkedNode(ptr:%d,elem:%d,size:%d,marked:%d)\n",this,this.element,this.bsize,this.marked);
+         return this;
+    ;
+
+    def LinkedNode* printAll(LinkedNode* this) does
+        LinkedNode* current = this;
+        while current.isLast() == 0 do
+            current.print();
+            &current = current.next;
+        ;
+        current.print();
+        return this;
+    ;
+
+    def LinkedNode* fromElementPointer(LinkedNode* this, int8* elemptr) does 
+        LinkedNode* current = this;
+        while current.isLast() == 0 do
+            if current.element as int64 == elemptr as int64 do 
+                return current;;
+            &current = current.next;
+        ;
+        if current.element as int64 == elemptr as int64 do return current;;
+        return 0 as LinkedNode*;
+    ;
+
+    def void end(LinkedNode* this) does
+        if this.element as int64 != 0 do &free(this.element);;
+        if this.next    as int64 != 0 do this.next.end();;
+        &free(this as int8*);
+        return;
+    ;
+
+;
+

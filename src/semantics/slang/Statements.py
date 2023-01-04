@@ -1,7 +1,6 @@
 from src.semantics.slang import Type, Void, Int8, Int32, Int64, Double, Pointer, Name
 from src.semantics.slang import Expression
 from llvmlite import ir
-import copy
 
 class DeclareAssign(Expression):
     def __init__(self, type, name, expr):
@@ -59,7 +58,7 @@ class IfThen:
     def toLLVM(self, builder):
         cond = builder.icmp_signed("==",self.cond.toLLVM(builder), ir.Constant(ir.IntType(64), 1))
 
-        builder.name2var, tmp = copy.deepcopy(builder.name2var), builder.name2var
+        builder.name2var, tmp = {**builder.name2var}, builder.name2var
         with builder.if_then(cond):
             self.block.toLLVM(builder)
         builder.name2var = tmp
@@ -76,7 +75,7 @@ class While:
         whilebuilder = ir.IRBuilder(whileblock)
         bodybuilder  = ir.IRBuilder(bodyblock)
         whilebuilder.name2var = builder.name2var
-        bodybuilder .name2var = copy.deepcopy(builder.name2var)
+        bodybuilder .name2var = {**builder.name2var}
 
         builder.branch(whileblock)
     
