@@ -30,6 +30,7 @@ indexed                      = P(name = "ssharplang_indexed"                    
 expressionSequence = P(name = "ssharplang_expression_sequence" , rules=[expression, R(expression, R(T(","), expression, mod="*"))])
 functionCall       = P(name = "ssharplang_function_call"       , rules=[R(identifier, T("("), expressionSequence, T(")")), R(expression, T("("),T(")"))])
 cast               = P(name = "ssharplang_cast"                , rules=[R(expression, T("as"), native)])
+classAccess    = P(name = "ssharplang_class_access"    , rules = [R(expression, T("."), identifier)])
 
 array = P(name = "ssharplang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])
 newExpression = P(name = "ssharplang_new" , rules = [R(T("new"), identifier, T("("), expressionSequence, T(")")),
@@ -57,6 +58,7 @@ expression.append(identifier,
                   cast, 
                   reference, 
                   indexed, 
+                  classAccess,
                   sizeOf,
                   newExpression,
                   roundParenthesized) 

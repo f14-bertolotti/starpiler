@@ -11,9 +11,9 @@ class SmallMeta:
         self.end_column:int|None   = end_column
         self.type:Type|None        = type
     def __str__(self):
-        return f"({self.start_line},{self.start_column}-{self.end_line},{self.end_column}-{self.type})"
+        return f"({self.type},{self.start_line},{self.start_column},{self.end_line},{self.end_column})"
     def clone(self):
-        return SmallMeta(start_line=self.start_line, end_line=self.end_line, start_column=self.start_column, end_column=self.end_column, type=self.end_type)
+        return SmallMeta(start_line=self.start_line, end_line=self.end_line, start_column=self.start_column, end_column=self.end_column, type=self.type)
 
 class ReplaceMeta(Transformer):
     def __default__(self, data, children, meta):

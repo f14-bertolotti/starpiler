@@ -24,6 +24,11 @@ class SppPrettyPrinter(Node2String):
         return tree
 
     @v_args(tree=True)
+    def spplang_method_definition(self, tree):
+        tree.string = f"{tree.children[0]} {tree.children[1].string} {tree.children[2].string} {tree.children[3].string} {tree.children[4]}\n{tree.children[5].string}{tree.children[6]}\n"
+        return tree
+
+    @v_args(tree=True)
     def spplang_function_declaration(self, tree):
         tree = super().__default__(tree.data, tree.children, tree.meta)
         tree.string += "\n"
@@ -33,7 +38,16 @@ class SppPrettyPrinter(Node2String):
     def spplang_start(self, tree):
         tree.string = "\n".join(child.string for child in tree.children)
         return tree
-   
+ 
+    @v_args(tree=True)
+    def spplang_global_assignement(self, tree):
+        tree.string = " ".join([child.value if isinstance(child, Token) else child.string for child in tree.children]) + "\n"
+        return tree
+
+    @v_args(tree=True)
+    def spplang_import(self, tree):
+        tree.string = " ".join([child.value if isinstance(child, Token) else child.string for child in tree.children]) + "\n"
+        return tree
 
 
 

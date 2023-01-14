@@ -342,6 +342,9 @@ def run(program_string=None, program_tree=None, program_ast=None):
     binding.initialize_native_asmprinter()
     binding.load_library_permanently(find_library('c'))
 
+    with open("tmp.ll","w") as f:
+        f.write(str(module))
+
     parsedAssembly = binding.parse_assembly(str(module))
     parsedAssembly.verify()
     

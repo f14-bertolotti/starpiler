@@ -13,6 +13,7 @@ tests = {
     'field_definition'   : {'path': 'src/testing/spplang/programs/field_definition.spp', 'result':1},
     'array_struct'       : {'path': 'src/testing/spplang/programs/array_struct.spp', 'result':1},
     'linked_node'        : {'path': 'src/testing/spplang/programs/linked_node.spp', 'result':1},
-    'gc'                 : {'path': 'src/testing/spplang/programs/gc.spp', 'result':1}
+    'gc'                 : {'path': 'src/testing/spplang/programs/gc.spp', 'result':1},
+    'gc_roots'           : {'path': 'src/testing/spplang/programs/gc_roots.spp', 'result':1}
 
 }

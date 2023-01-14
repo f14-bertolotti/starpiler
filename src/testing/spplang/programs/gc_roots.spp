@@ -1,0 +1,45 @@
+
+from "src/testing/spplang/programs/gc/LinkedNode.spp" import LinkedNode as LinkedNode;
+from "src/testing/spplang/programs/gc/GC.spp" import GC as GC;
+
+def int64 printf( int8 * , ... ) ;
+def void  free(int64);
+def GC* gc = 0 as GC*;
+
+class A with
+    def int64 x;
+    def A* start(A* this) does
+        this&.x = 0;
+        return this;
+    ;
+;
+
+def void rec(int64 x) does
+
+    if x <= 0 do 
+        return;
+    ;
+
+    A* a = new A();
+    gc.push(a as int8*, size of A);
+
+    &rec(x-1);
+
+    gc.pop().mark().sweep();
+
+    return;
+;
+
+def int64 start() does
+
+    &gc = new GC();
+    &rec(2);
+
+    int64 result = gc.roots as int64 == 0 * gc.node as int64 == 0;
+
+    gc.end();
+
+    return result;
+;
+
+

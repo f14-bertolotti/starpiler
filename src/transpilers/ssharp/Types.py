@@ -87,8 +87,6 @@ class Types(Transformer):
         return tree
 
     def ssharplang_function_call(self, tree):
-        import rich
-        rich.print(tree)
         if not isinstance(tree.children[0].meta.type, FType) : 
             raise ValueError(f"Not a callable called in {tree.meta}")
         tree.meta.type = tree.children[0].meta.type.rtype 
@@ -147,9 +145,9 @@ class Types(Transformer):
         return tree
 
     def ssharplang_assignement(self, tree):
-        if tree.children[0].children[0].value not in self.namespace: raise ValueError(f"Assigning undeclared variable in {tree.meta}")
-        if tree.children[2].meta.type != self.namespace[tree.children[0].children[0].value]: raise ValueError(f"Type mismatch in {tree.meta}")
-        tree.children[0].meta.type = tree.meta.type = tree.children[2].meta.type
+        if tree.children[0].meta.type == None or tree.children[2].meta.type == None: return tree
+        if tree.children[0].meta.type != tree.children[2].meta.type: raise ValueError(f"Type mismatch in {tree.meta}")
+        tree.meta.type = tree.children[2].meta.type
         return tree
 
     def ssharplang_declaration_assignment(self, tree):
@@ -192,6 +190,11 @@ class Types(Transformer):
         tree.meta.type = tree.children[1].meta.type
         return tree
 
+    def ssharplang_class_access(self, tree):
+        if tree.children[0].meta.type != None:
+            tree.meta.type = tree.children[0].meta.type.base[tree.children[2].children[0].value]
+        return tree
+
 
 class NameSpace(Interpreter):
     cachedPaths: dict[str, Tree] = dict()
@@ -201,13 +204,15 @@ class NameSpace(Interpreter):
         super().__init__(*args, **kwargs)
 
     def visit(self, parseTree) -> Tree:
-        Types({}).transform(parseTree)
+        parseTree = Types({}).transform(parseTree)
         return super().visit(parseTree)
 
     def ssharplang_class_definition(self, tree):
         if self.declaredClass: raise ValueError("One class per file allowed. Declared multiple classes")
         self.declaredClass = True
         tree.meta.type = self.currentNameSpace[tree.children[1].children[0].value] = tree.children[1].meta.type = Object(SType(tree.children[1].children[0].value, dict()))
+
+        tree = Types(self.currentNameSpace).transform(tree)
 
         for child in tree.children[3:-1]:
             if isinstance(child, Tree) and child.data in {"ssharplang_method_definition", "ssharplang_field_definition"}:
@@ -218,7 +223,22 @@ class NameSpace(Interpreter):
         self.visit_children(tree)
 
     def ssharplang_method_definition(self, tree):
-        Types({**self.currentNameSpace, **dict(zip(map(lambda x:x.children[0].value, tree.children[3].children[1:-1]), tree.meta.type.ptypes))}).transform(tree)
+        namespace = {**self.currentNameSpace, **dict(zip([x.children[0].value for x in tree.children[3].children[1:-1] if isinstance(x,Tree)], tree.meta.type.ptypes))}
+        #import rich
+        #if tree.children[2].children[0].value == "__init__": 
+        #    print("="*100)
+        #    rich.print(tree)
+
+        #    print(tree.meta.type.ptypes[0])
+        #rich.print(tree.children[1])
+        #rich.print(namespace)
+        #print(tree.children[1].meta.type.ptypes)
+        #print([x.children[0].value for x in tree.children[3].children[1:-1] if isinstance(x,Tree)])
+        #print("A"*100)
+        #rich.print(tree)
+        #print(namespace)
+        Types(namespace).transform(tree)
+        self.visit_children(tree)
 
     def ssharplang_import(self, tree):
         path = tree.children[1].children[0].value[1:-1]

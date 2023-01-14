@@ -1,10 +1,10 @@
 
 from "src/testing/spplang/programs/gc/LinkedNode.spp" import LinkedNode as LinkedNode;
 from "src/testing/spplang/programs/gc/GC.spp" import GC as GC;
+from "src/testing/spplang/programs/gc/GC.spp" import gc as gc;
 
 def int64 printf( int8 * , ... ) ;
 def void  free(int64);
-def GC* gc = 0 as GC*;
 
 class A with
     def int64 x;
@@ -18,13 +18,12 @@ class B with
     def A* a;
     def B* start(B* this) does
         this&.a = new A();
-        gc.add(this.a as int8*, sizeof A);
+        gc.push(this.a as int8*, sizeof A);
         return this;
     ;
 ;
 
 def int64 start() does
-
 
     &gc = new GC();
     A* a0 = new A();
@@ -33,20 +32,21 @@ def int64 start() does
     A* a3 = new A();
     B* b0 = new B();
 
-    gc.add(a0 as int8*, size of A);
-    gc.add(a1 as int8*, size of A);
-    gc.add(a2 as int8*, size of A);
-    gc.add(a3 as int8*, size of A);
-    gc.add(b0 as int8*, size of B);
+    gc.push(a0 as int8*, size of A);
+    gc.push(a1 as int8*, size of A);
+    gc.push(a2 as int8*, size of A);
+    gc.push(a3 as int8*, size of A);
+    gc.push(b0 as int8*, size of B);
 
-    gc.mark(b0 as int8*);
-    gc.mark(a1 as int8*);
+    gc.mark_root(b0 as int8*);
+    gc.mark_root(a1 as int8*);
 
     int64 result = gc.node.marked == 1 * 
                    gc.node.next.next.next.next.next.marked == 1 *
                    gc.node.next.next.marked == 1;
 
     gc.sweep();
+
     &result = result * gc.node.size() == 3;
 
     gc.end();

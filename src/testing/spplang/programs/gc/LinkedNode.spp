@@ -44,6 +44,7 @@ class LinkedNode with
     ;
 
     def LinkedNode* printAll(LinkedNode* this) does
+        if this as int64 == 0 do return this;;
         LinkedNode* current = this;
         while current.isLast() == 0 do
             current.print();

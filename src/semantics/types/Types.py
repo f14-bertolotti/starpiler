@@ -25,12 +25,14 @@ class Object(Type):
     def __str__(self): return self.toString([])
     def toString(self, visited): 
         return f"Object({self.base.toString(visited)})"  
+ 
 
 class Pointer(Type):
     def __init__(self, base): self.base = base
     def __str__(self): return self.toString([])
     def toString(self, visited): 
         return f"{self.base.toString(visited)}*"  
+
 
 class FType(Type):
     def __init__(self, ptypes, rtype, vararg=False): self.ptypes, self.rtype, self.vararg = ptypes, rtype, vararg
@@ -40,7 +42,8 @@ class FType(Type):
         if self.vararg: ptypestr += ",..." 
         return f"({ptypestr}->{self.rtype.toString(visited)})"
     def __eq__(self, other): return self is other or (type(other) == FType and self.rtype == other.rtype and self.vararg == other.vararg and all(p0==p1 for p0,p1 in zip(self.ptypes, other.ptypes)))
- 
+
+
 class SType(Type):
     def __init__(self, name, name2type): self.name, self.name2type = name, name2type
     def __contains__(self, name): return name in self.name2type

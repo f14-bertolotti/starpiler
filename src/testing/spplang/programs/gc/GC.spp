@@ -5,23 +5,54 @@ def void free(int8*);
 
 class GC with
     def LinkedNode* node;
+    def LinkedNode* roots;
 
     def GC* start(GC* this) does
-        this&.node = 0 as LinkedNode*;
+        this&.node  = 0 as LinkedNode*;
+        this&.roots = 0 as LinkedNode*;
         return this;
     ;
 
-    def GC* add(GC* this, int8* elem, int64 size) does 
+    def int8* push(GC* this, int8* elem, int64 size) does 
         LinkedNode* node = new LinkedNode(elem, size);
+        LinkedNode* root = new LinkedNode(elem, size);
+
         if this.node as int64 == 0 do 
             this&.node = node;
+            this&.roots = root;
+            return elem;
+        ;
+
+        this.node.append(node);
+        this.roots.append(root);
+        return elem;
+    ;
+
+    def GC* pop(GC* this) does
+        int64 size = this.roots.size();
+
+        if size == 1 do 
+            &free(this.roots as int8*);
+            this&.roots = 0 as LinkedNode*;
             return this;
         ;
-        this.node.append(node);
+
+        if size >= 2 do
+            LinkedNode* curr = this.roots;
+
+            while curr.next.next as int64 != 0 do
+                &curr = curr.next;
+            ;
+
+            &free(curr.next as int8*);
+            curr&.next = 0 as LinkedNode*;
+            return this;
+        ;
+
         return this;
     ;
 
-    def GC* mark(GC* this, int8* root) does
+    def GC* mark_root(GC* this, int8* root) does
         LinkedNode* root = this.node.fromElementPointer(root);
 
         if root as int64 != 0 do 
@@ -31,11 +62,32 @@ class GC with
             int64 stop  = start + root.bsize;
             while start < stop do
                 LinkedNode* node = this.node.fromElementPointer((start as int8**)[0]);
-                if node as int64 != 0 do 
-                    this.mark((start as int8**)[0]);
+                if node as int64 != 0 do
+                    if node.marked == 0 do
+                        this.mark_root((start as int8**)[0]);
+                    ;
                 ;
                 &start = start + 8;
             ;
+        ;
+
+        return this;
+    ;
+
+    def GC* mark(GC* this) does
+        LinkedNode* current = this.roots;
+        while current as int64 != 0 do
+            this.mark_root(current.element);
+            &current = current.next;
+        ;
+        return this;
+    ;
+
+    def GC* unmark(GC* this) does
+        LinkedNode* current = this.node;
+        while current as int64 != 0 do
+            current&.marked = 0;
+            &current = current.next;
         ;
 
         return this;
@@ -62,16 +114,26 @@ class GC with
         if current.marked == 0 * unmarkedNodes as int64 == 0 do &unmarkedNodes = newNode;;
         &free(current as int8*);
 
-        unmarkedNodes.end();
+        if unmarkedNodes as int64 != 0 do unmarkedNodes.end();;
         this&.node = markedNodes;
         return this;
     ;
 
     def void end(GC* this) does
-        this.node.end();
+        if this.node as int64 != 0 do this.node.end();;
+
+        if this.roots as int64 != 0 do
+            int64 size = this.roots.size();
+            while size != 0 do
+                this.pop();
+                &size = size-1;
+            ;
+        ;
+
         &free(this as int8*);
         return;
     ;
 
 ;
 
+def GC * gc = 0 as GC * ;

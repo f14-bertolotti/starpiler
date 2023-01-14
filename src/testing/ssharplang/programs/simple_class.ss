@@ -2,12 +2,14 @@ class Simple {
 
     var int64 x;
 
-    fun (int64->void) init() {
-        x = 0;
+    fun (Simple, int64->Simple) __init__(this,x) {
+        this.x = 0;
+        return;
     }
 
     fun (->int64) increment() {
         x = x + 1;
+        return x;
     }
 
 }
