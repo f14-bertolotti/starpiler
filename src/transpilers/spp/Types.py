@@ -273,8 +273,15 @@ class NameSpace(Interpreter):
         tree.meta.type = ExpressionType(self.currentNameSpace).visit(tree.children[1]).meta.type
 
 
+
+from lark.visitors import Transformer
+class T(Transformer):
+    def __default__(self, data, tree, meta):
+        return super().__default__(data+"  "+str(meta.type), tree, meta)
+
+
 def types(parseTree) -> Tree:
-    parseTree = CloneTransformer().transform(parseTree)
+    parseTree = CloneTransformer(notypes=True).transform(parseTree)
     NameSpace().visit(parseTree)
     return parseTree
  

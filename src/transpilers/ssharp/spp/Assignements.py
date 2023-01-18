@@ -12,6 +12,7 @@ class Assignements(AppliedTransformer):
     def ssharplang_assignement(self, meta, nodes):
 
         meta.type = Pointer(meta.type.base if isinstance(meta.type, Object) else meta.type)
+        del nodes[-1]
 
         if nodes[0].data == "ssharplang_identifier":
             self.applied = True
@@ -28,7 +29,20 @@ class Assignements(AppliedTransformer):
                 Token('__ANON__', '&.'), 
                 nodes[0].children[2]], meta)
 
-        return Tree(Token("RULE", "spplang_assignements"), nodes, meta)
+        return Tree(Token("RULE","spplang_stmt_expr"), [Tree(Token("RULE", "spplang_assignement"), nodes, meta), Token("SEMICOLON",";")])
+
+    @v_args(meta=True)
+    def ssharplang_declaration_assignment(self, meta, nodes):
+        del nodes[-1]
+        return Tree(Token("RULE","spplang_stmt_expr"), [Tree(Token("RULE", "spplang_declaration_assignment"), nodes, meta), Token("SEMICOLON",";")])
+
+
+    @v_args(meta=True)
+    def ssharplang_auto_assignment(self, meta, nodes):
+        del nodes[-1]
+        return Tree(Token("RULE","spplang_stmt_expr"), [Tree(Token("RULE", "spplang_auto_assignment"), nodes, meta), Token("SEMICOLON",";")])
+
+
 
 def assignements(parseTree) -> Tree:
     return Assignements().transform(parseTree)

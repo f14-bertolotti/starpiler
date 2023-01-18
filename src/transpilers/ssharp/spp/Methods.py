@@ -30,9 +30,8 @@ class Methods(AppliedTransformer):
 
         plist = [x for c in zip(
             filter(lambda x:isinstance(x,Tree), nodes[1].children[0].children[1:]), 
-            filter(lambda x:isinstance(x,Tree), nodes[3].children[1:-1])) for x in c]
-        for i in range(2,len(plist)-1,2)[::-1]:
-            plist.insert(i, Token("COMMA", ","))
+            filter(lambda x:isinstance(x,Tree), nodes[3].children[1:-1])) for x in [Tree(Token("RULE", "spplang_parameter_definition"), list(c)), Token("COMMA",",")]]
+        if len(plist) > 1: del plist[-1]
 
         res = Tree(Token('RULE', 'spplang_method_definition'), [
             Token('DEF', 'def'), 

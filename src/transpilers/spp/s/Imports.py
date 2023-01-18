@@ -29,6 +29,7 @@ class Imports(AppliedTransformer):
         if importpath not in Imports.path2cached:
             Imports.path2cached[importpath] = tempfile.NamedTemporaryFile()
 
+
             parseTree = lang.parse(importpath.read_text())
             for delta in [types, addEndMethods, Imports().transform, classes, news, classAccesses, identities]:
                 try: parseTree = delta(parseTree)

@@ -93,6 +93,22 @@ gcPop = Tree(Token('RULE', 'spplang_stmt_expr'), [
         Token('RPAR', ')')]), 
     Token('SEMICOLON', ';')])
 
+gcMarkSweep = Tree(Token('RULE', 'spplang_stmt_expr'), [
+    Tree(Token('RULE', 'spplang_function_call'), [
+        Tree(Token('RULE', 'spplang_struct_access'), [
+            Tree(Token('RULE', 'spplang_function_call'), [
+                Tree(Token('RULE', 'spplang_struct_access'), 
+                     [Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')]), 
+                      Token('DOT', '.'), 
+                      Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'mark')])]), 
+                Token('LPAR', '('), 
+                Token('RPAR', ')')]), 
+            Token('DOT', '.'), 
+            Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'sweep')])]), 
+        Token('LPAR', '('), 
+        Token('RPAR', ')')]), 
+    Token('SEMICOLON', ';')])
+
 
 class SSharpOnly(Visitor):
     def __default__(self, tree):
@@ -124,7 +140,6 @@ class GC(Transformer):
 
     @v_args(meta=True)
     def ssharplang_start(self, meta, nodes):
-
         if all([node != gcImportTree for node in nodes if node.data == "spplang_import"]):
             self.applied = True
             res = Tree(Token("RULE","ssharplang_start"), [gcImportTree, gcRefImportTree] + nodes + ([self.mainMethod] if not GC.mainMethodApplied else []), meta)
@@ -155,28 +170,46 @@ class GC(Transformer):
 
     @v_args(meta=True)
     def ssharplang_new(self, meta, nodes):
-        meta = SmallMeta(nodes[1].meta.start_line, nodes[1].meta.end_line, nodes[1].meta.start_column, nodes[1].meta.end_column, Pointer(meta.type))
-        return Tree(Token('RULE', 'spplang_stmt_expr'), [
-            Tree(Token('RULE', 'spplang_cast'), [
-                Tree(Token('RULE', 'spplang_function_call'), [
-                    Tree(Token('RULE', 'spplang_struct_access'), [
-                        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')]), 
-                        Token('DOT', '.'), 
-                        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'push')])]), 
-                    Token('LPAR', '('), 
-                    Tree(Token('RULE', 'spplang_expression_sequence'), [
+        meta = SmallMeta(nodes[1].meta.start_line, nodes[1].meta.end_line, nodes[1].meta.start_column, nodes[1].meta.end_column, meta.type)
+        import rich
+        rich.print(nodes[3])
+
+        return Tree(Token('RULE', 'spplang_cast'), [
+            Tree(Token('RULE', 'spplang_function_call'), [
+                Tree(Token('RULE', 'spplang_struct_access'), [
+                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')], SmallMeta(type=Pointer(GCType))), 
+                    Token('DOT', '.'), 
+                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'push')])],),
+                Token('LPAR', '('), 
+                Tree(Token('RULE', 'spplang_expression_sequence'), [
+                    Tree(Token('RULE', 'spplang_cast'), [
                         Tree(Token('RULE', 'spplang_new'), [
                             Token('NEW', 'new'), 
-                            Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[1].children[0].value)], meta), 
+                            Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[1].children[0].value)],meta), 
                             Token('LPAR', '('), 
-                            Token('RPAR', ')')])], meta), 
-                    Token('RPAR', ')')]), 
-                Token('AS', 'as'), 
-                Tree(Token('RULE', 'spplang_pointer'), [
-                    Tree(Token('RULE', 'spplang_tname'), [
-                        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[1].children[0].value)])]), 
-                    Token('STAR', '*')])], meta), 
-            Token('SEMICOLON', ';')])
+                            *nodes[3:-1],
+                            Token('RPAR', ')')]), 
+                        Token('AS', 'as'), 
+                        Tree(Token('RULE', 'spplang_pointer'), [
+                            Tree(Token('RULE', 'spplang_int8'), [Token('INT8', 'int8')]), 
+                            Token('STAR', '*')])]),
+                    Token('COMMA',','),
+                    Tree(Token('RULE', 'spplang_size_of'), [
+                        Token('SIZE', 'size'), 
+                        Token('OF', 'of'), 
+                        Tree(Token('RULE', 'spplang_tname'), [
+                            Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[1].children[0].value)])])])
+
+                ]), 
+                Token('RPAR', ')')]), 
+            Token('AS', 'as'), 
+            Tree(Token('RULE', 'spplang_pointer'), [
+                Tree(Token('RULE', 'spplang_tname'), [
+                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[1].children[0].value)], meta)]), 
+                Token('STAR', '*')])])
+
+    
+
 
 
     @v_args(meta=True)
@@ -198,7 +231,8 @@ class GC(Transformer):
                     Token('SEMICOLON', ';')])
             self.mainMethod = AddBeforeReturn(gcMainEnd).transform(self.mainMethod)
             return Tree(Token("RULE","delete"),[])
-        return Tree(Token("RULE", "ssharplang_method_definition"), nodes, meta)
+        else:
+            return AddBeforeReturn(gcMarkSweep).transform(Tree(Token("RULE", "ssharplang_method_definition"), nodes, meta))
         
 
     @v_args(meta=True)

@@ -36,9 +36,8 @@ class Imports(AppliedTransformer):
                 try: parseTree = delta(parseTree)
                 except NotAppliedException: continue
 
-            def p(x): print(x); return x
 
-            Imports.path2cached[importpath].write(p(SppPrettyPrinter().transform(parseTree)).encode("utf-8"))
+            Imports.path2cached[importpath].write(SppPrettyPrinter().transform(parseTree).encode("utf-8"))
             Imports.path2cached[importpath].flush()
 
         self.applied = True

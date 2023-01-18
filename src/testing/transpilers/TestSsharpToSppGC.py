@@ -1,5 +1,6 @@
 import unittest
 
+from src.syntax.slang import lang as slang
 from src.syntax.spplang  import lang as spplang
 from src.transpilers.spp import types as spptypes
 
@@ -14,9 +15,12 @@ from src.transpilers.ssharp.spp import imports
 from src.transpilers.ssharp.spp import fields
 from src.transpilers.ssharp.spp import types as ssharp2spp_types
 
+from src.transpilers.spp.s import transpile as spp2sTranspiler
+
+from src.semantics.slang import run
+
 from src.utils import SppPrettyPrinter
 from src.utils import SPrettyPrinter
-from src.transpilers.spp.s import transpile
 
 from lark.visitors import Transformer
 class TypeIntoData(Transformer):
@@ -36,7 +40,7 @@ class Test(unittest.TestCase):
                 return this;
             }
             fun ( -> int64) __main__ () {
-                S s = new S();
+                S s = new S(1);
                 return 0;
             }
         }
@@ -54,18 +58,24 @@ class Test(unittest.TestCase):
         parsed = imports(parsed)
         parsed = identities(parsed)
 
-
         self.assertEqual(sppgc.children[0].meta.type, parsed.children[0].meta.type)
 
 
-        parsed = transpile(parsed)
         import rich
-        rich.print(parsed)
         rich.print("="*100)
         rich.print(program)
         rich.print("="*100)
+        rich.print(SppPrettyPrinter().transform(parsed))
+        rich.print("="*100)
+        parsed = spp2sTranspiler(parsed)
+        #rich.print(parsed)
+        #rich.print("="*100)
         rich.print(SPrettyPrinter().transform(parsed))
+        parsed = slang.parse(SPrettyPrinter().transform(parsed))
+        #rich.print(slang.parse(SPrettyPrinter().transform(parsed)))
 
+        run(program_tree=parsed)
+        
 
 
 

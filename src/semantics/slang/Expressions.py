@@ -18,7 +18,9 @@ class FunctionCall(Expression):
     def getType(self, builder):
         return self.expr.getType(builder).base.rtype
     def toLLVM(self, builder):
-        return builder.call(self.expr.toLLVM(builder), [arg.toLLVM(builder) for arg in self.arguments])
+        callable = self.expr.toLLVM(builder)
+        arguments = [arg.toLLVM(builder) for arg in self.arguments]
+        return builder.call(callable, arguments)
 
 class Operation(Expression):
     @abstractmethod

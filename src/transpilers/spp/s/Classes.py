@@ -106,7 +106,7 @@ class Classes(Transformer):
                     baseFunctionDefinition.children[0].children[0].children[0].children.append(param.children[0])
                     baseFunctionDefinition.children[0].children[0].children[0].children.append(Token("COMMA",","))
                 # remove last comma
-                del baseFunctionDefinition.children[0].children[0].children[0].children[-1]
+                if len(list(filter(lambda x: isinstance(x,Tree), node.children[3].children))) > 0: del baseFunctionDefinition.children[0].children[0].children[0].children[-1]
                 # add return type to function definition type
                 baseFunctionDefinition.children[0].children[0].children[1].children.insert(-1,node.children[1])
                 # add function definition to the base struct

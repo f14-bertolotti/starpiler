@@ -4,12 +4,12 @@ class Simple {
 
     fun (Simple, int64->Simple) __init__(this,x) {
         this.x = 0;
-        return;
+        return this;
     }
 
-    fun (->int64) increment() {
-        x = x + 1;
-        return x;
+    fun (Simple->int64) increment(this) {
+        this.x = this.x + 1;
+        return this.x;
     }
 
 }

@@ -94,6 +94,9 @@ class GC with
     ;
 
     def GC* sweep(GC* this) does
+
+        if this.node as int64 == 0 do return this;;
+
         LinkedNode* current = this.node;
         LinkedNode* markedNodes = 0 as LinkedNode*;
         LinkedNode* unmarkedNodes = 0 as LinkedNode*;

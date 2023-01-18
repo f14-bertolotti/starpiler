@@ -224,19 +224,6 @@ class NameSpace(Interpreter):
 
     def ssharplang_method_definition(self, tree):
         namespace = {**self.currentNameSpace, **dict(zip([x.children[0].value for x in tree.children[3].children[1:-1] if isinstance(x,Tree)], tree.meta.type.ptypes))}
-        #import rich
-        #if tree.children[2].children[0].value == "__init__": 
-        #    print("="*100)
-        #    rich.print(tree)
-
-        #    print(tree.meta.type.ptypes[0])
-        #rich.print(tree.children[1])
-        #rich.print(namespace)
-        #print(tree.children[1].meta.type.ptypes)
-        #print([x.children[0].value for x in tree.children[3].children[1:-1] if isinstance(x,Tree)])
-        #print("A"*100)
-        #rich.print(tree)
-        #print(namespace)
         Types(namespace).transform(tree)
         self.visit_children(tree)
 
@@ -269,7 +256,7 @@ class NameSpace(Interpreter):
         self.currentNameSpace = tmpNameSpace
 
 def types(parseTree) -> Tree:
-    parseTree = CloneTransformer().transform(parseTree)
+    parseTree = CloneTransformer(notypes=True).transform(parseTree)
     NameSpace().visit(parseTree)
     return parseTree
  
