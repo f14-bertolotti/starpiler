@@ -34,6 +34,7 @@ class Imports(AppliedTransformer):
             for delta in [types, addEndMethods, Imports().transform, classes, news, classAccesses, identities]:
                 try: parseTree = delta(parseTree)
                 except NotAppliedException: continue
+
             Imports.path2cached[importpath].write(SPrettyPrinter().transform(parseTree).encode("utf-8"))
             Imports.path2cached[importpath].flush()
 

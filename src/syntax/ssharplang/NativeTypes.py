@@ -15,4 +15,6 @@ native  = P(name = "ssharplang_type"   , rules = [double, int64, int32, int8, vo
 ptype   = P(name = "ssharplang_ptype"  , rules = [R(T("(")), R(T("("), native, R(T(","), native, mod="*"))])
 rtype   = P(name = "ssharplang_rtype"  , rules = [R(T("->"), native, T(")"))])
 ftype   = P(name = "ssharplang_ftype"  , rules = [R(ptype, rtype)])
+atype   = P(name = "ssharplang_atype"  , rules = [R(native, T("["), T("]"))])
 native.append(ftype)
+native.append(atype)

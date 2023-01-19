@@ -34,7 +34,9 @@ classAccess    = P(name = "ssharplang_class_access"    , rules = [R(expression, 
 
 array = P(name = "ssharplang_array", rules = [R(T("["), T("]")), R(T("["), expression, R(T(","), expression, mod="*"), T("]"))])
 newExpression = P(name = "ssharplang_new" , rules = [R(T("new"), identifier, T("("), expressionSequence, T(")")),
-                                                                  R(T("new"), identifier, T("("), T(")"))])
+                                                     R(T("new"), identifier, T("("), T(")"))])
+newOfExpression = P(name = "ssharplang_new_of" , rules = [R(T("new"), expression, T("of"), native, T("("), expressionSequence, T(")")),
+                                                          R(T("new"), expression, T("of"), native, T("("), T(")"))])
 
 
 expression.append(identifier,
@@ -61,5 +63,6 @@ expression.append(identifier,
                   classAccess,
                   sizeOf,
                   newExpression,
+                  newOfExpression,
                   roundParenthesized) 
 

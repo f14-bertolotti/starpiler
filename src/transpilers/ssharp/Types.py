@@ -62,6 +62,14 @@ class Types(Transformer):
         tree.meta.type = tree.children[1].meta.type
         return tree
 
+    def ssharplang_atype(self, tree):
+        tree.meta.type = Array(tree.children[0].meta.type)
+        return tree
+
+    def ssharplang_new_of(self, tree):
+        tree.meta.type = Array(tree.children[3].meta.type)
+        return tree
+
     def ssharplang_field_definition(self, tree):
         self.namespace[tree.children[2].children[0].value] = tree.children[2].meta.type = tree.meta.type = tree.children[1].meta.type
         return tree

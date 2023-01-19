@@ -2,6 +2,8 @@ from "src/testing/spplang/programs/gc/LinkedNode.spp" import LinkedNode as Linke
 
 def int64 printf( int8 * , ... ) ;
 def void free(int8*);
+def int8* malloc(int64);
+def int8* memcpy(int8*,int8*,int64);
 
 class GC with
     def LinkedNode* node;
@@ -25,6 +27,18 @@ class GC with
 
         this.node.append(node);
         this.roots.append(root);
+        return elem;
+    ;
+
+    def int8* pushNoRoot(GC* this, int8* elem, int64 size) does 
+        LinkedNode* node = new LinkedNode(elem, size);
+
+        if this.node as int64 == 0 do 
+            this&.node = node;
+            return elem;
+        ;
+
+        this.node.append(node);
         return elem;
     ;
 
@@ -80,6 +94,8 @@ class GC with
             this.mark_root(current.element);
             &current = current.next;
         ;
+        &printf("MARK ============================\n");
+        this.node.printAll();
         return this;
     ;
 

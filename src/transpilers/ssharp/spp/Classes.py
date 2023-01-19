@@ -2,7 +2,6 @@ from lark.visitors import v_args
 from lark.tree import Tree
 from lark import Token
 
-from src.semantics.types import *
 from src.utils import AppliedTransformer
 
 

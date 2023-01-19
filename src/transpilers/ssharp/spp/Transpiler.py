@@ -1,0 +1,21 @@
+
+from src.transpilers.ssharp.spp import gc
+from src.transpilers.ssharp.spp import classes
+from src.transpilers.ssharp.spp import assignements
+from src.transpilers.ssharp.spp import methods
+from src.transpilers.ssharp.spp import arrays, news, newofs
+from src.transpilers.ssharp.spp import identities
+from src.transpilers.ssharp.spp import imports
+from src.transpilers.ssharp.spp import fields
+from src.transpilers.ssharp import types
+
+from src.utils import NotAppliedException
+
+def transpile(parseTree):
+    for delta in [types, gc, classes, fields, assignements, methods, arrays, news, newofs, imports, identities]: 
+        try: parseTree = delta(parseTree)
+        except NotAppliedException: continue
+    return parseTree
+
+
+deltas = [types, gc, classes, fields, assignements, methods, arrays, news, newofs, imports, identities]

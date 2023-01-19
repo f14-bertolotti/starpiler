@@ -47,10 +47,10 @@ class News(Transformer):
     @v_args(meta=True)
     def spplang_new(self, meta, nodes):
         newexpr = copy.deepcopy(newexpression)
-        newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[0].children[2].children[0].children[2].children[0] = Token("__ANON__", nodes[1].children[0].value)
-        newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[2].children[0].children[0] = Token("__ANON__", nodes[1].children[0].value)
-        newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[4].children[2].children[0] = Token("__ANON__", nodes[1].children[0].value)
-        newexpr.children[0].children[0].children[1].children[3].children[2].children[0].children[0] = Token("__ANON__", nodes[1].children[0].value)
+        newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[0].children[2].children[0].children[2].children[0] = nodes[1]
+        newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[2].children[0].children[0] = nodes[1]
+        newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[4].children[2].children[0] = nodes[1]
+        newexpr.children[0].children[0].children[1].children[3].children[2].children[0].children[0] = nodes[1]
         newexpr.meta.type = meta.type
         if len(nodes) == 5: newexpr.children[2].children += [Token("COMMA",",")] + nodes[3].children
         self.is_spplang_new = True

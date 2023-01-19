@@ -3,7 +3,7 @@ class Simple {
     var int64 x;
 
     fun (Simple, int64->Simple) __init__(this,x) {
-        this.x = 0;
+        this.x = x;
         return this;
     }
 

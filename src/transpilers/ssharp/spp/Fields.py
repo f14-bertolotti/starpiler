@@ -13,8 +13,7 @@ class Fields(AppliedTransformer):
         self.applied = True
         return Tree(Token('RULE', 'spplang_field_declaration'), [
             Token('DEF', 'def'), 
-            Tree(Token('RULE', 'spplang_int64'), [
-                Token('INT64', 'int64')]), 
+            nodes[1], 
             Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[2].children[0].value)]), 
             Token('SEMICOLON', ';')], meta)
 

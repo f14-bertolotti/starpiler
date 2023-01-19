@@ -4,9 +4,11 @@ from lark import Token
 from pathlib import Path
 
 from src.transpilers.ssharp     import types
-from src.transpilers.ssharp.spp import gc 
+from src.transpilers.ssharp.spp import gc4imports
 from src.transpilers.ssharp.spp import types as ssharp2spp_types
 from src.transpilers.ssharp.spp import methods
+from src.transpilers.ssharp.spp import arrays
+from src.transpilers.ssharp.spp import newofs, news
 from src.transpilers.ssharp.spp import classes
 from src.transpilers.ssharp.spp import assignements
 from src.transpilers.ssharp.spp import fields
@@ -32,7 +34,7 @@ class Imports(AppliedTransformer):
             Imports.path2cached[importpath] = tempfile.NamedTemporaryFile()
 
             parseTree = lang.parse(importpath.read_text())
-            for delta in [types, ssharp2spp_types, gc, classes, fields, methods, assignements, Imports().transform, identities]:
+            for delta in [types, ssharp2spp_types, gc4imports, classes, fields, methods, arrays, news, newofs, assignements, Imports().transform, identities]:
                 try: parseTree = delta(parseTree)
                 except NotAppliedException: continue
 
