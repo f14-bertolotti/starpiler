@@ -94,7 +94,7 @@ class GC with
             this.mark_root(current.element);
             &current = current.next;
         ;
-        &printf("MARK ============================\n");
+        &printf("MARKED ============================\n");
         this.node.printAll();
         return this;
     ;

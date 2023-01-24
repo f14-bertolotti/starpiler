@@ -3,9 +3,14 @@ from lark import Tree, Token
 
 from src.semantics.types import *
 from src.utils import AppliedTransformer
+from src.transpilers.ssharp.spp.Utils import importMalloc, importMemcpy
 
 
 class NewOfs(AppliedTransformer):
+
+    def __init__(self, *args, isMain=True, **kwargs):
+        self.isMain = isMain
+        super().__init__(*args, **kwargs)
 
     @v_args(meta=True)
     def ssharplang_new_of(self, meta, nodes):
@@ -16,7 +21,7 @@ class NewOfs(AppliedTransformer):
                 Tree(Token('RULE', 'spplang_struct_access'), [
                     Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')]), 
                     Token('DOT', '.'), 
-                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'pushNoRoot')])]), 
+                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'push' if self.isMain else 'pushNoRoot')])]), 
                 Token('LPAR', '('), 
                 Tree(Token('RULE', 'spplang_expression_sequence'), [
                     Tree(Token('RULE', 'spplang_function_call'), [
@@ -47,12 +52,15 @@ class NewOfs(AppliedTransformer):
                 nodes[3], 
                 Token('STAR', '*')])])
 
-malloc = Tree(Token('RULE', 'spplang_import'), [Token('FROM', 'from'), Tree(Token('RULE', 'spplang_string'), [Token('__ANON_0', '"src/testing/spplang/programs/gc/GC.spp"')]), Token('IMPORT', 'import'), Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON_1', 'malloc')]), Token('AS', 'as'), Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON_1', '__malloc__')]), Token('SEMICOLON', ';')])
-
-def newofs(parseTree):
-    parseTree = NewOfs().transform(parseTree)
+def mainNewofs(parseTree):
+    parseTree = NewOfs(isMain=True).transform(parseTree)
     parseTree.children.insert(0, malloc)
     return parseTree
 
+def newofs(parseTree):
+    parseTree = NewOfs(isMain=False).transform(parseTree)
+    if importMalloc not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(importMalloc))
+    if importMemcpy not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(importMemcpy))
+    return parseTree
 
 

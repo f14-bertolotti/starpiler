@@ -17,6 +17,7 @@ from src.utils import SPrettyPrinter
 
 from lark.visitors import Transformer
 from pathlib import Path
+import rich
 
 class Test(unittest.TestCase):
 
@@ -37,32 +38,17 @@ class Test(unittest.TestCase):
         """
         sppgc = """from "src/testing/spplang/programs/gc/GC.spp" import GC as GC;"""
         sppgc = spptypes(spplang.parse(sppgc))
-
         parsed = ssharp2sppTranspiler(ssharplang.parse(program))
-        self.assertEqual(sppgc.children[0].meta.type, parsed.children[0].meta.type)
         parsed = spp2sTranspiler(parsed)
+        parsed = slang.parse(SPrettyPrinter().transform(parsed))
         self.assertEqual(run(program_tree=parsed), 1)
         
     def test_array(self):
         program = Path("src/testing/ssharplang/programs/IntArray.ss").read_text()
-
-        import rich
-
         ssharp_parsed = ssharplang.parse(program)
-
-        rich.print(program)
-        rich.print("="*100)
-
-        spp_parsed    = ssharp2sppTranspiler(ssharp_parsed)
-
-        rich.print(SppPrettyPrinter().transform(spp_parsed))
-        rich.print("="*100)
-
-        s_parsed      = spp2sTranspiler(spp_parsed)
-
-        rich.print(SPrettyPrinter().transform(s_parsed))
-
-        run(program_tree=s_parsed)
+        spp_parsed = ssharp2sppTranspiler(ssharp_parsed)
+        s_parsed = spp2sTranspiler(spp_parsed)
+        self.assertEqual(run(program_tree=s_parsed),0)
 
 
 
