@@ -1,33 +1,16 @@
-from lark.visitors import v_args
-from lark.tree import Tree
-from lark import Token
-from src.semantics.types import * 
+from lark import Tree, Token
 
 from src.utils import AppliedTransformer
 from src.transpilers.ssharp.spp.Utils import * 
 import copy
 
-gcMarkAndSweep = \
-Tree(Token('RULE', 'spplang_stmt_expr'), [
-    Tree(Token('RULE', 'spplang_function_call'), [
-        Tree(Token('RULE', 'spplang_struct_access'), [
-            Tree(Token('RULE', 'spplang_function_call'), [
-                Tree(Token('RULE', 'spplang_struct_access'), [
-                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')]), 
-                    Token('DOT', '.'), 
-                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'mark')])]), 
-                Token('LPAR', '('), Token('RPAR', ')')]), 
-            Token('DOT', '.'), 
-            Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'sweep')])]), 
-        Token('LPAR', '('), 
-        Token('RPAR', ')')]), 
-    Token('SEMICOLON', ';')])
-
-
 class Methods(AppliedTransformer):
 
-    @v_args(meta=True)
-    def ssharplang_method_definition(self, meta, nodes):
+    def reset(self):
+        self.applied = False
+        return self
+
+    def ssharplang_method_definition(self, nodes):
         self.applied = True
 
         plist = [x for c in zip(
@@ -52,22 +35,20 @@ class Methods(AppliedTransformer):
             Token('DOES', 'does'), 
             nodes[5],
             Token('SEMICOLON',';')
-            ], meta)
+            ])
         return res
 
-    @v_args(meta=True)
-    def ssharplang_block(self, meta, nodes):
-        return Tree(Token("RULE", "ssharplang_block"), [n for node in nodes for n in (node if isinstance(node,list) else [node])], meta)
+    def ssharplang_block(self, nodes):
+        return Tree(Token("RULE", "ssharplang_block"), [n for node in nodes for n in (node if isinstance(node,list) else [node])])
 
-    @v_args(meta=True)
-    def ssharplang_return(self, meta, nodes):
+    def ssharplang_return(self, nodes):
         return [copy.deepcopy(gcMarkAndSweep),
-                Tree(Token("RULE", "ssharplang_return"),nodes, meta)]
+                Tree(Token("RULE", "ssharplang_return"), nodes)]
 
     
-
+methodsTransformer = Methods()
 def methods(parseTree)->Tree:
-    parseTree = Methods().transform(parseTree)
-    if importMalloc not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(gcImport))
-    if importMemcpy not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(gcRefImport))
+    parseTree = methodsTransformer.reset().transform(parseTree)
+    if importGC not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(importGC))
+    if importgc not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(importgc))
     return parseTree

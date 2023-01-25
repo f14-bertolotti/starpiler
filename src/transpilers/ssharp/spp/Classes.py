@@ -1,16 +1,14 @@
-from lark.visitors import v_args
-from lark.tree import Tree
-from lark import Token
-
+from lark import Tree, Token
 from src.utils import AppliedTransformer
-
 
 class Classes(AppliedTransformer):
 
-    @v_args(meta=True)
-    def ssharplang_class_definition(self, meta, nodes):
+    def reset(self):
+        self.applied = False
+        return self
+
+    def ssharplang_class_definition(self, nodes):
         self.applied = True
-        meta.type = meta.type.base
         return Tree(Token('RULE', 'spplang_class'), [
                 Token('CLASS', 'class'), 
                 Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[1].children[0].value)]), 
@@ -18,9 +16,9 @@ class Classes(AppliedTransformer):
                 *nodes[3:-1],
                 Token('SEMICOLON', ';')])
 
-
+classesTransformer = Classes()
 def classes(parseTree):
-    return Classes().transform(parseTree)
+    return classesTransformer.reset().transform(parseTree)
 
 
 

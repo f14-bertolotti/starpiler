@@ -12,11 +12,11 @@ from src.transpilers.ssharp import types
 from src.utils import NotAppliedException
 
 def transpile(parseTree):
-    for delta in [types, mainMethod, news, newofs, classes, fields, assignements, methods, arrays, imports, identities]: 
+    for delta in [types, news, newofs, mainMethod, classes, fields, assignements, methods, arrays, imports, identities]: 
         try: parseTree = delta(parseTree)
         except NotAppliedException as e: pass 
 
     return parseTree
 
 
-deltas = [types, mainMethod, news, newofs, classes, fields, assignements, methods, arrays, imports, identities]
+deltas = [types, news, newofs, mainMethod, classes, fields, assignements, methods, arrays, imports, identities]

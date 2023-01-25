@@ -44,11 +44,18 @@ class Test(unittest.TestCase):
         
     def test_array(self):
         program = Path("src/testing/ssharplang/programs/IntArray.ss").read_text()
+        
+        rich.print(program)
+        print("="*100)
+        
         ssharp_parsed = ssharplang.parse(program)
         spp_parsed = ssharp2sppTranspiler(ssharp_parsed)
-        print(SppPrettyPrinter().transform(spp_parsed))
-        s_parsed = spp2sTranspiler(spp_parsed)
+        
+        rich.print(spp_parsed)
         print("="*100)
+        rich.print(SppPrettyPrinter().transform(spp_parsed))
+
+        s_parsed = spp2sTranspiler(spp_parsed)
         print(SPrettyPrinter().transform(s_parsed))
         self.assertEqual(run(program_tree=s_parsed),0)
 
