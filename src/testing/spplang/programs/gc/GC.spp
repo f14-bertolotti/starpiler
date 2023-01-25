@@ -5,6 +5,15 @@ def void free(int8*);
 def int8* malloc(int64);
 def int8* memcpy(int8*,int8*,int64);
 
+def int8* memcpyn(int8* dst, int8* src, int64 size, int64 rep) does
+    int64 i = 0;
+    while i < rep do
+        &memcpy((dst as int64 + size * i) as int8*, src, size);
+        &i = i + 1;
+    ;
+    return dst;
+;
+
 class GC with
     def LinkedNode* node;
     def LinkedNode* roots;

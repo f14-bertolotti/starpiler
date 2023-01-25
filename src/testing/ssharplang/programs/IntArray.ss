@@ -1,12 +1,13 @@
+from "src/testing/ssharplang/programs/Integer.ss" import Integer as Integer; 
 
 class IntArray {
 
-    var int64[] data;
-    var int64   size;
+    var Integer[] data;
+    var int64     size;
 
     fun (IntArray, int64 -> IntArray) __init__(this, size) {
         this.size = size;
-        this.data = new size of int64();
+        this.data = new size of Integer(10);
         return this;
     } 
 

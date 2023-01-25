@@ -40,14 +40,16 @@ class Test(unittest.TestCase):
         sppgc = spptypes(spplang.parse(sppgc))
         parsed = ssharp2sppTranspiler(ssharplang.parse(program))
         parsed = spp2sTranspiler(parsed)
-        parsed = slang.parse(SPrettyPrinter().transform(parsed))
         self.assertEqual(run(program_tree=parsed), 1)
         
     def test_array(self):
         program = Path("src/testing/ssharplang/programs/IntArray.ss").read_text()
         ssharp_parsed = ssharplang.parse(program)
         spp_parsed = ssharp2sppTranspiler(ssharp_parsed)
+        print(SppPrettyPrinter().transform(spp_parsed))
         s_parsed = spp2sTranspiler(spp_parsed)
+        print("="*100)
+        print(SPrettyPrinter().transform(s_parsed))
         self.assertEqual(run(program_tree=s_parsed),0)
 
 

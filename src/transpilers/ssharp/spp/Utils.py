@@ -51,6 +51,17 @@ Tree(Token('RULE', 'spplang_import'), [
     Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', '__memcpy__')]), 
     Token('SEMICOLON', ';')])
 
+
+importMemcpyn = \
+Tree(Token('RULE', 'spplang_import'), [
+    Token('FROM', 'from'), 
+    Tree(Token('RULE', 'spplang_string'), [Token('__ANON__', '"src/testing/spplang/programs/gc/GC.spp"')]), 
+    Token('IMPORT', 'import'), 
+    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'memcpyn')]), 
+    Token('AS', 'as'), 
+    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', '__memcpyn__')]), 
+    Token('SEMICOLON', ';')])
+
 gcImport = \
 Tree(Token("RULE", "spplang_import"), [
     Token("FROM", "from"), 

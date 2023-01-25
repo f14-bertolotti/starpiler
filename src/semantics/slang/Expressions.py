@@ -175,7 +175,8 @@ class Index(Expression):
     def __str__(self): return f"Index({self.name},"+"".join([str(idx) for idx in self.indexes])+")"
     def getType(self, builder):
         currentType = self.name.getType(builder)
-        for _ in self.indexes: currentType = currentType.base
+        for idx in self.indexes: 
+            if isinstance(idx,ValIndex): currentType = currentType.base
         return currentType
     def toLLVM(self, builder):
         val = self.name.toLLVM(builder)
