@@ -7,4 +7,9 @@ class Integer {
         return this;
     }
 
+    fun (Integer, int64 -> Integer) set(this, value) {
+        this.value = value;
+        return this;
+    }
+
 }

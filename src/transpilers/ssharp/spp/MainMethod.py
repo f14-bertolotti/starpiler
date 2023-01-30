@@ -7,10 +7,10 @@ import copy
 
 def getTempResultAssigement(value):
     return \
-    Tree(Token('RULE', 'spplang_stmt_expr'), [
-        Tree(Token('RULE', 'spplang_declaration_assignment'), [
-            Tree(Token('RULE', 'spplang_int64'), [Token('INT64', 'int64')]), 
-            Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', '__result__')]), 
+    Tree(Token('RULE', 'ssharplang_stmt_expr'), [
+        Tree(Token('RULE', 'ssharplang_declaration_assignment'), [
+            Tree(Token('RULE', 'ssharplang_int64'), [Token('INT64', 'int64')]), 
+            Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', '__result__')]), 
             Token('EQUAL', '='), 
             value]), 
         Token('SEMICOLON', ';')])
@@ -26,8 +26,6 @@ def getReturnResultTree():
 class EndGC(Visitor):
     def ssharplang_block(self, tree):
         tree.children = [c for child in tree.children for c in ([getTempResultAssigement(child.children[1]), copy.deepcopy(gcEnd), getReturnResultTree()] if isinstance(child, Tree) and child.data == "ssharplang_return" else [child])]
-    def spplang_block(self, tree):
-        self.ssharplang_block(tree)
 
 class MainMethod(AppliedTransformer):
 
@@ -42,7 +40,8 @@ class MainMethod(AppliedTransformer):
 
     def ssharplang_start(self, nodes): 
         if self.mainMethod == None: raise ValueError("no required __main__ method found.") 
-        return Tree(Token('RULE', 'ssharplang_start'), nodes + [self.mainMethod])
+        nodes.append(self.mainMethod)
+        return Tree(Token('RULE', 'ssharplang_start'), nodes)
 
     def ssharplang_method_definition(self, nodes):
 
@@ -57,6 +56,7 @@ class MainMethod(AppliedTransformer):
             self.mainMethod = copy.deepcopy(sppMainMethod)
             self.mainMethod.children[5].children += nodes[5].children
             self.mainMethod = self.endGCVisitor.visit(self.mainMethod)
+
             return None 
 
         else:

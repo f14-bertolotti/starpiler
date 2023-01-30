@@ -28,7 +28,7 @@ parenthesized                = P(name = "ssharplang_parenthesized"              
 indexed                      = P(name = "ssharplang_indexed"                      , rules=[R(expression, R(parenthesized, mod="+"))])
 
 expressionSequence = P(name = "ssharplang_expression_sequence" , rules=[expression, R(expression, R(T(","), expression, mod="*"))])
-functionCall       = P(name = "ssharplang_function_call"       , rules=[R(identifier, T("("), expressionSequence, T(")")), R(expression, T("("),T(")"))])
+functionCall       = P(name = "ssharplang_function_call"       , rules=[R(expression, T("("), expressionSequence, T(")")), R(expression, T("("),T(")"))])
 cast               = P(name = "ssharplang_cast"                , rules=[R(expression, T("as"), native)])
 classAccess    = P(name = "ssharplang_class_access"    , rules = [R(expression, T("."), identifier)])
 

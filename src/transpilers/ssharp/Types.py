@@ -167,8 +167,9 @@ class Types(Transformer):
         return tree
 
     def ssharplang_indexed(self, tree):
-        cur= tree.children[0].meta.type
+        cur = tree.children[0].meta.type
         for node in tree.children:
+            if cur == None: raise ValueError("Invalid type")
             if node.data == "ssharplang_square_parenthesized": cur = cur.base
         tree.meta.type = cur
         return tree
@@ -211,11 +212,14 @@ class NameSpace(Interpreter):
         self.declaredClass = False
         super().__init__(*args, **kwargs)
 
-    def visit(self, parseTree) -> Tree:
-        parseTree = Types({}).transform(parseTree)
-        return super().visit(parseTree)
+#    def visit(self, parseTree) -> Tree:
+#        parseTree = Types({}).transform(parseTree)
+#        return super().visit(parseTree)
 
     def ssharplang_class_definition(self, tree):
+#        print("-"*100)
+#        print(tree.meta.type)
+
         if self.declaredClass: raise ValueError("One class per file allowed. Declared multiple classes")
         self.declaredClass = True
         tree.meta.type = self.currentNameSpace[tree.children[1].children[0].value] = tree.children[1].meta.type = Object(SType(tree.children[1].children[0].value, dict()))

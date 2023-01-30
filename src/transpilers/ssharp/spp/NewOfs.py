@@ -148,7 +148,8 @@ class NewOfs(Transformer):
                     Tree(Token('RULE', 'spplang_pointer'), [
                         nodes[3],
                         Token('STAR', '*')])]),
-                nodes[1]]), 
+            Token('COMMA',','),
+            nodes[1]]), 
             Token('RPAR', ')')])
 
 class BlockTransformer(Transformer):

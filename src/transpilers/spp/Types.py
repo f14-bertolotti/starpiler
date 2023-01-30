@@ -151,6 +151,9 @@ class ExpressionType(NativeTypes):
         tree.meta.type = [node.meta.type for node in tree.children if isinstance(node,Tree) and node.data=="spplang_expression"]
 
     def spplang_square_parenthesized(self, tree):
+        #import rich
+        #rich.print(tree)
+        #print(tree.children[1].meta.type)
         if tree.children[1].meta.type != Int64(): raise ValueError(f"Unexpected type in {tree.meta.start_pos}, {tree.meta.end_pos}. Expected: int64. Got: {tree.children[1].meta.type}")
 
     def spplang_reference_square_parenthesized(self, tree):

@@ -7,7 +7,7 @@ from src.utils import AppliedTransformer
 class Identities(AppliedTransformer): 
     pass
 
-for spprule in ["ssharplang_start", "ssharplang_stmt_expr", "ssharplang_identifier", "ssharplang_tname", "ssharplang_block", "ssharplang_integer", "ssharplang_int64", "ssharplang_return", "ssharplang_declaration_assignment", "ssharplang_expression_sequence"]:
+for spprule in ["ssharplang_start", "ssharplang_function_call", "ssharplang_less", "ssharplang_multiplication", "ssharplang_equality", "ssharplang_addition", "ssharplang_round_parenthesized", "ssharplang_stmt_expr", "ssharplang_square_parenthesized", "ssharplang_identifier", "ssharplang_tname", "ssharplang_block", "ssharplang_integer", "ssharplang_int64", "ssharplang_return", "ssharplang_declaration_assignment", "ssharplang_expression_sequence"]:
     srule = "spp" + spprule[6:]
     def make(spprule):
         @v_args(meta=True)

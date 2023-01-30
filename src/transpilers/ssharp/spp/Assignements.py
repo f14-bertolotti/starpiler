@@ -32,8 +32,14 @@ class Assignements(AppliedTransformer):
     @v_args(meta=True)
     def ssharplang_declaration_assignment(self, meta, nodes):
         self.applied=True
-        nodes[0] = Tree(Token('RULE', 'spplang_pointer'), [Tree(Token('RULE', 'spplang_tname'), [nodes[0].children[0]]), Token('STAR', '*')])
-        return Tree(Token("RULE", "spplang_declaration_assignment"), nodes, meta)
+
+        if nodes[0].data in {"ssharplang_int64", "ssharplang_int32", "ssharplang_int8", "ssharplang_double", "ssharplang_void"}:
+            # native types do not to be pointers in spplang
+            return Tree(Token("RULE", "spplang_declaration_assignment"), nodes, meta)
+        else:
+            # non-native types becomes pointer in ssplang
+            nodes[0] = Tree(Token('RULE', 'spplang_pointer'), [Tree(Token('RULE', 'spplang_tname'), [nodes[0].children[0]]), Token('STAR', '*')])
+            return Tree(Token("RULE", "spplang_declaration_assignment"), nodes, meta)
 
 
     @v_args(meta=True)

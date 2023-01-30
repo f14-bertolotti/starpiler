@@ -3,10 +3,9 @@ from lark.tree import Tree
 from lark import Token
 from pathlib import Path
 
-from src.transpilers.ssharp     import types
 from src.transpilers.ssharp.spp import methods
 from src.transpilers.ssharp.spp import arrays
-from src.transpilers.ssharp.spp import classAccesses, newofs, news
+from src.transpilers.ssharp.spp import fors, classAccesses, newofs, indexes,  whiles, news
 from src.transpilers.ssharp.spp import classes
 from src.transpilers.ssharp.spp import assignements
 from src.transpilers.ssharp.spp import fields
@@ -32,7 +31,7 @@ class Imports(AppliedTransformer):
             Imports.path2cached[importpath] = tempfile.NamedTemporaryFile()
 
             parseTree = lang.parse(importpath.read_text())
-            for delta in [types, classes, fields, methods, arrays, news, newofs, assignements, Imports().transform, identities]:
+            for delta in [classes, fields, methods, arrays, indexes, fors, whiles, news, newofs, assignements, Imports().transform, identities]:
                 try: parseTree = delta(parseTree)
                 except NotAppliedException: pass
 
