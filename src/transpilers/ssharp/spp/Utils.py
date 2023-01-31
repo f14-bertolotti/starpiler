@@ -55,7 +55,7 @@ Tree(Token("RULE", "spplang_import"), [
 gcPop = \
 Tree(Token('RULE', 'ssharplang_stmt_expr'), [
     Tree(Token('RULE', 'ssharplang_function_call'), [
-        Tree(Token('RULE', 'ssharplang_struct_access'), [
+        Tree(Token('RULE', 'ssharplang_class_access'), [
             Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'gc')]), 
             Token('DOT', '.'), 
             Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'pop')])]), 
@@ -64,22 +64,22 @@ Tree(Token('RULE', 'ssharplang_stmt_expr'), [
     Token('SEMICOLON', ';')])
 
 sppMainMethod = \
-Tree(Token('RULE', 'ssharplang_function_definition'), [
+Tree(Token('RULE', 'spplang_function_definition'), [
     Token('DEF', 'def'), 
-    Tree(Token('RULE', 'ssharplang_int64'), [Token('INT64', 'int64')]), 
-    Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'start')]), 
-    Tree(Token('RULE', 'ssharplang_parameter_seq_def'), [Token('LPAR', '('), Token('RPAR', ')')]), 
+    Tree(Token('RULE', 'spplang_int64'), [Token('INT64', 'int64')]), 
+    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'start')]), 
+    Tree(Token('RULE', 'spplang_parameter_seq_def'), [Token('LPAR', '('), Token('RPAR', ')')]), 
     Token('DOES', 'does'), 
     Tree(Token('RULE', 'ssharplang_block'), [
-        Tree(Token('RULE', 'ssharplang_stmt_expr'), [
-            Tree(Token('RULE', 'ssharplang_assignement'), [
-                Tree(Token('RULE', 'ssharplang_reference'), [
+        Tree(Token('RULE', 'spplang_stmt_expr'), [
+            Tree(Token('RULE', 'spplang_assignement'), [
+                Tree(Token('RULE', 'spplang_reference'), [
                     Token('AMPERSAND', '&'), 
-                    Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'gc')])]), 
+                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')])]), 
                 Token('EQUAL', '='), 
-                Tree(Token('RULE', 'ssharplang_new'), [
+                Tree(Token('RULE', 'spplang_new'), [
                     Token('NEW', 'new'), 
-                    Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'GC')]), 
+                    Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'GC')]), 
                     Token('LPAR', '('), 
                     Token('RPAR', ')')])]), 
             Token('SEMICOLON', ';')]),]), 
@@ -88,7 +88,7 @@ Tree(Token('RULE', 'ssharplang_function_definition'), [
 gcEnd = \
 Tree(Token('RULE', 'ssharplang_stmt_expr'), [
     Tree(Token('RULE', 'ssharplang_function_call'), [
-        Tree(Token('RULE', 'ssharplang_struct_access'), [
+        Tree(Token('RULE', 'ssharplang_class_access'), [
             Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'gc')]), 
             Token('DOT', '.'), 
             Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'end')])]), 
@@ -101,9 +101,9 @@ Tree(Token('RULE', 'ssharplang_stmt_expr'), [
 gcMarkAndSweep = \
 Tree(Token('RULE', 'ssharplang_stmt_expr'), [
     Tree(Token('RULE', 'ssharplang_function_call'), [
-        Tree(Token('RULE', 'ssharplang_struct_access'), [
+        Tree(Token('RULE', 'ssharplang_class_access'), [
             Tree(Token('RULE', 'ssharplang_function_call'), [
-                Tree(Token('RULE', 'ssharplang_struct_access'), [
+                Tree(Token('RULE', 'ssharplang_class_access'), [
                     Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'gc')]), 
                     Token('DOT', '.'), 
                     Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'mark')])]), 
@@ -113,5 +113,31 @@ Tree(Token('RULE', 'ssharplang_stmt_expr'), [
         Token('LPAR', '('), 
         Token('RPAR', ')')]), 
     Token('SEMICOLON', ';')])
+
+def gcMarkAndSweepDebug(value):
+    return \
+    Tree(Token('RULE', 'spplang_stmt_expr'), [
+        Tree(Token('RULE', 'spplang_function_call'), [
+            Tree(Token('RULE', 'spplang_struct_access'), [
+                Tree(Token('RULE', 'spplang_function_call'), [
+                    Tree(Token('RULE', 'spplang_struct_access'), [
+                        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')]), 
+                        Token('DOT', '.'), 
+                        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'markDebug')])]), 
+                    Token('LPAR', '('), 
+                    Tree(Token('RULE', 'spplang_expression_sequence'), [
+                        Tree(Token('RULE', 'spplang_integer'), [Token('__ANON__', str(value))])]), 
+                    Token('RPAR', ')')]), 
+                Token('DOT', '.'), 
+                Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'sweep')])]), 
+            Token('LPAR', '('), 
+            Token('RPAR', ')')]), 
+        Token('SEMICOLON', ';')])
+
+
+
+
+
+
 
 

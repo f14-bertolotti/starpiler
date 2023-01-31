@@ -13,8 +13,8 @@ class Indexes(AppliedTransformer):
         return \
         Tree(Token('RULE', 'spplang_indexed'), [
             nodes[0], 
-            Tree(Token('RULE', 'spplang_reference_square_parenthesized'), [
-                Token('__ANON__', '&['), 
+            Tree(Token('RULE', 'spplang_square_parenthesized'), [
+                Token('__ANON__', '['), 
                 nodes[1].children[1], 
                 Token('RSQB', ']')])])
 

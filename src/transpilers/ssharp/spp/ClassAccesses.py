@@ -6,8 +6,7 @@ from src.utils import AppliedTransformer
 
 class ClassAccesses(AppliedTransformer):
 
-    @v_args(meta=True)
-    def ssharplang_class_access(self, meta, nodes):
+    def ssharplang_class_access(self, nodes):
         self.applied = True
         return Tree(Token('RULE', 'spplang_struct_access'), nodes) 
 

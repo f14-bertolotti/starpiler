@@ -2,13 +2,21 @@ from lark import Tree, Token
 
 from src.utils import AppliedTransformer
 from src.transpilers.ssharp.spp.Utils import * 
+
 import copy
 
+
 class Methods(AppliedTransformer):
+    
+    debug = 0
 
     def reset(self):
         self.applied = False
         return self
+
+    def ssharplang_start(self, nodes):
+        if importgc not in nodes: nodes.insert(0, importgc)
+        return Tree(Token("RULE","ssharplang_start"), nodes)
 
     def ssharplang_method_definition(self, nodes):
         self.applied = True
@@ -24,7 +32,8 @@ class Methods(AppliedTransformer):
 
         rtype = Tree(Token("RULE", "spplang_pointer"), [nodes[1].children[1].children[1], Token("STAR","*")]) if nodes[1].children[1].children[1].data == "ssharplang_tname" else nodes[1].children[1].children[1]
 
-        res = Tree(Token('RULE', 'spplang_method_definition'), [
+        return \
+            Tree(Token('RULE', 'spplang_method_definition'), [
             Token('DEF', 'def'), 
             rtype, 
             nodes[2] if nodes[2].children[0].value != "__init__" else Tree(Token("RULE", "spplang_identifier"), [Token("__ANON__", "start")]), 
@@ -36,19 +45,20 @@ class Methods(AppliedTransformer):
             nodes[5],
             Token('SEMICOLON',';')
             ])
-        return res
 
     def ssharplang_block(self, nodes):
-        return Tree(Token("RULE", "ssharplang_block"), [n for node in nodes for n in (node if isinstance(node,list) else [node])])
+        Methods.debug += 1
+        if gcEnd in nodes: nodes.insert(nodes.index(gcEnd), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
+        elif any([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes]):
+            nodes.insert([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes].index(True), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
+        else:
+            nodes.append(copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
 
-    def ssharplang_return(self, nodes):
-        return [copy.deepcopy(gcMarkAndSweep),
-                Tree(Token("RULE", "ssharplang_return"), nodes)]
+        return Tree(Token("RULE", "ssharplang_block"), nodes)
+
+
 
     
 methodsTransformer = Methods()
 def methods(parseTree)->Tree:
-    parseTree = methodsTransformer.reset().transform(parseTree)
-    if importGC not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(importGC))
-    if importgc not in parseTree.children: parseTree.children.insert(0, copy.deepcopy(importgc))
-    return parseTree
+    return methodsTransformer.reset().transform(parseTree)

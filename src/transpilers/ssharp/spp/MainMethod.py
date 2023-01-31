@@ -7,26 +7,31 @@ import copy
 
 def getTempResultAssigement(value):
     return \
-    Tree(Token('RULE', 'ssharplang_stmt_expr'), [
         Tree(Token('RULE', 'ssharplang_declaration_assignment'), [
             Tree(Token('RULE', 'ssharplang_int64'), [Token('INT64', 'int64')]), 
             Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', '__result__')]), 
             Token('EQUAL', '='), 
-            value]), 
-        Token('SEMICOLON', ';')])
+            value,
+            Token('SEMICOLON', ';')])
 
 def getReturnResultTree():
     return \
-    Tree(Token('RULE', 'spplang_return'), [
+    Tree(Token('RULE', 'ssharplang_return'), [
         Token('RETURN', 'return'), 
-        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', '__result__')]), 
+        Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', '__result__')]), 
         Token('SEMICOLON', ';')])
 
 
 class EndGC(Visitor):
     def ssharplang_block(self, tree):
-        tree.children = [c for child in tree.children for c in ([getTempResultAssigement(child.children[1]), copy.deepcopy(gcEnd), getReturnResultTree()] if isinstance(child, Tree) and child.data == "ssharplang_return" else [child])]
 
+        if isinstance(tree.children[-1], Tree) and tree.children[-1].data == "ssharplang_return":
+            last_gcPop = len(tree.children) - tree.children[::-1].index(gcPop) - 1 if gcPop in tree.children else -2
+            tree.children.insert(last_gcPop,getTempResultAssigement(tree.children[-1].children[1]))
+            tree.children.insert(-1, copy.deepcopy(gcEnd))
+            tree.children[-1] = getReturnResultTree()
+
+        
 class MainMethod(AppliedTransformer):
 
     def __init__(self, *args, **kwargs):
@@ -50,8 +55,8 @@ class MainMethod(AppliedTransformer):
            nodes[1].children[0].data == "ssharplang_ptype" and \
            nodes[1].children[1].data == "ssharplang_rtype" and \
            nodes[1].children[1].children[1].data == "ssharplang_int64": 
-            # if it is a main method
 
+            # if it is a main method
             self.applied=True
             self.mainMethod = copy.deepcopy(sppMainMethod)
             self.mainMethod.children[5].children += nodes[5].children

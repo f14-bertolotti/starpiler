@@ -39,6 +39,19 @@ class GC with
         return elem;
     ;
 
+    def int8* gcmalloc(GC* this, int64 size) does
+        int8* ptr = &malloc(size);
+        this.push(ptr, size);
+        return ptr;
+    ;
+
+    def int8* gcmemcpy(GC* this, int64 size, int8* src) does
+        int8* ptr = &malloc(size);
+        &memcpy(ptr,src,size);
+        this.push(ptr,size);
+        return ptr;
+    ;
+
     def int8* pushNoRoot(GC* this, int8* elem, int64 size) does 
         LinkedNode* node = new LinkedNode(elem, size);
 
@@ -105,6 +118,13 @@ class GC with
         ;
         &printf("MARKED ============================\n");
         this.node.printAll();
+        &printf("===================================\n");
+        return this;
+    ;
+
+    def GC* markDebug(GC* this, int64 x) does
+        &printf("debug %d\n", x);
+        this.mark();
         return this;
     ;
 

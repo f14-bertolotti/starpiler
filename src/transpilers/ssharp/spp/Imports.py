@@ -1,11 +1,10 @@
 from lark.visitors import v_args
-from lark.tree import Tree
-from lark import Token
+from lark import Tree, Token
 from pathlib import Path
 
 from src.transpilers.ssharp.spp import methods
 from src.transpilers.ssharp.spp import arrays
-from src.transpilers.ssharp.spp import fors, classAccesses, newofs, indexes,  whiles, news
+from src.transpilers.ssharp.spp import remove_mainmethod, futurepops_ssharp, fors, classAccesses, newofs, indexes,  whiles, news
 from src.transpilers.ssharp.spp import classes
 from src.transpilers.ssharp.spp import assignements
 from src.transpilers.ssharp.spp import fields
@@ -31,10 +30,9 @@ class Imports(AppliedTransformer):
             Imports.path2cached[importpath] = tempfile.NamedTemporaryFile()
 
             parseTree = lang.parse(importpath.read_text())
-            for delta in [classes, fields, methods, arrays, indexes, fors, whiles, news, newofs, assignements, Imports().transform, identities]:
+            for delta in [remove_mainmethod, classes, fields, methods, arrays, indexes, fors, whiles, news, futurepops_ssharp, newofs, futurepops_ssharp, assignements, classAccesses, Imports().transform, identities]:
                 try: parseTree = delta(parseTree)
                 except NotAppliedException: pass
-
 
             Imports.path2cached[importpath].write(SppPrettyPrinter().transform(parseTree).encode("utf-8"))
             Imports.path2cached[importpath].flush()

@@ -38,10 +38,19 @@ class Test(unittest.TestCase):
         """
         sppgc = """from "src/testing/spplang/programs/gc/GC.spp" import GC as GC;"""
         sppgc = spptypes(spplang.parse(sppgc))
-        parsed = ssharp2sppTranspiler(ssharplang.parse(program))
-        parsed = spp2sTranspiler(parsed)
-        self.assertEqual(run(program_tree=parsed), 1)
+        sharp_parsed = ssharplang.parse(program)
+        spp_parsed = ssharp2sppTranspiler(sharp_parsed)
+        s_parsed = spp2sTranspiler(spp_parsed)
+        self.assertEqual(run(program_tree=s_parsed), 1)
         
+    def test_integer_array(self):
+        program = Path("src/testing/ssharplang/programs/IntegerArray.ss").read_text()
+        ssharp_parsed = ssharplang.parse(program)
+        spp_parsed = ssharp2sppTranspiler(ssharp_parsed)
+        s_parsed = spp2sTranspiler(spp_parsed)
+        self.assertEqual(run(program_tree=s_parsed),1)
+
+
     def test_array(self):
         program = Path("src/testing/ssharplang/programs/IntArray.ss").read_text()
         ssharp_parsed = ssharplang.parse(program)
@@ -53,8 +62,6 @@ class Test(unittest.TestCase):
         program = Path("src/testing/ssharplang/programs/IntMatrix.ss").read_text()
         ssharp_parsed = ssharplang.parse(program)
         spp_parsed = ssharp2sppTranspiler(ssharp_parsed)
-        rich.print(spp_parsed)
-        spp_parsed = spplang.parse(SppPrettyPrinter().transform(spp_parsed))
         s_parsed = spp2sTranspiler(spp_parsed)
         self.assertEqual(run(program_tree=s_parsed),1)
 

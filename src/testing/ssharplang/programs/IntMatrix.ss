@@ -22,7 +22,7 @@ class IntMatrix {
     }
 
     fun (-> int64) __main__() {
-        IntMatrix matrix = new IntMatrix(10).fill(1);
-        return matrix.get(0,0) == 1 * matrix.get(9,9) == 1;
+        IntMatrix matrix = new IntMatrix(3).fill(1);
+        return matrix.get(0,0) == 1 * matrix.get(2,2) == 1;
     }
 }

@@ -10,7 +10,10 @@ class Arrays(AppliedTransformer):
     @v_args(meta=True)
     def ssharplang_atype(self, meta, nodes):
         self.applied = True
-        return Tree(Token('RULE', 'spplang_pointer'), [nodes[0], Token('STAR', '*')])
+        return \
+        Tree(Token('RULE', 'spplang_pointer'), [
+            Tree(Token('RULE', 'spplang_pointer'), [nodes[0], Token('STAR','*')]), 
+            Token('STAR', '*')])
 
 
 def arrays(parseTree):

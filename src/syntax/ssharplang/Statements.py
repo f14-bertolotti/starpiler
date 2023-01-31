@@ -14,18 +14,16 @@ ifthen                 = P(name="ssharplang_ifthen"                 , rules = [R
 stmtexpr               = P(name="ssharplang_stmt_expr"              , rules = [R(expression, T(";"))], mod="?")
 forloop                = P(name="ssharplang_for"                    , rules = [R(T("for"), identifier, T("from"), expression, T("{"), block, T("}"))])
 
-declarationAssignement = P(name="ssharplang_declaration_assignment" , rules = [R(native, identifier, T("="), expression)])
-autoAssignement        = P(name="ssharplang_auto_assignement"       , rules = [R(T("auto"), identifier, T("="), expression)])
-assignement            = P(name="ssharplang_assignement"            , rules = [R(expression, T("="), expression)])
-
-
-expression.insert(0, assignement)
-expression.insert(0, declarationAssignement)
-expression.insert(0, autoAssignement)
+declarationAssignement = P(name="ssharplang_declaration_assignment" , rules = [R(native, identifier, T("="), expression, T(";"))])
+autoAssignement        = P(name="ssharplang_auto_assignement"       , rules = [R(T("auto"), identifier, T("="), expression, T(";"))])
+assignement            = P(name="ssharplang_assignement"            , rules = [R(expression, T("="), expression, T(";"))])
 
 statement.append(ifthen, 
                  whileloop, 
                  forloop,
+                 declarationAssignement,
+                 autoAssignement,
+                 assignement,
                  returnstmt, 
                  returnvoidstmt, 
                  skip,

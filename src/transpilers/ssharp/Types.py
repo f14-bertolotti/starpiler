@@ -212,13 +212,7 @@ class NameSpace(Interpreter):
         self.declaredClass = False
         super().__init__(*args, **kwargs)
 
-#    def visit(self, parseTree) -> Tree:
-#        parseTree = Types({}).transform(parseTree)
-#        return super().visit(parseTree)
-
     def ssharplang_class_definition(self, tree):
-#        print("-"*100)
-#        print(tree.meta.type)
 
         if self.declaredClass: raise ValueError("One class per file allowed. Declared multiple classes")
         self.declaredClass = True
