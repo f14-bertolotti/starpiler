@@ -2,7 +2,7 @@ from src.syntax import Production as P
 from src.syntax import Rule as R
 from src.syntax import Terminal as T
 
-from src.syntax.ssharplang import native, rational, integer, identifier, string
+from src.syntax.ssharplang import native, rational, integer, identifier, string, double, int64, int32, int8
 
 expression = P(name = "ssharplang_expression", mod="?")
 
@@ -38,6 +38,8 @@ newExpression = P(name = "ssharplang_new" , rules = [R(T("new"), identifier, T("
 newOfExpression = P(name = "ssharplang_new_of" , rules = [R(T("new"), expression, T("of"), native, T("("), expressionSequence, T(")")),
                                                           R(T("new"), expression, T("of"), native, T("("), T(")"))])
 
+simpletype = P(name = "ssharplang_native_type", rules = [double, int64, int32, int8], mod="?")
+newOfNative = P(name = "ssharplang_new_of_native", rules = [R(T("new"), expression, T("of"), simpletype)])
 
 expression.append(identifier,
                   addition, 
@@ -62,6 +64,7 @@ expression.append(identifier,
                   indexed, 
                   classAccess,
                   sizeOf,
+                  newOfNative,
                   newExpression,
                   newOfExpression,
                   roundParenthesized) 

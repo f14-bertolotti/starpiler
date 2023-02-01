@@ -6,5 +6,3 @@ from src.testing.transpilers.TestSppToSClassAccesses  import Test as TestSppToSC
 from src.testing.transpilers.TestSppToSMetaTranspiler import Test as TestSppToSMetaTranspiler
 from src.testing.transpilers.TestSToSppMetaTranspiler import Test as TestSToSppMetaTranspiler
 
-
-from src.testing.transpilers.TestSsharpTypes          import Test as TestSsharpTypes
