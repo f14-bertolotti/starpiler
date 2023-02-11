@@ -117,7 +117,7 @@ class GC with
             &current = current.next;
         ;
         &printf("MARKED ============================\n");
-        this.node.printAll();
+        if this.node as int64 != 0 do this.node.printAll();;
         &printf("===================================\n");
         return this;
     ;

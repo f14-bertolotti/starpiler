@@ -20,6 +20,7 @@ class FunctionCall(Expression):
     def toLLVM(self, builder):
         callable = self.expr.toLLVM(builder)
         arguments = [arg.toLLVM(builder) for arg in self.arguments]
+        print(self)
         return builder.call(callable, arguments)
 
 class Operation(Expression):

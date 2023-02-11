@@ -8,6 +8,10 @@ class Classes(AppliedTransformer):
         return self
 
     def ssharplang_class_definition(self, nodes):
+        
+        if nodes[1].children[0].value == "FFI":
+            return Tree(Token("RULE","ssharplang_class_definition"), nodes)
+
         self.applied = True
         return Tree(Token('RULE', 'spplang_class'), [
                 Token('CLASS', 'class'), 

@@ -13,9 +13,12 @@ class Fields(AppliedTransformer):
 
     def ssharplang_field_definition(self, nodes):
         self.applied = True
+
+        typ = nodes[1] if nodes[1].data != "ssharplang_tname" else Tree(Token('RULE', 'spplang_pointer'), [nodes[1], Token('STAR', '*')])
+
         return Tree(Token('RULE', 'spplang_field_declaration'), [
             Token('DEF', 'def'), 
-            nodes[1], 
+            typ, 
             Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', nodes[2].children[0].value)]), 
             Token('SEMICOLON', ';')])
 

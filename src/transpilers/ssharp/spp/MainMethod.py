@@ -26,8 +26,10 @@ class EndGC(Visitor):
     def ssharplang_block(self, tree):
 
         if isinstance(tree.children[-1], Tree) and tree.children[-1].data == "ssharplang_return":
-            last_gcPop = len(tree.children) - tree.children[::-1].index(gcPop) - 1 if gcPop in tree.children else -2
-            tree.children.insert(last_gcPop,getTempResultAssigement(tree.children[-1].children[1]))
+            if gcPop in tree.children: 
+                tree.children.insert(tree.children.index(gcPop),getTempResultAssigement(tree.children[-1].children[1]))
+            else:
+                tree.children.insert(-1, getTempResultAssigement(tree.children[-1].children[1]))
             tree.children.insert(-1, copy.deepcopy(gcEnd))
             tree.children[-1] = getReturnResultTree()
 

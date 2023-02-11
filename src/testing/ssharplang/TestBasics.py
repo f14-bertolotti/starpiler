@@ -16,6 +16,11 @@ for testname in tests:
             code = Path(tests[f.__name__[5:]]["path"]).read_text()
             ssharp_tree = lang.parse(code)
             spp_tree = ssharp2spp_transpile(ssharp_tree)
+
+            from src.utils import SppPrettyPrinter
+            import rich
+            rich.print(SppPrettyPrinter().transform(spp_tree))
+
             s_tree = spp2s_transpile(spp_tree)
             self.assertEqual(run(program_tree=s_tree), tests[f.__name__[5:]]["result"])
         f.__name__ = f"test_{testname}"

@@ -46,15 +46,15 @@ class Methods(AppliedTransformer):
             Token('SEMICOLON',';')
             ])
 
-    def ssharplang_block(self, nodes):
-        Methods.debug += 1
-        if gcEnd in nodes: nodes.insert(nodes.index(gcEnd), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
-        elif any([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes]):
-            nodes.insert([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes].index(True), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
-        else:
-            nodes.append(copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
+    #def ssharplang_block(self, nodes):
+    #    Methods.debug += 1
+    #    if gcEnd in nodes: nodes.insert(nodes.index(gcEnd), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
+    #    elif any([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes]):
+    #        nodes.insert([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes].index(True), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
+    #    else:
+    #        nodes.append(copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
 
-        return Tree(Token("RULE", "ssharplang_block"), nodes)
+    #    return Tree(Token("RULE", "ssharplang_block"), nodes)
 
 
 
