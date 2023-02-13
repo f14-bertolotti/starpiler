@@ -3,9 +3,6 @@ from lark import Tree, Token
 from src.utils import AppliedTransformer
 from src.transpilers.ssharp.spp.Utils import * 
 
-import copy
-
-
 class Methods(AppliedTransformer):
     
     debug = 0
@@ -19,6 +16,10 @@ class Methods(AppliedTransformer):
         return Tree(Token("RULE","ssharplang_start"), nodes)
 
     def ssharplang_method_definition(self, nodes):
+
+        if is_main_method(nodes):
+            return Tree(Token("RULE", "ssharplang_method_definition"), nodes)
+
         self.applied = True
 
         plist = [x for c in zip(
@@ -45,18 +46,6 @@ class Methods(AppliedTransformer):
             nodes[5],
             Token('SEMICOLON',';')
             ])
-
-    #def ssharplang_block(self, nodes):
-    #    Methods.debug += 1
-    #    if gcEnd in nodes: nodes.insert(nodes.index(gcEnd), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
-    #    elif any([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes]):
-    #        nodes.insert([isinstance(node,Tree) and node.data in {"ssharplang_return", "ssharplang_return_void"} for node in nodes].index(True), copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
-    #    else:
-    #        nodes.append(copy.deepcopy(gcMarkAndSweepDebug(Methods.debug)))
-
-    #    return Tree(Token("RULE", "ssharplang_block"), nodes)
-
-
 
     
 methodsTransformer = Methods()

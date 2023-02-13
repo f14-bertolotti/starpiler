@@ -9,7 +9,6 @@ class Indexes(AppliedTransformer):
 
     def ssharplang_indexed(self, nodes):
         self.applied = True
-        # TODO THIS MAY NOT WORK FOR ARRAY OF NATIVES TYPES
         return \
         Tree(Token('RULE', 'spplang_indexed'), [
             nodes[0], 

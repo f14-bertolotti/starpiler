@@ -2,7 +2,6 @@ from lark.visitors import Transformer
 from lark import Tree, Token
 from src.transpilers.ssharp.spp.Utils import *
 from src.utils import NotAppliedException
-import copy
 
 class NewOfNatives(Transformer):
 

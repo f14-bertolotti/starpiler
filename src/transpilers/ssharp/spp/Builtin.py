@@ -23,7 +23,11 @@ class Builtin(Transformer):
         return tree
 
     def ssharplang_start(self, nodes):
-        if self.hasPrint: nodes.insert(0,Tree(Token('RULE', 'spplang_function_declaration'), [Token('DEF', 'def'), Tree(Token('RULE', 'spplang_pointer'), [Tree(Token('RULE', 'spplang_int8'), [Token('INT8', 'int8')]), Token('STAR', '*')]), Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'printf')]), Tree(Token('RULE', 'spplang_parameter_seq_decl'), [Token('LPAR', '('), Tree(Token('RULE', 'spplang_parameter_declaration'), [Tree(Token('RULE', 'spplang_pointer'), [Tree(Token('RULE', 'spplang_int8'), [Token('INT8', 'int8')]), Token('STAR', '*')])]), Token('COMMA', ','), Tree(Token('RULE', 'spplang_parameter_declaration'), [Tree(Token('RULE', 'spplang_vararg_parameter'), [Token('__ANON__', '...')])]), Token('RPAR', ')')]), Token('SEMICOLON', ';')]))
+        for i,node in enumerate(nodes): 
+            if isinstance(node, Tree) and node.data == "ssharplang_class_definition":
+                break
+
+        if self.hasPrint: nodes.insert(i,Tree(Token('RULE', 'spplang_function_declaration'), [Token('DEF', 'def'), Tree(Token('RULE', 'spplang_pointer'), [Tree(Token('RULE', 'spplang_int8'), [Token('INT8', 'int8')]), Token('STAR', '*')]), Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'printf')]), Tree(Token('RULE', 'spplang_parameter_seq_decl'), [Token('LPAR', '('), Tree(Token('RULE', 'spplang_parameter_declaration'), [Tree(Token('RULE', 'spplang_pointer'), [Tree(Token('RULE', 'spplang_int8'), [Token('INT8', 'int8')]), Token('STAR', '*')])]), Token('COMMA', ','), Tree(Token('RULE', 'spplang_parameter_declaration'), [Tree(Token('RULE', 'spplang_vararg_parameter'), [Token('__ANON__', '...')])]), Token('RPAR', ')')]), Token('SEMICOLON', ';')]))
         return Tree(Token("RULE", "ssharplang_start"), nodes)
 
     def ssharplang_function_call(self, nodes):

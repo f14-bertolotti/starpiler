@@ -1,6 +1,6 @@
-from lark.visitors import Visitor
+from lark.visitors import Transformer, Visitor
 from lark import Tree, Token
-from src.utils import AppliedTransformer
+from src.utils import NotAppliedException
 from src.transpilers.ssharp.spp.Utils import *
 
 import copy
@@ -34,36 +34,42 @@ class EndGC(Visitor):
             tree.children[-1] = getReturnResultTree()
 
         
-class MainMethod(AppliedTransformer):
+class MainMethod(Transformer):
 
     def __init__(self, *args, **kwargs):
         self.mainMethod = None
         self.endGCVisitor = EndGC()
+        self.removedNode = False
+        self.mainMethodInserted = False
+        self.applied = False
         super().__init__(*args, **kwargs)
+
+    def transform(self, *args, **kwargs):
+        result = super().transform(*args, **kwargs)
+        if self.applied == False or self.mainMethodInserted == False or self.removedNone == False: raise NotAppliedException("MainMethod not applied")
+        return result
 
     def reset(self):
         self.applied, self.mainMethod = False, None
+        self.removedNone = False
+        self.mainMethodInserted = False
         return self
 
     def ssharplang_start(self, nodes): 
-        if self.mainMethod == None: raise ValueError("no required __main__ method found.") 
-        nodes.append(self.mainMethod)
+        if self.mainMethod != None:
+            self.mainMethodInserted = True
+            nodes.append(self.mainMethod)
         return Tree(Token('RULE', 'ssharplang_start'), nodes)
 
     def ssharplang_method_definition(self, nodes):
 
-        if nodes[2].children[0] == "__main__" and \
-           nodes[1].data == "ssharplang_ftype" and \
-           nodes[1].children[0].data == "ssharplang_ptype" and \
-           nodes[1].children[1].data == "ssharplang_rtype" and \
-           nodes[1].children[1].children[1].data == "ssharplang_int64": 
+        if is_main_method(nodes): 
 
             # if it is a main method
             self.applied=True
             self.mainMethod = copy.deepcopy(sppMainMethod)
             self.mainMethod.children[5].children += nodes[5].children
             self.mainMethod = self.endGCVisitor.visit(self.mainMethod)
-
             return None 
 
         else:
@@ -72,6 +78,7 @@ class MainMethod(AppliedTransformer):
 
     def ssharplang_class_definition(self, nodes):
         # remove the None child from the class which may be present if there was a main method in the class
+        self.removedNone = True
         return Tree(Token("RULE", "ssharplang_class_definition"), [node for node in nodes if node != None])
 
 mainMethodTransformer = MainMethod()

@@ -1,5 +1,6 @@
 from lark import Tree, Token
 from src.utils import AppliedTransformer
+import copy
 
 class Whiles(AppliedTransformer):
     
@@ -9,6 +10,7 @@ class Whiles(AppliedTransformer):
 
     def ssharplang_while(self, nodes):
         self.applied = True
+
         return Tree(Token('RULE', 'spplang_while'), [
             Token('WHILE', 'while'), 
             nodes[2], 

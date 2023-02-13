@@ -2,6 +2,8 @@
 from src.utils import SPrettyPrinter
 import heapq
 
+from src.utils import NotAppliedException
+
 class MetaTranspiler:
     def __init__(self, deltas, metric):
         self.metric = metric
@@ -20,7 +22,7 @@ class MetaTranspiler:
             #if i > 1000: exit(0)
             #input()
             metric,_ , parseTree = heapq.heappop(queue)
-            #print(metric, parseTree.path)
+            print(metric, parseTree.path)
             if metric == 0: 
                 #print("="*10,"DONE","="*10)
                 #print(SPrettyPrinter().transform(parseTree))
@@ -29,17 +31,26 @@ class MetaTranspiler:
             for delta in self.deltas:
                 try:
                     i += 1
-                    new = delta(parseTree)
-                    #print("\t", self.metric(new), delta.__name__)
-                    new.path = parseTree.path + [delta.__name__]
-                    if new not in visited:
-                        heapq.heappush(queue, tuple((self.metric(new), i, new)))
-                        visited.add(new)
-                except: 
+            
+                    newParseTree = None
+                    if isinstance(delta, list):
+                        path = parseTree.path
+                        for subdelta in delta:
+                            parseTree = subdelta(parseTree)
+                        newParseTree = parseTree
+                        newParseTree.path = path + [subdelta.__name__ for subdelta in delta]
+
+                    else:
+                        newParseTree = delta(parseTree) 
+                        newParseTree.path = parseTree.path + [delta.__name__]
+
+                    if newParseTree not in visited:
+                        heapq.heappush(queue, tuple((self.metric(newParseTree), i, newParseTree)))
+                        visited.add(newParseTree)
+                except NotAppliedException: 
                     #import traceback
                     #print(">>> ", traceback.print_exc())
                     #print(">>> ", parseTree.path)
-                    #print(">>> ", delta.__name__)
 
                     continue
 

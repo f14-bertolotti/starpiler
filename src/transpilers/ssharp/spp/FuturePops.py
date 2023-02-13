@@ -15,6 +15,6 @@ class FuturePopsSsharp(Transformer):
 
         return Tree(Token("RULE","ssharplang_block"), nodes[:-1])
 
-futurePopsSsharp = FuturePopsSsharp()
+transformer = FuturePopsSsharp()
 def futurepops_ssharp(parseTree):
-    return futurePopsSsharp.transform(parseTree)
+    return transformer.transform(parseTree)

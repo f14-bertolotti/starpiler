@@ -283,6 +283,9 @@ class T(Transformer):
 def types(parseTree) -> Tree:
     parseTree = CloneTransformer(notypes=True).transform(parseTree)
     NameSpace().visit(parseTree)
+    import rich
+    print("*"*100)
+    rich.print(T().transform(parseTree))
     return parseTree
  
 

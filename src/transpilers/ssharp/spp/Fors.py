@@ -42,7 +42,7 @@ class Fors(AppliedTransformer):
                     nodes[3]]), 
                 Token('DO', 'do'), 
                 Tree(Token('RULE', 'spplang_block'), [
-                    nodes[5],
+                    *nodes[5].children,
                     Tree(Token('RULE', 'spplang_stmt_expr'), [
                         Tree(Token('RULE', 'spplang_assignement'), [
                             Tree(Token('RULE', 'spplang_reference'), [

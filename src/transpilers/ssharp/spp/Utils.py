@@ -1,6 +1,12 @@
 from lark import Tree, Token
 from src.semantics.types import *
 
+def is_main_method(nodes):
+
+    if nodes[2].children[0] == "__main__": 
+        return True
+    return False
+
 importMalloc = \
 Tree(Token('RULE', 'spplang_import'), [
     Token('FROM', 'from'), 
