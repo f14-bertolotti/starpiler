@@ -5,7 +5,6 @@ from src.transpilers.ssharp.spp.RemoveMainMethod import remove_mainmethod
 from src.transpilers.ssharp.spp.Assignements     import assignements
 from src.transpilers.ssharp.spp.ClassAccesses    import classAccesses
 from src.transpilers.ssharp.spp.Methods          import methods
-from src.transpilers.ssharp.spp.FFI              import ffi
 from src.transpilers.ssharp.spp.Arrays           import arrays
 from src.transpilers.ssharp.spp.Whiles           import whiles
 from src.transpilers.ssharp.spp.Fors             import fors

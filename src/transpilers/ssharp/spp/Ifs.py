@@ -1,10 +1,8 @@
-from lark.visitors import Transformer
-from src.utils import AppliedTransformer
 from lark import Tree, Token
 
-from src.utils import NotAppliedException
+from src.utils import AppliedTransformer
 
-class Ifs(Transformer):
+class Ifs(AppliedTransformer):
     def reset(self):
         self.applied = False
         return self
@@ -20,6 +18,5 @@ class Ifs(Transformer):
             Token('SEMICOLON', ';')]) 
 
 transformer= Ifs()
-
 def ifs(parseTree):
     return transformer.reset().transform(parseTree)

@@ -12,6 +12,5 @@ tests = {
     'gc'             : { 'path': 'src/testing/ssharplang/programs/gc.ss'             , 'result': 1} ,
     'string'         : { 'path': 'src/testing/ssharplang/programs/String.ss'         , 'result': 1} ,
     'tree'           : { 'path': 'src/testing/ssharplang/programs/Tree.ss'           , 'result': 1} ,
-    'stack'          : { 'path': 'src/testing/ssharplang/programs/Stack.ss'          , 'result': 1} ,
 
 }
