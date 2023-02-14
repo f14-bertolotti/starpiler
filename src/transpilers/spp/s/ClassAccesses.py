@@ -2,21 +2,38 @@ from lark.visitors import v_args
 from lark.tree import Tree
 from lark import Token
 from src.utils import AppliedTransformer
-import copy
+from src.utils import NotAppliedException
+import copy, lark
 
 from src.semantics.types import Pointer
 class ClassAccesses(AppliedTransformer):
 
+    def transform(self, *args, **kwargs):
+        try: 
+            res = super().transform(*args, **kwargs)
+            if self.applied == False: raise ValueError()
+            return res
+        except lark.exceptions.VisitError: raise NotAppliedException()
+
+
     @v_args(meta=True)
     def spplang_struct_access(self, meta, nodes):
+        if not hasattr(nodes[0].meta,"type") or nodes[0].meta.type == None:
+            raise ValueError("no type info available")
+
+        if isinstance(nodes[0].meta.type, Pointer) and \
+           not nodes[2].children[0].value not in nodes[0].meta.type.base: 
+            ValueError(f"Type {nodes[0].meta.type.base} has not identifier {nodes[2].children[0].value}")
+
         self.applied = True
-        if not isinstance(nodes[0].meta.type, Pointer) or \
-           nodes[2].children[0].value not in nodes[0].meta.type.base: 
-            raise ValueError(f"Type {nodes[0].meta.type.base} has not identifier {nodes[2].children[0].value}")
         return Tree(Token("RULE","slang_struct_access"), nodes, meta)
 
     @v_args(meta=True)
     def spplang_function_call(self, meta, nodes):
+
+        if not hasattr(nodes[0].meta,"type") or nodes[0].meta.type == None:
+            return ValueError("no type info available")
+
         self.applied = True
         if nodes[0].data == "slang_struct_access" and \
            len(nodes[0].meta.type.base.ptypes) > 0  and \

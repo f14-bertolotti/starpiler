@@ -3,6 +3,7 @@ from lark.tree import Tree
 from src.semantics.types import Double, Int64, Int32, Int8, Void, Pointer, SType, FType
 from src.syntax.spplang import lang as spplang
 from src.utils import CloneTransformer
+from src.utils import NotAppliedException
 from pathlib import Path
 
 class NativeTypes(Visitor):
@@ -273,19 +274,11 @@ class NameSpace(Interpreter):
         tree.meta.type = ExpressionType(self.currentNameSpace).visit(tree.children[1]).meta.type
 
 
-
-from lark.visitors import Transformer
-class T(Transformer):
-    def __default__(self, data, tree, meta):
-        return super().__default__(data+"  "+str(meta.type), tree, meta)
-
-
 def types(parseTree) -> Tree:
-    parseTree = CloneTransformer(notypes=True).transform(parseTree)
-    NameSpace().visit(parseTree)
-    import rich
-    print("*"*100)
-    rich.print(T().transform(parseTree))
+    try:
+        parseTree = CloneTransformer(notypes=True).transform(parseTree)
+        NameSpace().visit(parseTree)
+    except Exception: raise NotAppliedException
     return parseTree
  
 

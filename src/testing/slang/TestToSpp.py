@@ -1,44 +1,39 @@
 from src.testing.slang     import tests
 from src.transpilers.s.spp import transpile as SToSppTranspile
 from src.transpilers.spp.s import transpile as SppToSTranspile
+from src.transpilers.spp   import metric01
 from src.syntax.slang      import lang
 from src.semantics.slang   import run
 
 from pathlib import Path
 import unittest
-import lark
 
 class TestToSpp(unittest.TestCase):
 
     def test_point(self):
         programString = Path(tests["point"]["path"]).read_text()
         SParseTree = lang.parse(programString)
-        with self.assertRaises(lark.exceptions.VisitError):
-            SToSppTranspile(SParseTree)
+        self.assertEqual(metric01(SToSppTranspile(SParseTree)),1)
         
     def test_struct_class3(self):
         programString = Path(tests["struct_class3"]["path"]).read_text()
         SParseTree = lang.parse(programString)
-        with self.assertRaises(lark.exceptions.VisitError):
-            SToSppTranspile(SParseTree)
+        self.assertEqual(metric01(SToSppTranspile(SParseTree)),1)
         
     def test_struct_class2(self):
         programString = Path(tests["struct_class2"]["path"]).read_text()
         SParseTree = lang.parse(programString)
-        with self.assertRaises(lark.exceptions.VisitError):
-            SToSppTranspile(SParseTree)
+        self.assertEqual(metric01(SToSppTranspile(SParseTree)),1)
  
     def test_struct_class(self):
         programString = Path(tests["struct_class"]["path"]).read_text()
         SParseTree = lang.parse(programString)
-        with self.assertRaises(lark.exceptions.VisitError):
-            SToSppTranspile(SParseTree)
+        self.assertEqual(metric01(SToSppTranspile(SParseTree)),1)
  
     def test_sizeof_struct(self):
         programString = Path(tests["struct_class"]["path"]).read_text()
         SParseTree = lang.parse(programString)
-        with self.assertRaises(lark.exceptions.VisitError):
-            SToSppTranspile(SParseTree)
+        self.assertEqual(metric01(SToSppTranspile(SParseTree)),1)
  
 for testname in tests:
     def make():

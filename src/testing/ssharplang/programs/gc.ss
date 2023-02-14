@@ -17,6 +17,9 @@ class Test{
         test.f1();
         test.f1();
 
+        gccollect();
+
+
         return 1;
     }
 }

@@ -16,11 +16,18 @@ from src.utils import SPrettyPrinter
 from src.utils import AppliedTransformer
 from src.utils import NotAppliedException
 
-import tempfile
+import lark, tempfile
 
 
 class Imports(AppliedTransformer):
     path2cached = dict()
+
+    def transform(self, *args, **kwargs):
+        try: 
+            res = super().transform(*args, **kwargs)
+            return res
+        except lark.exceptions.VisitError: raise NotAppliedException()
+        if not self.applied: raise NotAppliedException()
 
     @v_args(meta=True)
     def spplang_import(self, meta, nodes):

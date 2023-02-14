@@ -4,13 +4,21 @@ from src.syntax         import Language
 from lark.tree          import Tree
 from lark               import Token, Lark
 from src.utils          import AppliedTransformer
-import copy
+from src.utils          import NotAppliedException
+import copy, lark
 
 startMethod = Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def _* start(_* this) does return this;;")
 endMethod   = Lark(Language(methodDefinition).toLark(), keep_all_tokens=True).parse(f"def void end(_* this) does return;;")
 
 class Structs(AppliedTransformer):
-    
+
+    def transform(self, *args, **kwargs):
+        try:
+            res = super().transform(*args, **kwargs)
+            return res
+        except lark.exceptions.VisitError: raise NotAppliedException
+        if not self.applied: raise NotAppliedException
+
     @v_args(meta=True)
     def slang_struct(self, meta, nodes):
         self.applied = True

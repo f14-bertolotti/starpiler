@@ -17,4 +17,10 @@ def transpile(parseTree):
 
     return parseTree
 
-deltas = [[mainMethod, methods], [news, futurepops_ssharp], [newof_natives, futurepops_ssharp], [newofs, futurepops_ssharp], [builtin, functionCalls], [ifs, fors, whiles, assignements], classes, fields, indexes, arrays, classAccesses, imports, identities]
+deltas = [[mainMethod, methods], 
+          [news, futurepops_ssharp], 
+          [newof_natives, futurepops_ssharp], 
+          [newofs, futurepops_ssharp], 
+          [builtin, functionCalls], 
+          [ifs, fors, whiles, assignements], 
+          [classes, fields, indexes, arrays, classAccesses], imports, identities]

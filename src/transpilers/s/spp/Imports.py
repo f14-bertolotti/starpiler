@@ -12,10 +12,16 @@ from src.utils import AppliedTransformer
 from src.utils import NotAppliedException
 from src.utils import SppPrettyPrinter
 
-import tempfile
+import tempfile, lark
 
 class Imports(AppliedTransformer):
     path2cached = dict()
+
+    def transform(self, *args, **kwargs):
+        try:
+            res = super().transform(*args, **kwargs)
+            return res
+        except lark.exceptions.VisitError: raise NotAppliedException
 
     @v_args(meta=True)
     def slang_import(self, meta, nodes):

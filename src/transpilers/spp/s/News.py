@@ -57,6 +57,6 @@ class News(Transformer):
         return newexpr
 
 def news(parseTree):
-    if parseTree.data != "spplang_start": raise ValueError("top level insertions may be required")
+    if parseTree.data != "spplang_start": raise NotAppliedException("top level insertions may be required")
     return News().transform(parseTree)
 

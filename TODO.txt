@@ -18,3 +18,12 @@ meta cloning takes to much time, refactor meta to fit only the necessary [DONE]
 better exception [DONE]
 
 ssharp new identifier -> native types
+from -> until (ssharp)
+
+for i until expr {
+    block 
+} ensure expr else {
+    
+};
+
+use __init_array__ () function to init array

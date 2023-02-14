@@ -3,6 +3,7 @@ from lark.visitors import v_args, Transformer
 from lark.tree     import Tree
 from lark          import Token
 from lark          import Lark
+import lark
 
 from src.syntax       import Language
 from src.transpilers  import addBeforeReturn
@@ -28,7 +29,9 @@ class Classes(Transformer):
         super().__init__(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        res = super().transform(*args, **kwargs)
+        try:
+            res = super().transform(*args, **kwargs)
+        except lark.exceptions.VisitError: raise NotAppliedException()
         if self.add_free and not self.free_added: raise NotAppliedException()
         return res
 
@@ -123,7 +126,7 @@ class Classes(Transformer):
         return [baseStruct, *additionalFunctions]
 
 def classes(parseTree):
-    if parseTree.data != "spplang_start": raise ValueError("top level insertions may be required")
+    if parseTree.data != "spplang_start": raise NotAppliedException("top level insertions may be required")
     return Classes().transform(parseTree)
 
 

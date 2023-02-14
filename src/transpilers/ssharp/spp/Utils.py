@@ -105,20 +105,18 @@ Tree(Token('RULE', 'ssharplang_stmt_expr'), [
 
 
 gcMarkAndSweep = \
-Tree(Token('RULE', 'ssharplang_stmt_expr'), [
-    Tree(Token('RULE', 'ssharplang_function_call'), [
-        Tree(Token('RULE', 'ssharplang_class_access'), [
-            Tree(Token('RULE', 'ssharplang_function_call'), [
-                Tree(Token('RULE', 'ssharplang_class_access'), [
-                    Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'gc')]), 
-                    Token('DOT', '.'), 
-                    Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'mark')])]), 
-                Token('LPAR', '('), Token('RPAR', ')')]), 
-            Token('DOT', '.'), 
-            Tree(Token('RULE', 'ssharplang_identifier'), [Token('__ANON__', 'sweep')])]), 
-        Token('LPAR', '('), 
-        Token('RPAR', ')')]), 
-    Token('SEMICOLON', ';')])
+Tree(Token('RULE', 'spplang_function_call'), [
+    Tree(Token('RULE', 'spplang_struct_access'), [
+        Tree(Token('RULE', 'spplang_function_call'), [
+            Tree(Token('RULE', 'spplang_struct_access'), [
+                Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'gc')]), 
+                Token('DOT', '.'), 
+                Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'mark')])]), 
+            Token('LPAR', '('), Token('RPAR', ')')]), 
+        Token('DOT', '.'), 
+        Tree(Token('RULE', 'spplang_identifier'), [Token('__ANON__', 'sweep')])]), 
+    Token('LPAR', '('), 
+    Token('RPAR', ')')])
 
 def gcMarkAndSweepDebug(value):
     return \
