@@ -31,8 +31,8 @@ class Classes(Transformer):
     def transform(self, *args, **kwargs):
         try:
             res = super().transform(*args, **kwargs)
-        except lark.exceptions.VisitError: raise NotAppliedException()
-        if self.add_free and not self.free_added: raise NotAppliedException()
+        except lark.exceptions.VisitError as e: raise NotAppliedException("visit error") 
+        if self.add_free and not self.free_added: raise NotAppliedException("not applied")
         return res
 
 
@@ -40,7 +40,7 @@ class Classes(Transformer):
     def spplang_start(self, meta, nodes):
         free = []
         globalAssignements = [node for node in nodes if isinstance(node, Tree) and node.data == "slang_global_assignement"]
-        if self.add_free and not any(ass.children[1].children[2].children[0].value == "__free" for ass in globalAssignements):
+        if self.add_free and not any(ass.children[1].children[3].children[0].value == "__free" for ass in globalAssignements):
             free = [copy.deepcopy(freeDeclaration), copy.deepcopy(freeAssignement)] 
             self.free_added = True
         return Tree(Token("RULE","spplang_start"), free + [sub for child in nodes for sub in (child if isinstance(child, list) else [child])], meta)

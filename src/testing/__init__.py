@@ -14,5 +14,6 @@ from src.testing.transpilers import TestSppToSClassAccesses
 from src.testing.transpilers import TestSppToSMetaTranspiler
 from src.testing.transpilers import TestSToSppMetaTranspiler
 from src.testing.transpilers import TestSsharpToSppMetaTranspiler
+from src.testing.transpilers import TestSsharpToSMetaTranspiler
 from src.testing.transpilers import TestSToSppStruct
 

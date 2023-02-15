@@ -10,6 +10,7 @@ class FunctionCall(AppliedTransformer):
     def slang_function_call(self, meta, nodes):
 
         if not (nodes[0].data == "slang_struct_access" and \
+                hasattr(nodes[0].meta, "type") and \
                 nodes[0].meta.type != None and \
                 hasattr(nodes[0].meta.type, "base") and \
                 hasattr(nodes[0].meta.type.base, "ptypes") and \

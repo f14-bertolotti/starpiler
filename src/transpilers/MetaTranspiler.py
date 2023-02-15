@@ -56,7 +56,7 @@ class MetaTranspiler:
             #if i > 1000: exit(0)
             #input()
             metric,_ , tree = heapq.heappop(queue)
-            #print(metric, tree.path)
+            #print(i, metric, tree.path)
             if metric == 0: 
                 #print("="*10,"DONE","="*10)
                 #print(SPrettyPrinter().transform(tree))
@@ -67,14 +67,12 @@ class MetaTranspiler:
                 if isinstance(delta, list):
                     #print("\t", ":".join([d.__name__ for d in delta]))
                     self.apply_list(tree, delta, queue, visited, i)
-                    i += len(delta)
 
                 else:
 
                     #print("\t",delta.__name__)
                     self.apply(tree, delta, queue, visited, i)
-                    i += 1
-
-
+                i += 1
 
         raise ValueError("Could not transpile")
+
