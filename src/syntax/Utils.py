@@ -2,8 +2,6 @@ from src.syntax import Language   as L
 from src.syntax import Production as P
 from src.syntax import Terminal   as T
 from src.syntax import Rule       as R
-
-
 import re
 
 def getChangePrefixVisitor(srcPrefix, tgtPrefix):

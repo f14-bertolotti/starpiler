@@ -13,7 +13,10 @@ class ClassAccesses(AppliedTransformer):
             res = super().transform(*args, **kwargs)
             if self.applied == False: raise ValueError()
             return res
-        except lark.exceptions.VisitError: raise NotAppliedException()
+        except lark.exceptions.VisitError as e: 
+            raise NotAppliedException(f"VisitError {e}")
+        except ValueError: 
+            raise NotAppliedException("ValueError")
 
 
     @v_args(meta=True)
@@ -66,5 +69,6 @@ class ClassAccesses(AppliedTransformer):
         return Tree(Token("RULE","slang_function_call"), nodes, meta)
 
 def classAccesses(parseTree):
-    return ClassAccesses().transform(parseTree)
+    res = ClassAccesses().transform(parseTree)
+    return res
 

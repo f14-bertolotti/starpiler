@@ -1,7 +1,11 @@
+import lark
 from lark import Tree, Token
 from src.utils import AppliedTransformer
+from src.utils import NotAppliedException
 
 def reference(nodes):
+
+    if not nodes[0].data.value.startswith("ssharplang_"): raise ValueError("subtree translated")
 
     if nodes[0].data == "ssharplang_identifier":
         
@@ -29,6 +33,14 @@ def reference(nodes):
 
 
 class Assignements(AppliedTransformer):
+
+    def transform(self, *args, **kwargs):
+        try: 
+            res = super().transform(*args, **kwargs)
+            if not self.applied: raise ValueError()
+            return res
+        except lark.exceptions.VisitError: raise NotAppliedException
+        except ValueError: raise NotAppliedException
 
     def ssharplang_assignement(self, nodes):
         self.applied = True

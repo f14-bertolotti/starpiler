@@ -9,16 +9,19 @@ from src.transpilers.ssharp.spp import imports
 from src.transpilers.ssharp.spp import fields
 
 from src.utils import NotAppliedException
+from src.utils import merge_delta
 
 def transpile(parseTree):
-    for delta in [mainMethod, news, futurepops_ssharp, newof_natives, futurepops_ssharp, newofs, futurepops_ssharp, builtin, functionCalls, ifs, fors, whiles, classes, fields, assignements, indexes, methods, arrays, classAccesses, imports, identities]: 
+    for delta in [mainMethod, news, futurepops_ssharp, newof_natives, futurepops_ssharp, newofs, futurepops_ssharp, ifs, fors, whiles, builtin, classes, fields, assignements, indexes, methods, arrays, classAccesses, imports, identities]: 
         try: parseTree = delta(parseTree)
         except NotAppliedException as e: pass 
 
     return parseTree
 
-deltas = [[mainMethod, methods], 
-          [news, futurepops_ssharp, newof_natives, futurepops_ssharp, newofs, futurepops_ssharp], 
-          [builtin, functionCalls], 
-          [ifs, fors, whiles, assignements],
-          [classes, fields, indexes, arrays, classAccesses], imports, identities]
+deltas = [merge_delta([mainMethod, methods]), 
+          merge_delta([news, futurepops_ssharp]), 
+          merge_delta([newof_natives, futurepops_ssharp]), 
+          merge_delta([newofs, futurepops_ssharp]), 
+          builtin, 
+          ifs, fors, whiles, assignements,
+          classes, fields, indexes, arrays, classAccesses, imports, identities]
