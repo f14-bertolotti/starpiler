@@ -70,18 +70,13 @@ class MetaTranspiler:
 
         while openSet:
 
-            #print([x[0] for x in openSet])
+            print([x[0] for x in openSet])
 
             score, _, current, currentset = heapq.heappop(openSet)
 
-            #print(score, iteration, current.path)
-
-            #if nodeset(current).issubset(solutionset):
-            #    return current
+            print(score, iteration, current.path)
 
             for delta in reversed(self.deltas):
-
-               
                 try:
                     neighbor = delta(current)
 
@@ -102,13 +97,7 @@ class MetaTranspiler:
                             iteration += 1
                             heapq.heappush(openSet, (fScore[neighbor], -iteration, neighbor, neighborset))
     
-                except NotAppliedException as e: 
-                    #print(current.path)
-                    #print(delta.__name__)
-                    #import traceback
-                    #traceback.print_exception(e)
-                    #input()
-                    continue
+                except NotAppliedException as e: continue
 
 
                 

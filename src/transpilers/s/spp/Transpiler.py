@@ -13,11 +13,6 @@ deltas = [structs, globalAssignements, imports, identities]
 def transpile(parseTree):
     for delta in deltas: 
         try: parseTree = delta(parseTree)
-        except NotAppliedException: 
-            #import traceback; 
-            #traceback.print_exc(); 
-            #print(delta, e);
-            #print(("="*20+"\n")*5); 
-            continue
+        except NotAppliedException: continue
     return parseTree
 

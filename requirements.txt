@@ -1,4 +1,9 @@
 lark
+pygraphviz
+matplolib
 llvmlite
+tqdm
 rich
 coverage
+networkx
+numpy
