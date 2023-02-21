@@ -1,6 +1,7 @@
 from lark.visitors import v_args, Transformer
 from lark.tree     import Tree
 from lark          import Lark, Token
+import lark
 
 from src.syntax.slang import functionCall, functionDeclaration, globalAssignement
 from src.syntax       import Language
@@ -26,7 +27,9 @@ class News(Transformer):
         self.additional_decl = False
         super().__init__(*args, **kwargs)
     def transform(self, *args, **kwargs):
-        res = super().transform(*args, **kwargs)
+        try:
+            res = super().transform(*args, **kwargs)
+        except lark.exceptions.VisitError: raise NotAppliedException()
         if self.is_spplang_new and not self.additional_decl: raise NotAppliedException() 
         return res 
 
@@ -46,6 +49,8 @@ class News(Transformer):
 
     @v_args(meta=True)
     def spplang_new(self, meta, nodes):
+        if not hasattr(meta, "type"): raise ValueError("type info needed")
+
         newexpr = copy.deepcopy(newexpression)
         newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[0].children[2].children[0].children[2].children[0] = nodes[1]
         newexpr.children[0].children[0].children[1].children[3].children[0].children[2].children[2].children[0].children[0] = nodes[1]

@@ -12,11 +12,12 @@ from src.transpilers.spp import addEndMethods
 
 from src.utils import NotAppliedException
 
+deltas = [addEndMethods, types, globalAssignements, imports, news, classAccesses, classes, functionCall, identities]
+
 def transpile(parseTree):
-    for delta in [types, addEndMethods, functionCall, classes, news, classAccesses, imports, globalAssignements, identities]: 
+    for delta in deltas: 
         try: parseTree = delta(parseTree)
         except NotAppliedException: continue
     return parseTree
 
 
-deltas = [types, globalAssignements, imports, news, addEndMethods, classAccesses, classes, functionCall, identities]

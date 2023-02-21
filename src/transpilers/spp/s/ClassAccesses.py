@@ -35,7 +35,8 @@ class ClassAccesses(AppliedTransformer):
     def spplang_function_call(self, meta, nodes):
 
         if not hasattr(nodes[0].meta,"type") or nodes[0].meta.type == None:
-            return ValueError("no type info available")
+            raise ValueError("no type info available")
+
 
         self.applied = True
         if nodes[0].data == "slang_struct_access" and \
@@ -69,6 +70,5 @@ class ClassAccesses(AppliedTransformer):
         return Tree(Token("RULE","slang_function_call"), nodes, meta)
 
 def classAccesses(parseTree):
-    res = ClassAccesses().transform(parseTree)
-    return res
+    return ClassAccesses().transform(parseTree)
 

@@ -52,8 +52,10 @@ class MetaTranspiler:
 
  
     def search_Astar(self, tree, solutionset):
+
+        if nodeset(tree).issubset(solutionset): return tree
+
         openSet = []
-        cameFrom = dict()
 
         gScore = defaultdict(lambda : float("inf"))
         gScore[tree] = 0
@@ -68,34 +70,37 @@ class MetaTranspiler:
 
         while openSet:
 
-            print(iteration)
-            
-            _, _, current, currentset = heapq.heappop(openSet)
+            #print([x[0] for x in openSet])
 
-            #import rich
-            #rich.print(current)
+            score, _, current, currentset = heapq.heappop(openSet)
 
+            #print(score, iteration, current.path)
 
-            if nodeset(current).issubset(solutionset):
-                return current
+            #if nodeset(current).issubset(solutionset):
+            #    return current
 
-            for delta in self.deltas:
-                
+            for delta in reversed(self.deltas):
+
+               
                 try:
                     neighbor = delta(current)
+
+                    if nodeset(neighbor).issubset(solutionset):
+                        return neighbor
+ 
+
                     neighborset = nodeset(neighbor)
                     neighbor.path = current.path + [delta.__name__]
-                    tentative_gScore = gScore[tree] + rsdd(solutionset, currentset, neighborset)
+                    tentative_gScore = gScore[current] + rsdd(solutionset, currentset, neighborset)
 
                     if tentative_gScore < gScore[neighbor]:
 
-                        cameFrom[neighbor] = current
                         gScore[neighbor] = tentative_gScore
                         fScore[neighbor] = tentative_gScore + rsdd(solutionset, solutionset, neighborset)
 
                         if neighbor not in openSet:
                             iteration += 1
-                            heapq.heappush(openSet, (fScore[neighbor], iteration, neighbor, neighborset))
+                            heapq.heappush(openSet, (fScore[neighbor], -iteration, neighbor, neighborset))
     
                 except NotAppliedException as e: 
                     #print(current.path)
@@ -104,6 +109,7 @@ class MetaTranspiler:
                     #traceback.print_exception(e)
                     #input()
                     continue
+
 
                 
         raise ValueError("could not transpile")

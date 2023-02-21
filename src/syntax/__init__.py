@@ -11,3 +11,6 @@ from src.syntax.Utils      import getChangePrefixVisitor
 from src.syntax.Utils      import getClonerVisitor
 from src.syntax.Utils      import getMatchesVisitor
 
+from src.syntax.slang      import lang as slang
+from src.syntax.spplang    import lang as spplang
+from src.syntax.ssharplang import lang as ssharplang

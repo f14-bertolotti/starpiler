@@ -279,9 +279,6 @@ def types(parseTree) -> Tree:
         parseTree = CloneTransformer(notypes=True).transform(parseTree)
         NameSpace().visit(parseTree)
     except Exception as e: 
-        print("TYPE ERROR")
-        import traceback
-        traceback.print_exception(e)
         raise NotAppliedException
  
     return parseTree

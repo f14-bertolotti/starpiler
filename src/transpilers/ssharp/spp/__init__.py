@@ -8,7 +8,6 @@ from src.transpilers.ssharp.spp.Methods          import methods
 from src.transpilers.ssharp.spp.Arrays           import arrays
 from src.transpilers.ssharp.spp.Whiles           import whiles
 from src.transpilers.ssharp.spp.Fors             import fors
-from src.transpilers.ssharp.spp.FunctionCalls    import functionCalls
 from src.transpilers.ssharp.spp.Ifs              import ifs
 from src.transpilers.ssharp.spp.Indexes          import indexes
 from src.transpilers.ssharp.spp.Builtin          import builtin

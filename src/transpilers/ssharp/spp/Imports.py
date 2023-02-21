@@ -4,7 +4,7 @@ from pathlib import Path
 
 from src.transpilers.ssharp.spp import methods
 from src.transpilers.ssharp.spp import arrays
-from src.transpilers.ssharp.spp import functionCalls, newof_natives, ifs, builtin, remove_mainmethod, futurepops_ssharp, fors, classAccesses, newofs, indexes,  whiles, news
+from src.transpilers.ssharp.spp import newof_natives, ifs, builtin, remove_mainmethod, futurepops_ssharp, fors, classAccesses, newofs, indexes,  whiles, news
 from src.transpilers.ssharp.spp import classes
 from src.transpilers.ssharp.spp import assignements
 from src.transpilers.ssharp.spp import fields
@@ -30,7 +30,7 @@ class Imports(AppliedTransformer):
             Imports.path2cached[importpath] = tempfile.NamedTemporaryFile()
 
             parseTree = lang.parse(importpath.read_text())
-            for delta in [builtin, remove_mainmethod, classes, fields, methods, arrays, fors, ifs, whiles, news, futurepops_ssharp, newof_natives, futurepops_ssharp, newofs, futurepops_ssharp, functionCalls, assignements, indexes, classAccesses, Imports().transform, identities]:
+            for delta in [builtin, remove_mainmethod, classes, fields, methods, arrays, fors, ifs, whiles, news, futurepops_ssharp, newof_natives, futurepops_ssharp, newofs, futurepops_ssharp, assignements, indexes, classAccesses, Imports().transform, identities]:
                 try: parseTree = delta(parseTree)
                 except NotAppliedException: pass
 

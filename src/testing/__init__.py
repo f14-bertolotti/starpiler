@@ -11,9 +11,12 @@ from src.testing.transpilers import TestSppTypes
 from src.testing.transpilers import TestSppToSClasses
 from src.testing.transpilers import TestSppToSNew
 from src.testing.transpilers import TestSppToSClassAccesses
-from src.testing.transpilers import TestSppToSMetaTranspiler
-from src.testing.transpilers import TestSToSppMetaTranspiler
-from src.testing.transpilers import TestSsharpToSppMetaTranspiler
-from src.testing.transpilers import TestSsharpToSMetaTranspiler
 from src.testing.transpilers import TestSToSppStruct
 
+
+from src.testing.transpilers import SsharpToSppAStar
+from src.testing.transpilers import SsharpToSppToAStar
+from src.testing.transpilers import SToSppBFS
+from src.testing.transpilers import SToSppAStar
+from src.testing.transpilers import SppToSBFS
+from src.testing.transpilers import SppToSAStar
