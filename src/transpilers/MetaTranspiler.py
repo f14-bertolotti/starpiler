@@ -53,8 +53,6 @@ class MetaTranspiler:
  
     def search_Astar(self, tree, solutionset):
 
-        if nodeset(tree).issubset(solutionset): return tree
-
         openSet = []
 
         gScore = defaultdict(lambda : float("inf"))
@@ -62,7 +60,7 @@ class MetaTranspiler:
 
         fScore = defaultdict(lambda : float("inf"))
         treeset = nodeset(tree)
-        fScore[tree] = rsdd(solutionset, solutionset, treeset)
+        fScore[tree] = 0 if treeset.issubset(solutionset) else rsdd(solutionset, solutionset, treeset)
 
         iteration = 0
         tree.path = []
@@ -74,15 +72,14 @@ class MetaTranspiler:
 
             score, _, current, currentset = heapq.heappop(openSet)
 
+            if nodeset(current).issubset(solutionset):
+                return current
+ 
             print(score, iteration, current.path)
 
             for delta in reversed(self.deltas):
                 try:
                     neighbor = delta(current)
-
-                    if nodeset(neighbor).issubset(solutionset):
-                        return neighbor
- 
 
                     neighborset = nodeset(neighbor)
                     neighbor.path = current.path + [delta.__name__]
@@ -91,7 +88,7 @@ class MetaTranspiler:
                     if tentative_gScore < gScore[neighbor]:
 
                         gScore[neighbor] = tentative_gScore
-                        fScore[neighbor] = tentative_gScore + rsdd(solutionset, solutionset, neighborset)
+                        fScore[neighbor] = tentative_gScore + (0 if neighborset.issubset(solutionset) else rsdd(solutionset, solutionset, neighborset)) 
 
                         if neighbor not in openSet:
                             iteration += 1

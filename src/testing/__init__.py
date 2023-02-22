@@ -15,7 +15,7 @@ from src.testing.transpilers import TestSToSppStruct
 
 
 from src.testing.transpilers import SsharpToSppAStar
-from src.testing.transpilers import SsharpToSppToAStar
+from src.testing.transpilers import SsharpToSppToSAStar
 from src.testing.transpilers import SToSppBFS
 from src.testing.transpilers import SToSppAStar
 from src.testing.transpilers import SppToSBFS
