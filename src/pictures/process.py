@@ -1,35 +1,23 @@
-import tqdm, numpy, pickle, networkx, matplotlib
-
-from src.utils import relative_set_difference_distance
-from src.utils import lang2rules
-from src.utils import nodeset
-
-from src.syntax import slang
+import pickle, networkx
+import matplotlib.pyplot as plt
+import matplotlib
 
 with open('data/trees.pickle', 'rb') as file:
-    visited = pickle.load(file)
+    graph, root = pickle.load(file)
 
-solutionset = lang2rules(slang)
+pos = networkx.nx_agraph.graphviz_layout(graph, root=0, prog="dot", args="")
+node_color = [node.value for node in graph.nodes]
+edge_color = [edge[0].value for edge in graph.edges]
 
-id2tree = {i:tree for i,tree in enumerate(visited)}
+networkx.draw(graph, 
+              pos, 
+              #arrows=False, 
+              node_color=node_color, 
+              edge_color=edge_color, 
+              cmap=matplotlib.colormaps["magma"], 
+              edge_cmap=matplotlib.colormaps["magma"],
+              node_size=5)
+plt.show()
+#plt.savefig("data/graph.pdf",dpi=600,format="pdf")
 
-
-dst_matrix = numpy.zeros((len(visited), len(visited)))
-
-for i in tqdm.tqdm(range(len(visited))):
-    for j in range(len(visited)):
-        dst_matrix[i,j] = relative_set_difference_distance(solutionset, nodeset(id2tree[i]), nodeset(id2tree[j]))
-
-dt = [('len', float)]
-dst_matrix = dst_matrix.view(dt)
-G = networkx.from_numpy_array(dst_matrix)
-
-G = networkx.drawing.nx_agraph.to_agraph(G)
-
-G.node_attr.update(color="red", style="filled")
-G.edge_attr.update(color="red", style="setlinewidth(0.1)")
-
-G.draw('data/out.png', format='png', prog='neato')
-
-print(dst_matrix)
 

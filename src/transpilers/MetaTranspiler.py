@@ -68,14 +68,14 @@ class MetaTranspiler:
 
         while openSet:
 
-            print([x[0] for x in openSet])
+            #print([x[0] for x in openSet])
 
             score, _, current, currentset = heapq.heappop(openSet)
 
             if nodeset(current).issubset(solutionset):
                 return current
  
-            print(score, iteration, current.path)
+            #print(score, iteration, current.path)
 
             for delta in reversed(self.deltas):
                 try:

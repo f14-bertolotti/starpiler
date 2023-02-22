@@ -1,8 +1,10 @@
 lark
 pygraphviz
-matplolib
+matplotlib
 llvmlite
 tqdm
+scipy
+pydot
 rich
 coverage
 networkx
