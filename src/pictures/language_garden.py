@@ -11,7 +11,6 @@ from src.utils import relative_set_difference_distance as rsdd
 from src.utils import lang2rules
 from src.utils import nodeset
 
-solutionset = lang2rules(spplang)
 
 def dump(obj):
     with open('data/trees.pickle', 'wb') as file:
@@ -41,40 +40,64 @@ class Point {
 
 """
 
-ssharp_tree = ssharplang.parse(ssharp_program)
-ssharp_tree.value = rsdd(solutionset, solutionset, nodeset(ssharp_tree))
+class Node:
+    def __init__(self, tree, rsdd, issol=False, isroot=False, genfrom=None):
+        self.tree, self.rsdd = tree, rsdd
+        self.issol, self.isroot = issol, isroot
+        self.genfrom = genfrom
 
-graph = networkx.DiGraph()
-graph.add_node(ssharp_tree)
-queue = []
-heapq.heappush(queue, (0,0,ssharp_tree))
+    def __hash__(self):
+        return hash(self.tree)
+
+    def __eq__(self, other):
+        return self.tree == other.tree
+
+    def __neq__(self, other):
+        return self.tree != other.tree
+
+
+solutionset = lang2rules(slang)
+
+root = Node(t:=ssharplang.parse(ssharp_program), 
+            rsdd(solutionset, solutionset, s:=nodeset(t)), 
+            issol=s.issubset(solutionset), 
+            isroot=True,
+            genfrom=None)
+
+graph     = networkx.DiGraph()
+queue     = []
 iteration = 0
-visited = {ssharp_tree}
+visited   = {root.tree}
+graph.add_node(root)
+heapq.heappush(queue, (0,root))
 
 while queue:
 
-    l, i, current = heapq.heappop(queue)
+    _, current = heapq.heappop(queue)
 
-    if nodeset(current).issubset(solutionset): break
+    print(f"iteration: {iteration}, queue: {len(queue)}, visited:{len(visited)}")
 
-    print(f"iteration: {iteration}, queue: {len(queue)}, visited:{len(graph)}, len:{l}")
-
-    for delta in ssharp2spp_deltas:
+    for delta in ssharp2spp_deltas + [merge_delta(spp2s_deltas)]:
         try: 
-            neighbor = (l + 1, iteration, delta(current)) 
-            neighbor[2].value = rsdd(solutionset, solutionset, nodeset(neighbor[2]))
-            if neighbor[2] not in visited:
-                visited.add(neighbor)
+
+            neighbor = Node(t:=delta(current.tree),
+                        rsdd(solutionset, solutionset, s:=nodeset(t)),
+                        issol=s.issubset(solutionset),
+                        isroot=False,
+                        genfrom=delta.__name__)
+            
+            if current == neighbor: pass
+            elif neighbor.tree not in visited:
+                visited.add(neighbor.tree)
                 iteration += 1
-                heapq.heappush(queue, neighbor)
-                graph.add_node(neighbor[2]) 
-                graph.add_edge(current, neighbor[2], weight=rsdd(solutionset, nodeset(current), nodeset(neighbor[2])))
+                heapq.heappush(queue, (iteration, neighbor))
+                graph.add_node(neighbor)
+                graph.add_edge(current, neighbor)
+            else:
+                pass #graph.add_edge(current, neighbor)
+
         except NotAppliedException: pass
 
-
-dump((graph,ssharp_tree))
-
-
-
+dump((graph,root))
 
 
