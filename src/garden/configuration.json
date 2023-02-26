@@ -1,0 +1,34 @@
+
+{
+    "garden" : {
+        "input_path"  : "data/Point.ss",
+        "output_path" : "data/data.pickle",
+        "solutionset" : "spplang", 
+        "ssharp2spp" : true,
+        "spp2s" : true,
+        "s2spp" : true,
+        "max_iterations": 10000
+    },
+
+
+    "draw" : {
+        "input_path"  : "data/data.pickle",
+        "output_path" : "src/garden/figs/figs.pdf",
+        "layout"      : "twopi",
+        "format"      : "pdf",
+        "dpi"         : 600,
+        "show"        : true,
+        "palette"     : "magma", 
+        
+        "rgba_visited"    : {"r":0, "g":0, "b":0, "a":0.1},
+        "rgba_unvisited"  : {"r":0, "g":0, "b":0, "a":1},
+        "rgba_special"    : {"r":1, "g":0, "b":0, "a":1},
+
+        "width" : 0.5,
+        "linewidths" : 0.5,
+        "node_size" : 1.5
+    }
+
+}
+
+

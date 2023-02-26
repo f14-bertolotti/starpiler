@@ -10,9 +10,10 @@ import copy
 from collections import defaultdict
 
 class MetaTranspiler:
-    def __init__(self, deltas, metric):
+    def __init__(self, deltas, metric, return_visited=False):
         self.metric = metric
         self.deltas = deltas
+        self.return_visited = return_visited
 
 
     def search(self, tree):
@@ -22,20 +23,16 @@ class MetaTranspiler:
         i = 0
         heapq.heappush(queue, (self.metric(tree), i, tree))
         visited = {tree}
-        #print()
 
         while queue:
-            #if i > 1000: exit(0)
-            #input()
+
             metric, _ , tree = heapq.heappop(queue)
-            #print(i, metric, len(tree.path), tree.path)
+
             if metric == 0: 
-                #print("="*10,"DONE","="*10)
-                #print(SPrettyPrinter().transform(tree))
-                return tree
+                if self.return_visited: return tree, visited
+                else: return tree
 
             for delta in self.deltas:
-                #print("\t",delta.__name__)
                 try:
                     path = tree.path.copy()
                     newtree = delta(tree)
@@ -68,14 +65,13 @@ class MetaTranspiler:
 
         while openSet:
 
-            #print([x[0] for x in openSet])
+            _, _, current, currentset = heapq.heappop(openSet)
 
-            score, _, current, currentset = heapq.heappop(openSet)
+            if nodeset(current).issubset(solutionset): 
+                if self.return_visited: return current, set(fScore.keys())
+                else: return current
 
-            if nodeset(current).issubset(solutionset):
-                return current
- 
-            #print(score, iteration, current.path)
+
 
             for delta in reversed(self.deltas):
                 try:
