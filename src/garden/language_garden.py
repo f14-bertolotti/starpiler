@@ -61,11 +61,13 @@ while queue:
 print("DONE")
 
 print("A* search ...", end="", flush=True)
-_,Astar_visited = MetaTranspiler(ssharp2spp_deltas + spp2s_deltas, None, return_visited=True).search_Astar(root.tree, solutionset)
+sol,Astar_visited = MetaTranspiler(ssharp2spp_deltas + spp2s_deltas, None, return_visited=True).search_Astar(root.tree, solutionset)
+Astar_visited.add(sol)
 print("DONE")
 
 print("bfs search ...", end="", flush=True)
-_,bfs_visited = MetaTranspiler(ssharp2spp_deltas + spp2s_deltas, metric, return_visited=True).search(root.tree)
+sol,bfs_visited = MetaTranspiler(ssharp2spp_deltas + spp2s_deltas, metric, return_visited=True).search(root.tree)
+bfs_visited.add(sol)
 print("DONE")
 
 dump((graph,root,bfs_visited,Astar_visited), configuration.garden.output_path)
