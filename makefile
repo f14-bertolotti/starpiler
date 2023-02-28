@@ -87,6 +87,14 @@ data/small-astar.pdf: makefile data/small.pickle src/garden/draw_Astar.py
 		--draw.output_path data/small-astar.pdf \
 		--draw.show False
 
+data/rsdd3d.pdf: makefile src/garden/draw_rsdd3D.py
+	python3 src/garden/draw_rsdd3D.py \
+		--configuration src/garden/configuration.json \
+		--rsdd3D.output_path data/rsdd3d.pdf \
+		--rsdd3D.size 130 \
+		--rsdd3D.radius 15 \
+		--rsdd3D.show False
+
 figs: data/small-astar.pdf \
 	  data/small-bfs.pdf \
 	  data/small-colored.pdf \
@@ -94,7 +102,8 @@ figs: data/small-astar.pdf \
 	  data/big-astar.pdf \
 	  data/big-bfs.pdf data/ \
 	  data/big-colored.pdf \
-	  data/big-shortestpath.pdf
+	  data/big-shortestpath.pdf \
+	  data/rsdd3d.pdf
 
 
 clean: 

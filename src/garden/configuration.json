@@ -27,6 +27,16 @@
         "width" : 0.5,
         "linewidths" : 0.5,
         "node_size" : 1.5
+    },
+
+    "rsdd3D" : {
+        "output_path" : "data/rsdd3d.pdf",
+        "format" : "pdf",
+        "dpi" : 600,
+        "linewidth" : 0.5,
+        "show" : true,
+        "size" : 1000, 
+        "radius" : 10
     }
 
 }
