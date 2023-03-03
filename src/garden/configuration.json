@@ -36,7 +36,8 @@
         "linewidth" : 0.5,
         "show" : true,
         "size" : 1000, 
-        "radius" : 10
+        "radius" : 10,
+        "color" : "black"
     }
 
 }

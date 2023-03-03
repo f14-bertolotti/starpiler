@@ -48,7 +48,7 @@ ax.zaxis._axinfo["grid"]['color'] =  (1,1,1,0)
 # plot the surface.
 surf = ax.plot_wireframe(X, Y, Z, 
                        linewidth=configuration.rsdd3D.linewidth, 
-                       color="darkorchid",
+                       color=configuration.rsdd3D.color,
                        antialiased=True)
 
 
