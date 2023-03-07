@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from functools import reduce
 
 configuration = configator.Configator()
+v = configuration.draw.rgba_visited
+u = configuration.draw.rgba_unvisited
+s = configuration.draw.rgba_special
 
 with open(configuration.draw.input_path, 'rb') as file:
     graph, _, _, _ = pickle.load(file)
@@ -15,7 +18,7 @@ palette = [color + (1,) for color in seaborn.color_palette(configuration.draw.pa
 
 
 node_color = [palette[int(node.rsdd)] for node in graph.nodes]
-edge_color = [palette[int(e1.rsdd)] if not d["data"]["visited"] else [0,0,0,0.05] for e0,e1,d in graph.edges.data()]
+edge_color = [palette[int(e1.rsdd)] if not d["data"]["visited"] else [v.r,v.g,v.b,v.a] for e0,e1,d in graph.edges.data()]
 
 networkx.draw(graph, 
               pos, 

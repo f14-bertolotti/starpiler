@@ -37,6 +37,7 @@ data/small-shortestpath.pdf: makefile data/small.pickle src/garden/draw_shortest
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
 		--draw.output_path data/small-shortestpath.pdf \
+		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
 data/big-colored.pdf: makefile data/big.pickle src/garden/draw_solution_distance.py
@@ -54,6 +55,7 @@ data/small-colored.pdf: makefile data/small.pickle src/garden/draw_solution_dist
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
 		--draw.output_path data/small-colored.pdf \
+		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
 data/big-bfs.pdf: makefile data/big.pickle src/garden/draw_BFS.py
@@ -71,6 +73,7 @@ data/small-bfs.pdf: makefile data/small.pickle src/garden/draw_BFS.py
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
 		--draw.output_path data/small-bfs.pdf \
+		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
 data/big-astar.pdf: makefile data/big.pickle src/garden/draw_Astar.py
@@ -88,6 +91,7 @@ data/small-astar.pdf: makefile data/small.pickle src/garden/draw_Astar.py
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
 		--draw.output_path data/small-astar.pdf \
+		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
 data/rsdd3d.pdf: makefile src/garden/draw_rsdd3D.py

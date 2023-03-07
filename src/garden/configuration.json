@@ -21,9 +21,9 @@
         "show"        : true,
         "palette"     : "magma", 
         
-        "rgba_visited"    : {"r":0, "g":0, "b":0, "a":0.1},
-        "rgba_unvisited"  : {"r":0, "g":0, "b":0, "a":1},
-        "rgba_special"    : {"r":1, "g":0, "b":0, "a":1},
+        "rgba_visited"    : {"r":0.0, "g":0.0, "b":0.0, "a":0.1},
+        "rgba_unvisited"  : {"r":0.0, "g":0.0, "b":0.0, "a":1.0},
+        "rgba_special"    : {"r":1.0, "g":0.0, "b":0.0, "a":1.0},
 
         "width" : 0.5,
         "linewidths" : 0.5,
