@@ -4,9 +4,10 @@
         "input_path"  : "data/Point.ss",
         "output_path" : "data/data.pickle",
         "solutionset" : "spplang", 
-        "ssharp2spp" : true,
-        "spp2s" : true,
-        "s2spp" : true,
+        "ssharp2spp" : 1.0,
+        "spp2s" : 0.0,
+        "s2spp" : 0.0,
+        "seed" : 14,
         "max_iterations": 10000
     },
 

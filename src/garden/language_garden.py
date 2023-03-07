@@ -1,4 +1,4 @@
-import configator, pathlib, networkx, pickle, heapq
+import configator, pathlib, networkx, random, pickle, heapq
 from src.syntax          import slang, spplang, ssharplang
 from src.transpilers     import s2spp_deltas, spp2s_deltas, ssharp2spp_deltas
 from src.utils           import NotAppliedException
@@ -12,6 +12,8 @@ from src.garden.Utils    import dump, Node
 
 
 configuration = configator.Configator()
+
+random.seed(configuration.garden.seed)
 
 metric = {"spplang":spp_metric,"slang":s_metric}[configuration.garden.solutionset]
 ssharp_program = pathlib.Path(configuration.garden.input_path).read_text()
@@ -29,6 +31,13 @@ visited   = {root.tree}
 graph.add_node(root)
 heapq.heappush(queue, (0,root))
 
+deltas = random.sample(ssharp2spp_deltas, int(len(ssharp2spp_deltas) * configuration.garden.ssharp2spp)) + \
+         random.sample(spp2s_deltas     , int(len(spp2s_deltas)      * configuration.garden.spp2s)) + \
+         random.sample(s2spp_deltas     , int(len(s2spp_deltas)      * configuration.garden.s2spp))
+random.shuffle(deltas)
+
+print(len(deltas))
+
 while queue:
 
     if iteration > configuration.garden.max_iterations: break 
@@ -36,7 +45,7 @@ while queue:
 
     print(f"\riteration: {iteration}, queue: {len(queue)}, visited:{len(visited)} ...",end="")
 
-    for delta in (ssharp2spp_deltas if configuration.garden.ssharp2spp else []) + (spp2s_deltas if configuration.garden.spp2s else []) + (s2spp_deltas if configuration.garden.s2spp else []):
+    for delta in deltas:
         try: 
 
             neighbor = Node(t:=delta(current.tree),

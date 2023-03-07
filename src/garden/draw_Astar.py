@@ -25,6 +25,9 @@ networkx.draw(graph,
               node_size=configuration.draw.node_size)
 
 if configuration.draw.show: plt.show()
-plt.savefig(configuration.draw.output_path,dpi=configuration.draw.dpi,format=configuration.draw.format)
+plt.savefig(configuration.draw.output_path,
+            dpi=configuration.draw.dpi,
+            format=configuration.draw.format,
+            transparent=True)
 
 

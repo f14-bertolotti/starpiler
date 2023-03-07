@@ -33,6 +33,7 @@ if configuration.draw.show: plt.show()
 
 plt.savefig(configuration.draw.output_path,
             dpi=configuration.draw.dpi,
-            format=configuration.draw.format)
+            format=configuration.draw.format,
+            transparent=True)
 
 

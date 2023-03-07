@@ -1,23 +1,26 @@
 
-data/big.pickle: src/garden/language_garden.py
+data/big.pickle: makefile src/garden/language_garden.py
 	python3 src/garden/language_garden.py \
 		--configuration src/garden/configuration.json \
 		--garden.input_path src/garden/Point.ss \
 		--garden.output_path "data/big.pickle" \
 		--garden.solutionset "spplang" \
-		--garden.ssharp2spp True \
-		--garden.spp2s True \
-		--garden.s2spp False
+		--garden.ssharp2spp 1.0 \
+		--garden.spp2s 0.4 \
+		--garden.s2spp 0.0 \
+		--garden.seed 1 
 
-data/small.pickle: src/garden/language_garden.py
+data/small.pickle: makefile src/garden/language_garden.py
 	python3 src/garden/language_garden.py \
 		--configuration src/garden/configuration.json \
 		--garden.input_path src/garden/Point.ss \
 		--garden.output_path "data/small.pickle" \
 		--garden.solutionset "spplang" \
-		--garden.ssharp2spp True \
-		--garden.spp2s False \
-		--garden.s2spp False
+		--garden.ssharp2spp 1.0 \
+		--garden.spp2s 0.0 \
+		--garden.s2spp 0.0 \
+		--garden.seed 2 
+
 
 data/big-shortestpath.pdf: makefile data/big.pickle src/garden/draw_shortest_path.py
 	python3 src/garden/draw_shortest_path.py \

@@ -59,6 +59,7 @@ if configuration.rsdd3D.show: plt.show()
 
 plt.savefig(configuration.rsdd3D.output_path,
             dpi=configuration.rsdd3D.dpi,
-            format=configuration.rsdd3D.format)
+            format=configuration.rsdd3D.format,
+            transparent=True)
 
 
