@@ -57,9 +57,13 @@ X, Y = numpy.meshgrid(numpy.arange(-size//2, size//2), numpy.arange(-size//2, si
 
 if configuration.rsdd3D.show: plt.show()
 
+plt.rc( 'text', usetex=True )
+plt.rc('font',family = 'sans-serif',  size=20)
+
 plt.savefig(configuration.rsdd3D.output_path,
             dpi=configuration.rsdd3D.dpi,
             format=configuration.rsdd3D.format,
-            transparent=True)
+            transparent=True, 
+            bbox_inches='tight')
 
 

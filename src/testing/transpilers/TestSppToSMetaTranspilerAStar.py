@@ -6,7 +6,6 @@ from src.semantics.slang import run
 from pathlib import Path
 
 from src.transpilers import deltas
-from src.transpilers.s import metric01
 from src.transpilers import MetaTranspiler
 from src.utils import lang2rules
 from src.syntax.slang import lang as slang
