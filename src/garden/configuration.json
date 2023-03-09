@@ -39,6 +39,15 @@
         "size" : 1000, 
         "radius" : 10,
         "color" : "black"
+    },
+
+    "benchmark" : {
+        "output_path" : "data/benchmark.csv",
+        "input_path"  : "data/benchmark.csv",
+        "spp2s"       : true,
+        "s2spp"       : true,
+        "ssharp2spp"  : true,
+        "trials"      : 5
     }
 
 }

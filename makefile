@@ -1,5 +1,5 @@
 
-data/big.pickle: makefile src/garden/language_garden.py
+data/big.pickle: src/garden/language_garden.py
 	python3 src/garden/language_garden.py \
 		--configuration src/garden/configuration.json \
 		--garden.input_path src/garden/Point.ss \
@@ -10,7 +10,7 @@ data/big.pickle: makefile src/garden/language_garden.py
 		--garden.s2spp 0.0 \
 		--garden.seed 1 
 
-data/small.pickle: makefile src/garden/language_garden.py
+data/small.pickle: src/garden/language_garden.py
 	python3 src/garden/language_garden.py \
 		--configuration src/garden/configuration.json \
 		--garden.input_path src/garden/Point.ss \
@@ -21,8 +21,7 @@ data/small.pickle: makefile src/garden/language_garden.py
 		--garden.s2spp 0.0 \
 		--garden.seed 2 
 
-
-data/big-shortestpath.pdf: makefile data/big.pickle src/garden/draw_shortest_path.py
+data/big-shortestpath.pdf: data/big.pickle src/garden/draw_shortest_path.py
 	python3 src/garden/draw_shortest_path.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/big.pickle \
@@ -32,7 +31,7 @@ data/big-shortestpath.pdf: makefile data/big.pickle src/garden/draw_shortest_pat
 		--draw.node_size 0.5 \
 		--draw.show False
 
-data/small-shortestpath.pdf: makefile data/small.pickle src/garden/draw_shortest_path.py
+data/small-shortestpath.pdf: data/small.pickle src/garden/draw_shortest_path.py
 	python3 src/garden/draw_shortest_path.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
@@ -40,7 +39,7 @@ data/small-shortestpath.pdf: makefile data/small.pickle src/garden/draw_shortest
 		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
-data/big-colored.pdf: makefile data/big.pickle src/garden/draw_solution_distance.py
+data/big-colored.pdf: data/big.pickle src/garden/draw_solution_distance.py
 	python3 src/garden/draw_solution_distance.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/big.pickle \
@@ -50,7 +49,7 @@ data/big-colored.pdf: makefile data/big.pickle src/garden/draw_solution_distance
 		--draw.node_size 0.5 \
 		--draw.show False
 
-data/small-colored.pdf: makefile data/small.pickle src/garden/draw_solution_distance.py
+data/small-colored.pdf: data/small.pickle src/garden/draw_solution_distance.py
 	python3 src/garden/draw_solution_distance.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
@@ -58,7 +57,7 @@ data/small-colored.pdf: makefile data/small.pickle src/garden/draw_solution_dist
 		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
-data/big-bfs.pdf: makefile data/big.pickle src/garden/draw_BFS.py
+data/big-bfs.pdf: data/big.pickle src/garden/draw_BFS.py
 	python3 src/garden/draw_BFS.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/big.pickle \
@@ -68,7 +67,7 @@ data/big-bfs.pdf: makefile data/big.pickle src/garden/draw_BFS.py
 		--draw.node_size 0.5 \
 		--draw.show False
 
-data/small-bfs.pdf: makefile data/small.pickle src/garden/draw_BFS.py
+data/small-bfs.pdf: data/small.pickle src/garden/draw_BFS.py
 	python3 src/garden/draw_BFS.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
@@ -76,7 +75,7 @@ data/small-bfs.pdf: makefile data/small.pickle src/garden/draw_BFS.py
 		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
-data/big-astar.pdf: makefile data/big.pickle src/garden/draw_Astar.py
+data/big-astar.pdf: data/big.pickle src/garden/draw_Astar.py
 	python3 src/garden/draw_Astar.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/big.pickle \
@@ -86,7 +85,7 @@ data/big-astar.pdf: makefile data/big.pickle src/garden/draw_Astar.py
 		--draw.node_size 0.5 \
 		--draw.show False
 
-data/small-astar.pdf: makefile data/small.pickle src/garden/draw_Astar.py
+data/small-astar.pdf: data/small.pickle src/garden/draw_Astar.py
 	python3 src/garden/draw_Astar.py \
 		--configuration src/garden/configuration.json \
 		--draw.input_path data/small.pickle \
@@ -94,13 +93,17 @@ data/small-astar.pdf: makefile data/small.pickle src/garden/draw_Astar.py
 		--draw.rgba_visited.a 0.2 \
 		--draw.show False
 
-data/rsdd3d.pdf: makefile src/garden/draw_rsdd3D.py
+data/rsdd3d.pdf: src/garden/draw_rsdd3D.py
 	python3 src/garden/draw_rsdd3D.py \
 		--configuration src/garden/configuration.json \
 		--rsdd3D.output_path data/rsdd3d.pdf \
 		--rsdd3D.size 130 \
 		--rsdd3D.radius 15 \
 		--rsdd3D.show False
+
+data/benchmark.csv: src/garden/benchmark.py
+	python3 src/garden/benchmark.py \
+		--benchmark.output_path data/benchmark.csv
 
 figs: data/small-astar.pdf \
 	  data/small-bfs.pdf \
@@ -111,7 +114,6 @@ figs: data/small-astar.pdf \
 	  data/big-colored.pdf \
 	  data/big-shortestpath.pdf \
 	  data/rsdd3d.pdf
-
 
 clean: 
 	rm data/*

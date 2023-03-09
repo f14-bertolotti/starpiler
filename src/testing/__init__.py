@@ -20,3 +20,7 @@ from src.testing.transpilers import SToSppBFS
 from src.testing.transpilers import SToSppAStar
 from src.testing.transpilers import SppToSBFS
 from src.testing.transpilers import SppToSAStar
+
+from src.testing.ssharplang import tests as ssharp_tests
+from src.testing.spplang    import tests as spp_tests
+from src.testing.slang      import tests as s_tests

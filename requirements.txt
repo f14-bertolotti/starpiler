@@ -10,4 +10,5 @@ rich
 coverage
 networkx
 numpy
+pandas
 git+https://github.com/f14-bertolotti/Configator@v0.1
