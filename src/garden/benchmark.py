@@ -44,9 +44,7 @@ def add_row(dataframe, lang, sourcelangname, targetlangname, path, deltas, metri
     BFSvisited   = len(MetaTranspiler(deltas, metric, return_visited=True).search(source_tree)[1])
     Astarvisited = len(MetaTranspiler(deltas,   None, return_visited=True).search_Astar(source_tree, rules)[1])
     dataframe.loc[dataframe.shape[0]] = [name, path, "BFS", sourcelangname, targetlangname, BFSvisited  , *BFSTimes  , *BFSMems]
-    print(dataframe.loc[dataframe.shape[0]-1])
     dataframe.loc[dataframe.shape[0]] = [name, path, "A*" , sourcelangname, targetlangname, Astarvisited, *AstarTimes, *AstarMems]
-    print(dataframe.loc[dataframe.shape[0]-1])
 
 if configuration.benchmark.s2spp:
     for name, test in tqdm.tqdm(list(filter(lambda x:x[0] not in excluded, s_tests.items())), desc="S->S++"):

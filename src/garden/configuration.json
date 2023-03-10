@@ -47,7 +47,22 @@
         "spp2s"       : true,
         "s2spp"       : true,
         "ssharp2spp"  : true,
-        "trials"      : 5
+        "trials"      : 5,
+
+        "draw" : {
+            "output_path" : "data/file.pdf",
+            "sourcelang" : "S++",
+            "targetlang" : "S",
+            "x" : "time1(s)",
+            "y" : "name",
+            "hue" : "search",
+            "label" : "time (s)",
+            "log" : false,
+            "format" : "pdf",
+            "sizex" : 6,
+            "sizey" : 6,
+            "dpi" : 600
+        }
     }
 
 }

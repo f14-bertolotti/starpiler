@@ -103,17 +103,105 @@ data/rsdd3d.pdf: src/garden/draw_rsdd3D.py
 
 data/benchmark.csv: src/garden/benchmark.py
 	python3 src/garden/benchmark.py \
+		--configuration src/garden/configuration.json \
 		--benchmark.output_path data/benchmark.csv
 
-figs: data/small-astar.pdf \
-	  data/small-bfs.pdf \
-	  data/small-colored.pdf \
-	  data/small-shortestpath.pdf \
-	  data/big-astar.pdf \
-	  data/big-bfs.pdf data/ \
-	  data/big-colored.pdf \
-	  data/big-shortestpath.pdf \
-	  data/rsdd3d.pdf
+data/spp2s_time.pdf: data/benchmark.csv src/garden/draw_benchmark.py 
+	python3 src/garden/draw_benchmark.py \
+		--configuration src/garden/configuration.json \
+		--benchmark.draw.output_path data/spp2s_time.pdf \
+		--benchmark.draw.sourcelang "S++" \
+		--benchmark.draw.targetlang "S" \
+		--benchmark.draw.x "time2(s)" \
+		--benchmark.draw.y "name" \
+		--benchmark.draw.hue "search" \
+		--benchmark.draw.label "time (s)" \
+		--benchmark.draw.log False
+
+data/spp2s_visited.pdf: data/benchmark.csv src/garden/draw_benchmark.py 
+	python3 src/garden/draw_benchmark.py \
+		--configuration src/garden/configuration.json \
+		--benchmark.draw.output_path data/spp2s_visited.pdf \
+		--benchmark.draw.sourcelang "S++" \
+		--benchmark.draw.targetlang "S" \
+		--benchmark.draw.x "visited" \
+		--benchmark.draw.y "name" \
+		--benchmark.draw.hue "search" \
+		--benchmark.draw.label "# nodes" \
+		--benchmark.draw.log False
+
+data/ssharp2spp_time.pdf: data/benchmark.csv src/garden/draw_benchmark.py 
+	python3 src/garden/draw_benchmark.py \
+		--configuration src/garden/configuration.json \
+		--benchmark.draw.output_path data/ssharp2spp_time.pdf \
+		--benchmark.draw.sourcelang "S#" \
+		--benchmark.draw.targetlang "S++" \
+		--benchmark.draw.x "time2(s)" \
+		--benchmark.draw.y "name" \
+		--benchmark.draw.hue "search" \
+		--benchmark.draw.label "time (s)" \
+		--benchmark.draw.log True
+
+data/ssharp2spp_visited.pdf: data/benchmark.csv src/garden/draw_benchmark.py 
+	python3 src/garden/draw_benchmark.py \
+		--configuration src/garden/configuration.json \
+		--benchmark.draw.output_path data/ssharp2spp_visited.pdf \
+		--benchmark.draw.sourcelang "S#" \
+		--benchmark.draw.targetlang "S++" \
+		--benchmark.draw.x "visited" \
+		--benchmark.draw.y "name" \
+		--benchmark.draw.hue "search" \
+		--benchmark.draw.label "# nodes" \
+		--benchmark.draw.log True
+
+data/s2spp_time.pdf: data/benchmark.csv src/garden/draw_benchmark.py 
+	python3 src/garden/draw_benchmark.py \
+		--configuration src/garden/configuration.json \
+		--benchmark.draw.output_path data/s2spp_time.pdf \
+		--benchmark.draw.sourcelang "S" \
+		--benchmark.draw.targetlang "S++" \
+		--benchmark.draw.x "time2(s)" \
+		--benchmark.draw.y "name" \
+		--benchmark.draw.hue "search" \
+		--benchmark.draw.label "time (s)" \
+		--benchmark.draw.sizex 6 \
+		--benchmark.draw.sizey 14 \
+		--benchmark.draw.log False
+
+data/s2spp_visited.pdf:data/benchmark.csv src/garden/draw_benchmark.py 
+	python3 src/garden/draw_benchmark.py \
+		--configuration src/garden/configuration.json \
+		--benchmark.draw.output_path data/s2spp_visited.pdf \
+		--benchmark.draw.sourcelang "S" \
+		--benchmark.draw.targetlang "S++" \
+		--benchmark.draw.x "visited" \
+		--benchmark.draw.y "name" \
+		--benchmark.draw.hue "search" \
+		--benchmark.draw.label "# nodes" \
+		--benchmark.draw.sizex 6 \
+		--benchmark.draw.sizey 14 \
+		--benchmark.draw.log False
+
+benchmarkfigs: data/spp2s_time.pdf \
+			   data/spp2s_visited.pdf \
+			   data/s2spp_time.pdf \
+			   data/s2spp_visited.pdf \
+			   data/ssharp2spp_time.pdf \
+			   data/ssharp2spp_visited.pdf \
+
+
+graphfigs: data/small-astar.pdf \
+	       data/small-bfs.pdf \
+	       data/small-colored.pdf \
+	       data/small-shortestpath.pdf \
+	       data/big-astar.pdf \
+	       data/big-bfs.pdf data/ \
+	       data/big-colored.pdf \
+	       data/big-shortestpath.pdf \
+	       data/rsdd3d.pdf
+
+figs: benchmarkfigs graphfigs
+
 
 clean: 
 	rm data/*
