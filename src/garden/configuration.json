@@ -50,10 +50,11 @@
         "trials"      : 5,
 
         "draw" : {
+            "latex_path" : "data/",
             "output_path" : "data/file.pdf",
             "sourcelang" : "S++",
             "targetlang" : "S",
-            "x" : "time1(s)",
+            "x" : "time",
             "y" : "name",
             "hue" : "search",
             "label" : "time (s)",

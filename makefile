@@ -102,6 +102,7 @@ data/rsdd3d.pdf: src/garden/draw_rsdd3D.py
 		--rsdd3D.show False
 
 data/benchmark.csv: src/garden/benchmark.py
+	mkdir -p data
 	python3 src/garden/benchmark.py \
 		--configuration src/garden/configuration.json \
 		--benchmark.output_path data/benchmark.csv
@@ -112,7 +113,7 @@ data/spp2s_time.pdf: data/benchmark.csv src/garden/draw_benchmark.py
 		--benchmark.draw.output_path data/spp2s_time.pdf \
 		--benchmark.draw.sourcelang "S++" \
 		--benchmark.draw.targetlang "S" \
-		--benchmark.draw.x "time2(s)" \
+		--benchmark.draw.x "time" \
 		--benchmark.draw.y "name" \
 		--benchmark.draw.hue "search" \
 		--benchmark.draw.label "time (s)" \
@@ -136,7 +137,7 @@ data/ssharp2spp_time.pdf: data/benchmark.csv src/garden/draw_benchmark.py
 		--benchmark.draw.output_path data/ssharp2spp_time.pdf \
 		--benchmark.draw.sourcelang "S#" \
 		--benchmark.draw.targetlang "S++" \
-		--benchmark.draw.x "time2(s)" \
+		--benchmark.draw.x "time" \
 		--benchmark.draw.y "name" \
 		--benchmark.draw.hue "search" \
 		--benchmark.draw.label "time (s)" \
@@ -160,7 +161,7 @@ data/s2spp_time.pdf: data/benchmark.csv src/garden/draw_benchmark.py
 		--benchmark.draw.output_path data/s2spp_time.pdf \
 		--benchmark.draw.sourcelang "S" \
 		--benchmark.draw.targetlang "S++" \
-		--benchmark.draw.x "time2(s)" \
+		--benchmark.draw.x "time" \
 		--benchmark.draw.y "name" \
 		--benchmark.draw.hue "search" \
 		--benchmark.draw.label "time (s)" \
