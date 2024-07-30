@@ -8,3 +8,16 @@ The file ```requirements.txt``` enumerates the necessary Python packages. You ca
 
 ### Replication
 The ```src``` directory holds the source code, while the ```data``` directory contains the output from various experiments. The ```makefile``` file provides instructions for reproducing these experiments. To execute all experiments, simply run ```make figs```. If you encounter any issues at this stage, you can attempt running ```PYTHONPATH=$PYTHONPATH:. make figs``` instead. Note that the run of the full suite may require several hours. You can find the file containing all the result as ```data/benchmark.csv```.
+
+### bibtex
+```
+@article{bertolotti2024piler,
+  title={★ piler: Compilers in search of compilations},
+  author={Bertolotti, Francesco and Cazzola, Walter and Favalli, Luca},
+  journal={Journal of Systems and Software},
+  volume={212},
+  pages={112006},
+  year={2024},
+  publisher={Elsevier}
+}
+```
